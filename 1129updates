@@ -2408,23 +2408,103 @@
             const ctx = canvas.getContext('2d');
 
             // Purple starry background
-            const gradient = ctx.createRadialGradient(600, 800, 100, 600, 800, 1000);
-            gradient.addColorStop(0, '#4a1a5e');
-            gradient.addColorStop(0.5, '#2d0e3d');
+            const gradient = ctx.createRadialGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1a0d2e');
+            gradient.addColorStop(0.5, '#6a0572');
             gradient.addColorStop(1, '#1a0d2e');
             ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 1200, 1600);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Add corner decorative frame ornaments
+        
+            const cornerLength = 80;
+            const cornerMargin = 25;
+
+        // Top-left corner
+        ctx.beginPath();
+        ctx.moveTo(cornerMargin + cornerLength, cornerMargin);
+        ctx.lineTo(cornerMargin, cornerMargin);
+        ctx.lineTo(cornerMargin, cornerMargin + cornerLength);
+        ctx.stroke();
+
+        // Top-right corner
+        ctx.beginPath();
+        ctx.moveTo(canvas.width - cornerMargin - cornerLength, cornerMargin);
+        ctx.lineTo(canvas.width - cornerMargin, cornerMargin);
+        ctx.lineTo(canvas.width - cornerMargin, cornerMargin + cornerLength);
+        ctx.stroke();
+
+            // Bottom-left corner
+            ctx.beginPath();
+            ctx.moveTo(cornerMargin, canvas.height - cornerMargin - cornerLength);
+            ctx.lineTo(cornerMargin, canvas.height - cornerMargin);
+            ctx.lineTo(cornerMargin + cornerLength, canvas.height - cornerMargin);
+            ctx.stroke();
+
+            // Bottom-right corner
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - cornerMargin, canvas.height - cornerMargin - cornerLength);
+            ctx.lineTo(canvas.width - cornerMargin, canvas.height - cornerMargin);
+            ctx.lineTo(canvas.width - cornerMargin - cornerLength, canvas.height - cornerMargin);
+            ctx.stroke();
+
+        // Add mystical symbols at corner intersections
+        ctx.fillStyle = '#c154c1';
+        ctx.font = '35px "Philosopher", serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(193, 84, 193, 0.8)';
+        ctx.shadowBlur = 20;
+        ctx.fillText('✦', cornerMargin, cornerMargin + 8);
+        ctx.fillText('✧', canvas.width - cornerMargin, cornerMargin + 8);
+        ctx.fillText('☆', cornerMargin, canvas.height - cornerMargin + 8);
+        ctx.fillText('✦', canvas.width - cornerMargin, canvas.height - cornerMargin + 8);
+
+        ctx.shadowBlur = 0;
 
             // Draw stars in background
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             for (let i = 0; i < 80; i++) {
-                const x = Math.random() * 1200;
-                const y = Math.random() * 1600;
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
                 const size = Math.random() * 3 + 1;
                 ctx.beginPath();
                 ctx.arc(x, y, size, 0, Math.PI * 2);
                 ctx.fill();
             }
+
+        // Medium gold stars
+        ctx.fillStyle = 'rgba(212, 175, 55, 0.8)';
+        for (let i = 0; i < 30; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = Math.random() * 2.5 + 1.5;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+
+        // Small purple/mystical stars
+        ctx.fillStyle = 'rgba(193, 84, 193, 0.7)';
+        for (let i = 0; i < 25; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = Math.random() * 1.5 + 1;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Tiny stars (star dust)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        for (let i = 0; i < 40; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = Math.random() * 1 + 0.5;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
             // Draw decorative stars (larger)
             const drawStar = (x, y, size, color, points = 4) => {
@@ -2458,69 +2538,110 @@
             drawStar(200, 750, 10, '#d4af37');
             drawStar(1000, 750, 10, '#d4af37');
 
-            // Title with diamonds: "◆ 你的塔羅啟示 ◆"
-            ctx.textAlign = 'center';
-            ctx.shadowBlur = 40;
-            ctx.shadowColor = '#d4af37';
-            ctx.fillStyle = '#f4e4c1';
-            ctx.font = 'bold 72px "Noto Serif TC", serif';
-            const titleText = lang === 'zh' ? '你的塔羅啟示' : 'Your Tarot Revelation';
+        // Load and draw the tarot card image
+        const cardImage = new Image();
+        cardImage.crossOrigin = "anonymous";
 
-            // Draw diamonds
-            ctx.font = '50px Arial';
-            ctx.fillText('◆', 280, 125);
-            ctx.fillText('◆', 920, 125);
+        await new Promise((resolve, reject) => {
+            cardImage.onload = () => resolve();
+            cardImage.onerror = () => {
+                console.warn('Failed to load card image, continuing without it');
+                resolve();
+            };
+            cardImage.src = finalCard.image;
+            // Timeout after 10 seconds
+            setTimeout(() => resolve(), 10000);
+        });
 
-            // Draw title
-            ctx.font = 'bold 72px "Noto Serif TC", serif';
-            ctx.fillText(titleText, 600, 125);
+       // Draw decorative top symbols (add more space at top)
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#c154c1';
+        ctx.font = '40px "Philosopher", serif';
+        ctx.shadowColor = 'rgba(193, 84, 193, 0.8)';
+        ctx.shadowBlur = 20;
+        ctx.fillText('☽ ✦ ☾', canvas.width / 2, 110);
 
-            // Moon and star symbols above title
-            ctx.font = '32px Arial';
-            ctx.fillText('☽ ✦ ☾', 600, 65);
+        // Draw title with enhanced glow (moved down)
+        ctx.fillStyle = '#e8c551';
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 72px "Noto Serif TC", serif';
+        const titleText = lang === 'zh' ? '你的塔羅啟示' : 'Your Tarot Message';
+        ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
+        ctx.shadowBlur = 30;
+        ctx.fillText('✦ 你的塔羅啟示 ✦', canvas.width / 2, 190);
 
-            // Small diamond below title
-            ctx.font = '20px Arial';
-            ctx.fillText('◇', 600, 165);
+
 
             // Card name (number + Chinese + English)
             ctx.shadowBlur = 20;
             ctx.font = 'bold 40px "Noto Serif TC", serif';
-            ctx.fillStyle = '#f4e4c1';
+            ctx.fillStyle = '#e8c551';
             // Strip HTML tags for canvas rendering
             const cleanName = result.name.replace(/<[^>]*>/g, '');
-            ctx.fillText(cleanName, 600, 215);
+            ctx.fillText(cleanName, canvas.width / 2, 290);
 
-            // Card image frame - golden border with decorative corners
-            const frameX = 225;
-            const frameY = 265;
-            const frameWidth = 750;
-            const frameHeight = 750;
+    // Draw card image if loaded (moved down with more space after card name)
+        let imageEndY = 370;
+        if (cardImage.complete && cardImage.naturalHeight !== 0) {
+            const imgWidth = 600;
+            const imgHeight = (cardImage.naturalHeight / cardImage.naturalWidth) * imgWidth;
+            const imgX = (canvas.width - imgWidth) / 2;
+            const imgY = 370;
+            const borderRadius = 15;
+            const borderPadding = 10;
 
-            // Draw golden frame
-            ctx.shadowBlur = 30;
-            ctx.shadowColor = '#d4af37';
-            ctx.strokeStyle = '#d4af37';
-            ctx.lineWidth = 8;
-            ctx.strokeRect(frameX, frameY, frameWidth, frameHeight);
-
-            // Inner shadow/depth
-            ctx.strokeStyle = '#f4e4c1';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(frameX + 8, frameY + 8, frameWidth - 16, frameHeight - 16);
-
-            // Corner decorative stars
-            drawStar(frameX - 10, frameY - 10, 15, '#f4e4c1');
-            drawStar(frameX + frameWidth + 10, frameY - 10, 15, '#f4e4c1');
-            drawStar(frameX - 10, frameY + frameHeight + 10, 15, '#f4e4c1');
-            drawStar(frameX + frameWidth + 10, frameY + frameHeight + 10, 15, '#f4e4c1');
-
-            // Load and draw card image
-            const cardImg = imageCache.has(result.image) ? imageCache.get(result.image) : new Image();
-            if (!imageCache.has(result.image)) {
-                cardImg.crossOrigin = 'anonymous';
-                cardImg.src = result.image;
+            // Helper function to draw rounded rectangle path
+            function roundRect(ctx, x, y, width, height, radius) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
             }
+
+            // Draw glowing border with multiple layers - matching result page
+            // Outer glow - purple/mystical (matching box-shadow: 0 0 60px rgba(193, 84, 193, 0.3))
+            ctx.strokeStyle = 'rgba(193, 84, 193, 0.3)';
+            ctx.lineWidth = 12;
+            ctx.shadowColor = 'rgba(193, 84, 193, 0.3)';
+            ctx.shadowBlur = 60;
+            roundRect(ctx, imgX - borderPadding, imgY - borderPadding, imgWidth + borderPadding * 2, imgHeight + borderPadding * 2, borderRadius);
+            ctx.stroke();
+
+            // Middle glow - gold (matching box-shadow: 0 0 40px rgba(212, 175, 55, 0.5))
+            ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+            ctx.lineWidth = 10;
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.5)';
+            ctx.shadowBlur = 40;
+            roundRect(ctx, imgX - borderPadding, imgY - borderPadding, imgWidth + borderPadding * 2, imgHeight + borderPadding * 2, borderRadius);
+            ctx.stroke();
+
+            // Inner border - solid gold (matching border: 3px solid var(--color-secondary))
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 6;
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.5)';
+            ctx.shadowBlur = 20;
+            roundRect(ctx, imgX - borderPadding, imgY - borderPadding, imgWidth + borderPadding * 2, imgHeight + borderPadding * 2, borderRadius);
+            ctx.stroke();
+
+            // Reset shadow for image
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Clip and draw image with rounded corners
+            ctx.save();
+            roundRect(ctx, imgX, imgY, imgWidth, imgHeight, borderRadius);
+            ctx.clip();
+            ctx.drawImage(cardImage, imgX, imgY, imgWidth, imgHeight);
+            ctx.restore();
+
 
             // Wait for image to load
             await new Promise((resolve) => {
@@ -2532,29 +2653,36 @@
                 }
             });
 
-            // Draw card image inside frame
-            ctx.save();
-            ctx.shadowBlur = 0;
-            const imgPadding = 20;
-            ctx.drawImage(
-                cardImg,
-                frameX + imgPadding,
-                frameY + imgPadding,
-                frameWidth - imgPadding * 2,
-                frameHeight - imgPadding * 2
-            );
-            ctx.restore();
+            // Add decorative mystical symbols around the image
+            ctx.fillStyle = '#d4af37';
+            ctx.font = '32px "Philosopher", serif';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
+            ctx.shadowBlur = 15;
 
-            // Sparkle effects on corners
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.font = '30px Arial';
-            ctx.fillText('✨', frameX + 40, frameY + 760);
-            ctx.fillText('✨', frameX + frameWidth - 40, frameY + 760);
+            // Top symbols
+            ctx.fillText('✦', imgX - 40, imgY + 30);
+            ctx.fillText('✦', imgX + imgWidth + 40, imgY + 30);
+
+            // Bottom symbols
+            ctx.fillText('✧', imgX - 40, imgY + imgHeight - 20);
+            ctx.fillText('✧', imgX + imgWidth + 40, imgY + imgHeight - 20);
+
+            // Side symbols
+            ctx.fillStyle = '#c154c1';
+            ctx.fillText('☆', imgX - 40, imgY + imgHeight / 2);
+            ctx.fillText('☆', imgX + imgWidth + 40, imgY + imgHeight / 2);
+
+            ctx.shadowBlur = 0;
+
+            imageEndY = imgY + imgHeight + 50;
+        }
+
 
             // Description box
             const descX = 75;
             const descY = 1050;
-            const descWidth = 1050;
+            const descWidth = 900;
             const descHeight = 135;
 
             // Draw description frame with golden border
@@ -2566,26 +2694,22 @@
             ctx.fillRect(descX, descY, descWidth, descHeight);
             ctx.strokeRect(descX, descY, descWidth, descHeight);
 
-            // Corner diamonds for description box
-            ctx.font = '22px Arial';
-            ctx.fillStyle = '#d4af37';
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#d4af37';
-            ctx.fillText('◆', descX - 18, descY + descHeight / 2 + 8);
-            ctx.fillText('◆', descX + descWidth + 18, descY + descHeight / 2 + 8);
+        // Calculate available space
+        const bottomSpace = 180; // Space needed for footer elements
+        const availableHeight = canvas.height - imageEndY - bottomSpace;
 
             // Description text
             ctx.shadowBlur = 0;
-            ctx.fillStyle = '#e8d5c4';
-            ctx.font = '26px "Noto Serif TC", serif';
-            ctx.textAlign = 'left';
+            ctx.fillStyle = '#f7f2c6';
+            ctx.font = '30px "Noto Serif TC", serif';
+            ctx.textAlign = 'center';
 
             const desc = lang === 'zh' ? result.descZh : result.descEn;
             // Remove markdown and HTML, keep only core description
             const cleanDesc = desc.replace(/\*\*/g, '').replace(/<[^>]*>/g, '').replace(/🎉|✨|🧘‍♀️|🌿|🛡️|📜|💖|🚀|🦁|💡|🍀|⚖️|🔄|🦋|💧|⛓️|⚡|🌟|🌙|☀️|🎺|🌎/g, '').replace(/啟示:|Revelation:/g, '').trim();
 
             // Word wrap for description (handle Chinese and English differently)
-            const maxWidth = descWidth - 50;
+            const maxWidth = descWidth - 70;
             const lines = [];
             let currentLine = '';
 
@@ -2619,26 +2743,74 @@
             if (currentLine) lines.push(currentLine.trim());
 
             // Draw description lines (max 3 lines to match photo)
-            const lineHeight = 38;
+            const lineHeight = 45;
             const startY = descY + 42;
             for (let i = 0; i < Math.min(lines.length, 3); i++) {
                 ctx.fillText(lines[i], descX + 25, startY + i * lineHeight);
             }
 
+
+
+        // Helper function for rounded rectangles (reuse if not in scope)
+        function roundRectBox(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        // Draw box background with gradient and rounded corners
+        const boxGradient = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxHeight);
+        boxGradient.addColorStop(0, 'rgba(13, 2, 33, 0.7)');
+        boxGradient.addColorStop(1, 'rgba(26, 13, 46, 0.5)');
+        ctx.fillStyle = boxGradient;
+
+        // Draw background with inset shadow effect
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 30;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        roundRectBox(ctx, boxX, boxY, boxWidth, boxHeight, boxRadius);
+        ctx.fill();
+
+        // Add decorative mystical symbols at corners
+        ctx.fillStyle = '#c154c1';
+        ctx.font = '28px "Philosopher", serif';
+        ctx.shadowColor = 'rgba(193, 84, 193, 0.8)';
+        ctx.shadowBlur = 12;
+
+        // Corner symbols
+        ctx.textAlign = 'left';
+        ctx.fillText('✦', boxX - 25, boxY + 20);
+        ctx.fillText('✧', boxX - 25, boxY + boxHeight - 10);
+
+        ctx.textAlign = 'right';
+        ctx.fillText('✦', boxX + boxWidth + 25, boxY + 20);
+        ctx.fillText('✧', boxX + boxWidth + 25, boxY + boxHeight - 10);
+
+        ctx.shadowBlur = 0;
+
             // Footer decorative stars
             ctx.textAlign = 'center';
             ctx.fillStyle = '#d4af37';
-            ctx.font = '32px Arial';
+            ctx.font = '36px "Philosopher", serif';
             ctx.shadowBlur = 15;
-            ctx.shadowColor = '#d4af37';
-            ctx.fillText('◆ ☆ ◇', 600, 1485);
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
+            ctx.fillText('◆ ☆ ◇', canvas.width / 2, 1485);
 
             // Footer text
             ctx.fillStyle = '#c154c1';
-            ctx.font = '28px "Noto Serif TC", serif';
+            ctx.font = 'bold 28px "Noto Serif TC", serif';
             ctx.shadowBlur = 15;
-            ctx.shadowColor = '#c154c1';
-            ctx.fillText('曜日塔羅 大阿爾克那 MascotTarot Major Arcana', 520, 1540);
+            ctx.shadowColor = 'rgba(193, 84, 193, 0.8)';
+            ctx.fillText('暉日塔羅 大阿爾克那 MascotTarot Major Arcana', canvas.width / 2, bottomY + 80);
 
             // QR Code (generate with current page URL)
             try {
@@ -2661,11 +2833,52 @@
 
                 const qrImg = qrContainer.querySelector('img');
                 if (qrImg && qrImg.complete) {
-                    // Draw white background for QR with rounded corners effect
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(1030, 1435, 135, 135);
-                    ctx.drawImage(qrImg, 1037, 1442, 120, 120);
+            const qrSize = 150;
+            const qrPadding = 15;
+            const qrX = canvas.width - qrSize - 30;
+            const qrY = canvas.height - qrSize - 30;
+            const qrRadius = 10;
                 }
+
+            // Helper for QR rounded rect
+            function roundRectQR(ctx, x, y, width, height, radius) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+            }
+
+            // Draw glowing border for QR box
+            // Outer purple glow
+            ctx.strokeStyle = 'rgba(193, 84, 193, 0.5)';
+            ctx.lineWidth = 4;
+            ctx.shadowColor = 'rgba(193, 84, 193, 0.6)';
+            ctx.shadowBlur = 40;
+            roundRectQR(ctx, qrX, qrY, qrSize, qrSize, qrRadius);
+            ctx.stroke();
+
+            // Inner gold glow
+            ctx.strokeStyle = 'rgba(212, 175, 55, 0.6)';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
+            ctx.shadowBlur = 15;
+            roundRectQR(ctx, qrX, qrY, qrSize, qrSize, qrRadius);
+            ctx.stroke();
+
+            // Draw white background with rounded corners
+            ctx.fillStyle = 'white';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 10;
+            roundRectQR(ctx, qrX, qrY, qrSize, qrSize, qrRadius);
+            ctx.fill();
+            ctx.shadowBlur = 0;
 
                 document.body.removeChild(qrContainer);
             } catch (error) {
