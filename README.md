@@ -27,7 +27,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Philosopher:wght@400;700&family=Noto+Serif+TC:wght@400;700&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Philosopher:wght@400;700&family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+Symbols+2&display=block" rel="stylesheet">
 
     <!-- Libraries for image generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -104,6 +104,11 @@
         /* Style for English text within Chinese content */
         .en-text {
             font-family: 'Philosopher', serif;
+        }
+
+        /* Style for moon symbols to ensure consistent rendering */
+        .moon-symbols {
+            font-family: 'Noto Sans Symbols 2', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
         }
 
         * {
@@ -340,6 +345,7 @@
             letter-spacing: 8px;
             opacity: 0.6;
             animation: symbolGlow 3s ease-in-out infinite alternate;
+            font-family: 'Noto Sans Symbols 2', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
         }
 
         .container::after {
@@ -353,6 +359,7 @@
             letter-spacing: 8px;
             opacity: 0.6;
             animation: symbolGlow 3s ease-in-out infinite alternate-reverse;
+            font-family: 'Noto Sans Symbols 2', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
         }
 
         @keyframes symbolGlow {
@@ -1790,7 +1797,7 @@
 
     <!-- Loading Screen (shows once on first load) -->
     <div id="loading-screen">
-        <div class="loading-symbol" id="loading-symbol">☽ ✦ ☾</div>
+        <div class="loading-symbol" id="loading-symbol"><span class="moon-symbols">☽</span> ✦ <span class="moon-symbols">☾</span></div>
         <div id="loading-progress-container">
             <div id="loading-progress-bar"></div>
         </div>
@@ -1810,7 +1817,7 @@
         <p id="intro-cards" style="color: var(--color-secondary); font-weight: bold; font-size: 1.1em; margin: 8px auto;">22 張大阿爾克那牌</p>
         <p id="intro-desc2" style="margin: 10px auto;">揭示你此刻最需要的指引</p>
         <div style="margin: 15px auto 20px; font-size: 1.7em; color: var(--color-mystical); text-shadow: 0 0 20px var(--color-mystical); animation: symbolGlow 3s ease-in-out infinite alternate;">
-            ☽ ✦ ☾
+            <span class="moon-symbols">☽</span> ✦ <span class="moon-symbols">☾</span>
         </div>
         <button id="start-quiz-btn" class="btn" onclick="startQuiz()">
             ✧ 開始探索 ✧
@@ -2096,7 +2103,7 @@
             { name: "12 倒吊人 <span class='en-text'>(The Hanged Man)</span>", image: "https://pfst.cf2.poecdn.net/base/image/6f60e6bb2e391bc5e9b745677d41d2134434aafe16bd2acc3fe37ce408a88aa9?w=4096&h=4096", descZh: "🔄 **啟示: 嶄新的視角** 🔄 這需要你暫停腳步，從一個全新的角度看待問題。放下控制慾，接受現狀。當你願意換個方向思考時，突破隨之而來。", descEn: "🔄 **Revelation: Fresh Perspective** 🔄 This requires you to pause and view problems from a completely new angle. Let go of the need for control, accept the current situation. When you're willing to think from a different direction, breakthroughs will follow." },
             { name: "13 死神 <span class='en-text'>(Death)</span>", image: "https://pfst.cf2.poecdn.net/base/image/579e3bf2c73af72a0e0a23990048df8e8c9c3abb00625d194f96a6b356676432?w=4096&h=4096", descZh: "🦋 **啟示: 積極的轉變** 🦋 這不是結束，而是蛻變的開始! 舊的模式、習慣或狀態正在結束，為更美好、更真實的你騰出空間。迎接重生，輕裝前行。", descEn: "🦋 **Revelation: Positive Transformation** 🦋 This is not an ending, but the beginning of transformation! Old patterns, habits, or states are concluding, making room for a better, more authentic you. Embrace rebirth and move forward lightly." },
             { name: "14 節制 <span class='en-text'>(Temperance)</span>", image: "https://pfst.cf2.poecdn.net/base/image/19b42ab117b9bb33516a6bf4f73a1959b54b9740e8bf8ae5ac406b647acc8d11?w=4096&h=4096", descZh: "💧 **啟示: 完美的融合** 💧 保持耐心和中庸之道。透過優雅地混合內在與外在的力量，你將在生活中找到完美的平衡點。和諧與療癒正在發生。", descEn: "💧 **Revelation: Perfect Integration** 💧 Maintain patience and the middle way. By gracefully blending inner and outer forces, you will find the perfect balance point in life. Harmony and healing are taking place." },
-            { name: "15 惡魔 <span class='en-text'>(The Devil)</span>", image: "https://pfst.cf2.poecdn.net/base/image/35c6902e9b4a6c426823bae36c0f9b3afd352cd4cc3a1873a443fdde34ff6ad4?w=4096&h=4096", descZh: "⛓️ **啟示: 掙脫束縛** ⛓️ 覺察那些阻礙你的物質或精神依賴。你擁有掙脫任何限制的力量，只要你願意承認並改變。你是自由的，選擇權在你手上!", descEn: "⛓️ **Revelation: Breaking Free from Bonds** ⛓️ Become aware of the material or spiritual dependencies hindering you. You have the power to break free from any limitation, as long as you're willing to acknowledge and change. You are free—the choice is in your hands!" },
+            { name: "15 惡魔 <span class='en-text'>(The Devil)</span>", image: "https://pfst.cf2.poecdn.net/base/image/35c6902e9b4a6c426823bae36c0f9b3afd352cd4cc3a1873a443fdde34ff6ad4?w=4096&h=4096", descZh: "⛓️ **啟示: 掙脫束縛** ⛓️ 覺察那些阻礙你的物質或精神依賴。你擁有掙���任何限制的力量，只要你願意承認並改變。你是自由的，選擇權在你手上!", descEn: "⛓️ **Revelation: Breaking Free from Bonds** ⛓️ Become aware of the material or spiritual dependencies hindering you. You have the power to break free from any limitation, as long as you're willing to acknowledge and change. You are free—the choice is in your hands!" },
             { name: "16 塔 <span class='en-text'>(The Tower)</span>", image: "https://pfst.cf2.poecdn.net/base/image/25f78ba4a1feb5455a58764222a82cdea8073fc9da103101b53a031a846c2d38?w=4096&h=4096", descZh: "⚡ **啟   : 突破與釋放** ⚡ 突然的變動正為你清除不穩定的結構，這是一個強大的覺醒時刻。相信舊的崩塌是為了迎接更堅固、更真實的未來，你將重生!", descEn: "⚡ **Revelation: Breakthrough and Release** ⚡ Sudden changes are clearing unstable structures for you—this is a powerful moment of awakening. Trust that the collapse of the old is to welcome a more solid, more authentic future. You will be reborn!" },
             { name: "17 星星 <span class='en-text'>(The Star)</span>", image: "https://pfst.cf2.poecdn.net/base/image/a14eb4206eee139e821aeb51346995d81664346974d835998a22f8e4d9e68349?w=4096&h=4096", descZh: "🌟 **啟示: 希望與靈感** 🌟 偉大的希望和心靈的平靜正在注入你的生命。相信你的夢想，你正受到宇宙的指引。保持樂觀，你閃耀著獨特的光芒。", descEn: "🌟 **Revelation: Hope and Inspiration** 🌟 Great hope and spiritual peace are being infused into your life. Believe in your dreams—you are being guided by the universe. Stay optimistic; you shine with a unique light." },
             { name: "18 月亮 <span class='en-text'>(The Moon)</span>", image: "https://pfst.cf2.poecdn.net/base/image/117301bf0dd5c2de7348f87eab6f16e6414e29b12c7f222de9eb3414d8c8b938?w=4096&h=4096", descZh: "🌙 **啟示: 信任直覺** 🌙 雖然路途看起來有些迷霧，但請相信你的內在指引。讓想像力流動，你的直覺會像月光一樣，照亮那些隱藏的真相。別怕未知!", descEn: "🌙 **Revelation: Trust Intuition** 🌙 Though the path may seem foggy, trust your inner guidance. Let imagination flow; your intuition will illuminate hidden truths like moonlight. Don't fear the unknown!" },
@@ -3245,7 +3252,7 @@
        // Draw decorative top symbols (more space at top)
         ctx.textAlign = 'center';
         ctx.fillStyle = '#c154c1';
-        ctx.font = '48px "Philosopher", serif';
+        ctx.font = '48px "Noto Sans Symbols 2", "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
         ctx.shadowColor = 'rgba(193, 84, 193, 0.8)';
         ctx.shadowBlur = 20;
         ctx.fillText('☽ ✦ ☾', canvas.width / 2, 90);
