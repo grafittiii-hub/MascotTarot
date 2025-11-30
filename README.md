@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -2092,7 +2091,7 @@
         const questionsData = {
             zh: [
                 { question: "當你進入房間時, 你第一眼看到的物品是?", options: [{ text: "古典花瓶與綻放的鮮花", value: 0 }, { text: "色彩繽紛的枕頭與被套", value: 1 }, { text: "玻璃窗上的雨點", value: 2 }, { text: "地上堆放的禮物盒", value: 3 }] },
-                { question: "在神秘的桌子上, 你想拿起哪一樣物品來引導你?", options: [{ text: "透明�����水晶球, 觀看未來的影像", value: 0 }, { text: "古老的鑰匙, 開啟被塵封的門", value: 4 }, { text: "發光的飾物, 朋友贈送的心意", value: 8 }, { text: "純白的羽毛, 象徵輕盈與自由", value: 12 }] },
+                { question: "在神秘的桌子上, 你想拿起哪一樣物品來引導你?", options: [{ text: "透明的水晶球, 觀看未來的影像", value: 0 }, { text: "古老的鑰匙, 開啟被塵封的門", value: 4 }, { text: "發光的飾物, 朋友贈送的心意", value: 8 }, { text: "純白的羽毛, 象徵輕盈與自由", value: 12 }] },
                 { question: "你聽到遠處傳來一種聲音, 最能撫慰你心靈的是?", options: [{ text: "寧靜的雪落聲, 一片沉寂與空白", value: 0 }, { text: "爐火中木材的爆裂聲, 溫暖而規律", value: 2 }, { text: "遠方大海拍打岸邊的潮汐聲, 充滿能量", value: 4 }, { text: "古老且遙遠的鐘擺聲, 代表時間的流動", value: 6 }] },
                 { question: "你走在一片迷霧中, 腳下延伸著哪一種路徑?", options: [{ text: "未曾有人走過的泥土小徑, 充滿未知", value: 0 }, { text: "被藤蔓覆蓋的古老石板路, 充滿歷史感", value: 3 }, { text: "鋪滿金幣的明亮大道, 直通繁榮", value: 6 }, { text: "懸浮於空中的彩虹橋, 只存在於夢境", value: 9 }] }
             ],
