@@ -1453,7 +1453,7 @@
             }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 520px) {
             #intro-title {
                 font-size: clamp(1em, 8vw, 1.6em);
             }
