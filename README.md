@@ -1899,8 +1899,8 @@
             配對結果純粹娛樂 僅供參考
         </div>
         <div id="copyright-notice" style="text-align: center; margin-top: 15px; padding: 10px; font-size: 0.65em; color: rgba(212, 175, 55, 0.6); line-height: 1.3; border-top: 1px solid rgba(212, 175, 55, 0.2);">
-            © 2025 孫孫暉日塔羅 by @grafittiii_uru<br>
-            All tarot card artwork is original and copyrighted. Credit to AI's assistant. 
+            2025 孫孫暉日塔羅 by @grafittiii_uru<br>
+            All tarot card artwork is original. Credit to GMM Mascots and AI's assistance. 
         </div>
     </div>
 
