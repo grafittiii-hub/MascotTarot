@@ -2,6 +2,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Samsung Browser Compatibility -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="theme-color" content="#0d0221">
     <title>✦ 邂逅心靈 ✦ 你的塔羅啟示 | Mystical Tarot Revelation</title>
 
     <!-- SEO Meta Tags -->
@@ -805,7 +808,7 @@
             width: 100%;
             height: 100vh;
             background: rgba(0, 0, 0, 0.92);
-            z-index: 9999;
+            z-index: 100000; /* Higher than loading screen to prevent Samsung browser overlap */
             overflow: hidden;
             animation: fadeIn 0.3s ease-out;
             padding: 0;
@@ -822,11 +825,12 @@
 
         .gallery-container {
             max-width: 780px;
-            height: 100vh;
+            min-height: 100vh;
+            max-height: 100vh;
             margin: 0 auto;
             background: linear-gradient(135deg, rgba(26, 13, 46, 0.98) 0%, rgba(106, 5, 114, 0.95) 100%);
             border-radius: 15px;
-            padding: 50px 18px 15px;
+            padding: 50px 18px 80px; /* Increased bottom padding for action buttons */
             border: none;
             border-left: 3px solid var(--color-secondary);
             border-right: 3px solid var(--color-secondary);
@@ -834,6 +838,7 @@
             position: relative;
             overflow-y: auto;
             overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
         }
 
         .gallery-close {
@@ -1204,7 +1209,9 @@
         /* Gallery action buttons */
         .gallery-actions {
             margin-top: 20px;
+            margin-bottom: 20px; /* Extra bottom margin for easier scrolling */
             padding-top: 20px;
+            padding-bottom: 10px;
             border-top: 2px solid rgba(212, 175, 55, 0.3);
             display: flex;
             flex-wrap: wrap;
@@ -1401,7 +1408,7 @@
             }
 
             .gallery-container {
-                padding: 55px 15px 12px;
+                padding: 55px 15px 80px; /* Increased bottom padding for buttons */
             }
 
             .gallery-close {
@@ -1573,7 +1580,7 @@
             }
 
             .gallery-container {
-                padding: 48px 12px 10px;
+                padding: 48px 12px 80px; /* Increased bottom padding for buttons */
             }
 
             .gallery-close {
@@ -1665,8 +1672,9 @@
         }
 
         #loading-screen.fade-out {
-            opacity: 0;
-            pointer-events: none;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            display: none !important; /* Force hide for Samsung browser compatibility */
         }
 
         .loading-symbol {
@@ -1920,7 +1928,7 @@
         </div>
         <div id="copyright-notice" style="text-align: center; margin-top: 15px; padding: 10px; font-size: 0.65em; color: rgba(212, 175, 55, 0.6); line-height: 1.3; border-top: 1px solid rgba(212, 175, 55, 0.2);">
             @2025 孫孫暉日塔羅 by @grafittiii_uru<br>
-            All tarot card artwork is original, giving credit to GMM Mascots and AI's assistance. 
+            All tarot card artwork is original, giving credit to GMM Mascots and AI's assistance. 
         </div>
     </div>
 
@@ -3104,6 +3112,15 @@
         // Open gallery
         function openGallery() {
             playButtonSound();
+
+            // Explicitly hide loading screen if it somehow persists (Samsung browser fix)
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen && loadingScreen.parentNode) {
+                loadingScreen.style.display = 'none';
+                loadingScreen.style.visibility = 'hidden';
+                loadingScreen.parentNode.removeChild(loadingScreen);
+            }
+
             const modal = document.getElementById('gallery-modal');
             const container = document.querySelector('.gallery-container');
             const grid = document.getElementById('gallery-grid');
@@ -3727,7 +3744,7 @@
 
             ctx.shadowBlur = 0;
 
-            imageEndY = imgY + imgHeight + 50; 
+            imageEndY = imgY + imgHeight + 50; 
         }
 
         // Calculate available space
@@ -4415,6 +4432,11 @@
                     // Smoother, longer fade transition (increased from 300ms to 800ms)
                     setTimeout(() => {
                         loadingScreen.style.display = 'none';
+                        loadingScreen.style.visibility = 'hidden';
+                        // Remove from DOM entirely to prevent Samsung browser re-showing
+                        if (loadingScreen.parentNode) {
+                            loadingScreen.parentNode.removeChild(loadingScreen);
+                        }
                     }, 800); // Match the CSS transition duration
                 }
             }, 1200); // Show glow for 1200ms before fading out
