@@ -809,9 +809,11 @@
             height: 100vh;
             background: rgba(0, 0, 0, 0.92);
             z-index: 100000; /* Higher than loading screen to prevent Samsung browser overlap */
-            overflow: hidden;
+            overflow-y: auto; /* Allow scrolling in modal */
+            overflow-x: hidden;
             animation: fadeIn 0.3s ease-out;
             padding: 0;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
         }
 
         .gallery-modal.active {
@@ -825,20 +827,17 @@
 
         .gallery-container {
             max-width: 780px;
-            min-height: 100vh;
-            max-height: 100vh;
-            margin: 0 auto;
+            min-height: auto; /* Let content define height */
+            margin: 10px auto 30px; /* Add vertical margins for scrolling space */
             background: linear-gradient(135deg, rgba(26, 13, 46, 0.98) 0%, rgba(106, 5, 114, 0.95) 100%);
             border-radius: 15px;
-            padding: 50px 18px 25px; /* Reduced bottom padding - buttons now in grid */
+            padding: 50px 18px 40px; /* Extra bottom padding for mobile */
             border: none;
             border-left: 3px solid var(--color-secondary);
             border-right: 3px solid var(--color-secondary);
             box-shadow: 0 0 80px rgba(212, 175, 55, 0.5);
             position: relative;
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
+            overflow: visible; /* No scrolling on container, modal handles it */
         }
 
         .gallery-close {
@@ -893,7 +892,7 @@
             grid-template-columns: repeat(6, 1fr);
             gap: 10px;
             margin-top: 10px;
-            padding-bottom: 15px;
+            padding-bottom: 20px; /* Extra padding for button visibility */
             justify-items: center;
         }
 
@@ -1415,7 +1414,8 @@
             }
 
             .gallery-container {
-                padding: 55px 15px 25px; /* Reduced bottom padding - buttons now in grid */
+                padding: 55px 15px 50px; /* Extra bottom padding for mobile scrolling */
+                margin: 10px auto 40px; /* More bottom margin on mobile */
             }
 
             .gallery-close {
@@ -1597,7 +1597,8 @@
             }
 
             .gallery-container {
-                padding: 48px 12px 25px; /* Reduced bottom padding - buttons now in grid */
+                padding: 48px 12px 60px; /* Extra bottom padding for small mobile screens */
+                margin: 8px auto 50px; /* More bottom margin on small screens */
             }
 
             .gallery-close {
@@ -2170,7 +2171,7 @@
             { name: "7 戰車 <span class='en-text'>(The Chariot)</span>", image: "https://pfst.cf2.poecdn.net/base/image/7012708ef7f9bc030a2cb3503a03d2bf1db276d8a2fc7f44356bf83c75d1fe7d?w=4096&h=4096", descZh: "🚀 **啟示: 堅定的勝利** 🚀 你正以驚人的速度向目標前進。只要保持專注、自信和內在的平衡，任何挑戰都無法阻擋你。勝利就在不遠的前方!", descEn: "🚀 **Revelation: Determined Victory** 🚀 You're advancing toward your goal at an amazing speed. As long as you stay focused, confident, and internally balanced, no challenge can stop you. Victory lies just ahead!" },
             { name: "8 力量 <span class='en-text'>(Strength)</span>", image: "https://pfst.cf2.poecdn.net/base/image/37fda1ff9085b01fa4d7eb81f143eb0c69e5daaa76db299cec4abdf8e35d18e2?w=4096&h=4096", descZh: "🦁 **啟示: 溫柔的韌性** 🦁 真正的力量來自於內心的平靜與溫柔。面對困難時，請用愛心和耐心來馴服內在的焦慮。你比自己想像的更強大!", descEn: "🦁 **Revelation: Gentle Resilience** 🦁 True strength comes from inner peace and gentleness. When facing difficulties, use love and patience to tame inner anxiety. You are stronger than you think!" },
             { name: "9 隱者 <span class='en-text'>(The Hermit)</span>", image: "https://pfst.cf2.poecdn.net/base/image/7fa8b296a7b7f1ef13130918a0e0991204f1bf1e5d45a32c9cc5f61cd031216e?w=4096&h=4096", descZh: "💡 **啟示: 尋找真理** 💡 這是暫時遠離喧囂、自我反思的黃金時期。透過內省，你將獲得清晰的洞察和深刻的個人真理。光芒源於內在。", descEn: "💡 **Revelation: Seeking Truth** 💡 This is a golden period to temporarily distance yourself from noise and engage in self-reflection. Through introspection, you will gain clear insight and profound personal truth. The light comes from within." },
-            { name: "10 命運之輪 <span class='en-text'>(Wheel of Fortune)</span>", image: "https://pfst.cf2.poecdn.net/base/image/d01071782df20884bcd10f8e36441e72bc3e181ac3780d37558ccf113efe03f4?w=4096&h=4096", descZh: "🍀 **啟示: 轉機與好運** 🍀 命運之輪正為你轉向積極的一面！抓住這個機會，迎接即將���來的改變和意想不到的好運。相信宇宙的安排是完美的。", descEn: "🍀 **Revelation: Turning Point and Good Fortune** 🍀 The Wheel of Fortune is turning toward the positive for you! Seize this opportunity, embrace the coming changes and unexpected good luck. Trust that the universe's arrangement is perfect." },
+            { name: "10 ���運之輪 <span class='en-text'>(Wheel of Fortune)</span>", image: "https://pfst.cf2.poecdn.net/base/image/d01071782df20884bcd10f8e36441e72bc3e181ac3780d37558ccf113efe03f4?w=4096&h=4096", descZh: "🍀 **啟示: 轉機與好運** 🍀 命運之輪正為你轉向積極的一面！抓住這個機會，迎接即將到來的改變和意想不到的好運。相信宇宙的安排是完美的。", descEn: "🍀 **Revelation: Turning Point and Good Fortune** 🍀 The Wheel of Fortune is turning toward the positive for you! Seize this opportunity, embrace the coming changes and unexpected good luck. Trust that the universe's arrangement is perfect." },
             { name: "11 正義 <span class='en-text'>(Justice)</span>", image: "https://pfst.cf2.poecdn.net/base/image/d0feda744bf2db0cd91d362a0f8064483f536525887d2b13b2011a784100e993?w=4096&h=4096", descZh: "⚖️ **啟示: 平衡與公平** ⚖️ 宇宙會帶來公正的結果。現在是時候以清晰、誠實的態度做出決定，你將獲得平衡與和諧。", descEn: "⚖️ **Revelation: Balance and Fairness** ⚖️ The universe will bring justice. Now is the time to make decisions with clarity and honesty, and you will achieve balance and harmony." },
             { name: "12 倒吊人 <span class='en-text'>(The Hanged Man)</span>", image: "https://pfst.cf2.poecdn.net/base/image/6f60e6bb2e391bc5e9b745677d41d2134434aafe16bd2acc3fe37ce408a88aa9?w=4096&h=4096", descZh: "🔄 **啟示: 嶄新的視角** 🔄 這需要你暫停腳步，從一個全新的角度看待問題。放下控制慾，接受現狀。當你願意換個方向思考時，突破隨之而來。", descEn: "🔄 **Revelation: Fresh Perspective** 🔄 This requires you to pause and view problems from a completely new angle. Let go of the need for control, accept the current situation. When you're willing to think from a different direction, breakthroughs will follow." },
             { name: "13 死神 <span class='en-text'>(Death)</span>", image: "https://pfst.cf2.poecdn.net/base/image/579e3bf2c73af72a0e0a23990048df8e8c9c3abb00625d194f96a6b356676432?w=4096&h=4096", descZh: "🦋 **啟示: 積極的轉變** 🦋 這不是結束，而是蛻變的開始! 舊的模式、習慣或狀態正在結束，為更美好、更真實的你騰出空間。迎接重生，輕裝前行。", descEn: "🦋 **Revelation: Positive Transformation** 🦋 This is not an ending, but the beginning of transformation! Old patterns, habits, or states are coming to an end, making room for a better, more authentic you. Embrace rebirth and move forward lightly." },
@@ -3130,7 +3131,7 @@
                 console.error('Error saving collection:', error);
                 hideLoading();
                 showRetryAlert(
-                    currentLanguage === 'zh' ? '❌ 圖鑑生成失敗，請重試' : '❌ Failed to generate collection, please try again',
+                    currentLanguage === 'zh' ? '❌ 圖鑑生成失敗，請重���' : '❌ Failed to generate collection, please try again',
                     saveGalleryCollection
                 );
             }
@@ -3282,16 +3283,13 @@
                 existingStars.remove();
             }
 
-            if (container) {
-                container.scrollTop = 0;
-            }
-
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
 
+            // Scroll modal to top when opening
             requestAnimationFrame(() => {
-                if (container) {
-                    container.scrollTop = 0;
+                if (modal) {
+                    modal.scrollTop = 0;
                 }
             });
         }
@@ -3969,7 +3967,7 @@
                 // Remove HTML tags from card name for sharing
                 const cardNameText = finalCard.name.replace(/<[^>]*>/g, '');
                 const shareText = currentLanguage === 'zh'
-                    ? `🔮 我的專屬啟示是【${cardNameText}】!\n\n���試試你的專屬塔羅啟示: ${SHARE_LINK}`
+                    ? `🔮 我的專屬啟示是【${cardNameText}】!\n\n來試試你的專屬塔羅啟示: ${SHARE_LINK}`
                     : `🔮 My personal revelation is【${cardNameText}】!\n\nTry your own tarot revelation: ${SHARE_LINK}`;
 
                 if (navigator.share) {
