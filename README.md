@@ -1955,7 +1955,7 @@
         </div>
         <div id="copyright-notice" style="text-align: center; margin-top: 15px; padding: 10px; font-size: 0.65em; color: rgba(212, 175, 55, 0.6); line-height: 1.3; border-top: 1px solid rgba(212, 175, 55, 0.2);">
             @2025 孫孫暉日塔羅 by @grafittiii_uru<br>
-            All tarot card artwork is original, giving credit to GMM Mascots and AI's assistance. 
+            All tarot card artwork is original, giving credit to GMM Mascots and AI's assistance. 
         </div>
     </div>
 
@@ -3789,7 +3789,7 @@
 
             ctx.shadowBlur = 0;
 
-            imageEndY = imgY + imgHeight + 50; 
+            imageEndY = imgY + imgHeight + 50; 
         }
 
         // Calculate available space
