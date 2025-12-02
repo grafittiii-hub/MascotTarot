@@ -1886,7 +1886,7 @@
 
     <div id="intro-page" class="container active">
         <h1 id="intro-title">✦ 邂逅心靈 ✦<br>你的塔羅啟示</h1>
-        <p id="intro-subtitle" style="margin-top: 18px; font-size: 1.05em;">你準備好接收孫孫給你的啟示了嗎?</p>
+        <p id="intro-subtitle" style="margin-top: 18px; font-size: 1.0em;">你準備好接收孫孫給你的啟示了嗎?</p>
         <p id="intro-desc1" style="margin: 10px auto;">每個選擇都將引導你走向</p>
         <p id="intro-cards" style="color: var(--color-secondary); font-weight: bold; font-size: 1.1em; margin: 8px auto;">22 張大阿爾克那牌</p>
         <p id="intro-desc2" style="margin: 10px auto;">揭示你此刻最需要的指引</p>
@@ -1920,7 +1920,7 @@
 
     <div id="result-page" class="container">
         <div style="margin-bottom: 10px;">
-            <h2 id="result-title" style="margin: 0; font-size: 1.3em;">你的專屬塔羅啟示</h2>
+            <h2 id="result-title" style="margin: 0; font-size: 1.3em; text-align: center;">你的專屬塔羅啟示</h2>
         </div>
 
         <img id="result-img" src="" alt="Tarot Card Result" loading="eager">
