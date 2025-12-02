@@ -954,15 +954,15 @@
         /* Dynamic font sizing for long English names - responsive to device width */
         @media (max-width: 768px) {
             .gallery-card-name-en.long {
-                font-size: 0.35em;
+                font-size: 0.38em;
             }
 
             .gallery-card-name-en.very-long {
-                font-size: 0.29em;
+                font-size: 0.32em;
             }
 
             .gallery-card-name-en.extremely-long {
-                font-size: 0.25em;
+                font-size: 0.27em;
             }
         }
 
