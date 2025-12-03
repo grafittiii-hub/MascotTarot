@@ -22,7 +22,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="✦ 邂逅心靈 ✦ 你的塔羅啟示">
     <meta name="twitter:description" content="探索22張大阿爾克那牌，揭示你此刻最需要的指引">
-    <meta name="twitter:image" content="https://pfst.cf2.poecdn.net/base/image/1baebbfe40cc9da5b4e45eb79ed19ffe08c766f37c81e1caacb265d1a7c2b13d?w=4096&h=4096">
+    <meta name="twitter:image" content="https://pfst.cf2.poecdn.net/base/image/1baebbfe40cc9da5b4e45eb79ed19ffe08c766f37c81e1caacb265d1a7c2b13d?w=800&h=800">
 
     <!-- Favicon (using mystical symbol) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
@@ -330,7 +330,7 @@
             max-width: 600px;
             max-height: 100vh;
             background: linear-gradient(135deg, rgba(26, 13, 46, 0.95) 0%, rgba(106, 5, 114, 0.85) 100%);
-            padding: 40px 25px;
+            padding: 40px 25px 50px 25px; /* Extra bottom padding for decoration */
             margin: 0 auto;
             border-radius: 20px;
             box-shadow:
@@ -344,7 +344,7 @@
             z-index: 10;
             position: relative;
             backdrop-filter: blur(10px);
-            transition: opacity 0.6s ease-out, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: opacity 1.2s ease-out, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
             transform: translate3d(-50px, 0, 0) scale3d(0.95, 0.95, 1);
             overflow-y: auto;
             overflow-x: hidden;
@@ -354,7 +354,7 @@
 
         .container::before {
             content: '✦ ☽ ✧ ☆ ✦ ☾ ✧';
-            position: absolute;
+            position: relative;
             top: 7px;
             left: 50%;
             transform: translateX(-50%);
@@ -367,9 +367,9 @@
         }
 
         .container::after {
-            content: '✧ ☾ ✦ ��� ✧ ☽ ✦';
-            position: absolute;
-            bottom: 10px;
+            content: '✧ ☾ ✦ ☆ ✧ ☽ ✦';
+            position: relative;
+            bottom: 25px; /* Increased for more space */
             left: 50%;
             transform: translateX(-50%);
             color: var(--color-secondary);
@@ -1409,7 +1409,7 @@
             }
 
             .container {
-                padding: 25px 20px;
+                padding: 25px 20px 45px 20px; /* Extra bottom padding for decoration on mobile */
                 width: 94%;
             }
 
@@ -1522,7 +1522,7 @@
             }
 
             .container {
-                padding: 20px 16px;
+                padding: 20px 16px 40px 16px; /* Extra bottom padding for decoration on small mobile */
                 width: 92%;
             }
 
@@ -1712,7 +1712,13 @@
             align-items: center;
             z-index: 99999;
             opacity: 1;
-            transition: opacity 0.8s ease-out;
+            transition: opacity 1.2s ease-out; /* Slow fade for mysterious crossfade */
+        }
+
+        /* Fade background during crossfade to reveal intro page */
+        #loading-screen.crossfading {
+            opacity: 0;
+            pointer-events: none;
         }
 
         #loading-screen.fade-out {
@@ -1730,38 +1736,116 @@
             animation: loadingPulse 1.5s ease-in-out infinite;
             margin-bottom: 25px;
             transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); /* Smooth bounce effect */
+            /* Performance optimizations for smooth animation */
+            will-change: transform, opacity, filter;
+            transform: translateZ(0); /* Force hardware acceleration */
+            backface-visibility: hidden; /* Improve rendering performance */
         }
 
         .loading-symbol.ready {
             animation:
-                loadingGlowIntense 1.2s ease-in-out infinite,
-                secretDoorSpin 2.4s linear 3, /* Spin exactly 3 times, then stop */
-                symbolEnlargeAndFade 1.5s ease-out 7.2s forwards; /* Start enlarging after 3 spins (3 × 2.4s = 7.2s) */
-            text-shadow:
-                0 0 60px rgba(212, 175, 55, 1),
-                0 0 120px rgba(193, 84, 193, 1),
-                0 0 180px rgba(212, 175, 55, 1),
-                0 0 240px rgba(193, 84, 193, 0.9),
-                0 0 300px rgba(212, 175, 55, 0.8),
-                0 0 360px rgba(193, 84, 193, 0.6);
+                loadingGlowProgressive 3.6s ease-in-out forwards, /* Gradually stronger glow - faster */
+                secretDoorSpinEnlargeFade 3.6s linear forwards; /* LINEAR for constant spin speed - no pausing! */
+            /* Keep performance optimizations during spinning */
+            will-change: transform, opacity;
+            /* Reduce will-change to only essential properties for better performance */
         }
 
-        /* Enlargement and fade-out animation for the final transition */
-        @keyframes symbolEnlargeAndFade {
+        /* Progressive glow - smooth increase through spins 1-2, SUDDEN burst at spin 3! */
+        @keyframes loadingGlowProgressive {
+            /* Spin 1 start (0s): Match breathing animation glow */
             0% {
-                transform: scale(1) rotate(1080deg); /* Start at normal size after 3 spins (3 × 360 = 1080) */
-                opacity: 1;
-                filter: brightness(1.5);
+                text-shadow:
+                    0 0 20px rgba(212, 175, 55, 0.8),
+                    0 0 40px rgba(193, 84, 193, 0.6);
+                filter: brightness(1);
             }
-            60% {
-                transform: scale(2.2) rotate(1080deg); /* Enlarge dramatically */
-                opacity: 0.9;
-                filter: brightness(2);
+            /* Spin 1 end (1.2s): 33.33% - Slight increase */
+            33.33% {
+                text-shadow:
+                    0 0 35px rgba(212, 175, 55, 0.85),
+                    0 0 70px rgba(193, 84, 193, 0.7),
+                    0 0 105px rgba(212, 175, 55, 0.5);
+                filter: brightness(1.1);
+            }
+            /* Spin 2 end (2.4s): 66.66% - Gradual increase */
+            66.66% {
+                text-shadow:
+                    0 0 50px rgba(212, 175, 55, 0.9),
+                    0 0 100px rgba(193, 84, 193, 0.8),
+                    0 0 150px rgba(212, 175, 55, 0.6),
+                    0 0 200px rgba(193, 84, 193, 0.5);
+                filter: brightness(1.2);
+            }
+            /* Spin 3 start (2.4s+): 70% - ⚡⚡ DRAMATIC GOLDEN BURST ⚡⚡ */
+            70% {
+                text-shadow:
+                    0 0 80px rgba(255, 215, 0, 1),
+                    0 0 160px rgba(255, 215, 0, 1),
+                    0 0 240px rgba(255, 215, 0, 1),
+                    0 0 320px rgba(255, 215, 0, 1),
+                    0 0 400px rgba(255, 215, 0, 1),
+                    0 0 480px rgba(255, 215, 0, 0.95),
+                    0 0 560px rgba(255, 215, 0, 0.9),
+                    0 0 640px rgba(255, 215, 0, 0.85);
+                filter: brightness(2.2) saturate(1.4);
+            }
+            /* Spin 3 mid (3.0s): 83.33% - ✨✨ INTENSIFY GOLDEN RADIANCE ✨✨ */
+            83.33% {
+                text-shadow:
+                    0 0 100px rgba(255, 215, 0, 1),
+                    0 0 200px rgba(255, 215, 0, 1),
+                    0 0 300px rgba(255, 215, 0, 1),
+                    0 0 400px rgba(255, 215, 0, 1),
+                    0 0 500px rgba(255, 215, 0, 1),
+                    0 0 600px rgba(255, 215, 0, 0.95),
+                    0 0 700px rgba(255, 215, 0, 0.9),
+                    0 0 800px rgba(255, 215, 0, 0.85);
+                filter: brightness(2.5) saturate(1.5);
+            }
+            /* Spin 3 end (3.6s): 100% - ✨✨ MAXIMUM GOLDEN EXPLOSION ✨✨ */
+            100% {
+                text-shadow:
+                    0 0 120px rgba(255, 215, 0, 1),
+                    0 0 240px rgba(255, 215, 0, 1),
+                    0 0 360px rgba(255, 215, 0, 1),
+                    0 0 480px rgba(255, 215, 0, 1),
+                    0 0 600px rgba(255, 215, 0, 1),
+                    0 0 720px rgba(255, 215, 0, 1),
+                    0 0 840px rgba(255, 215, 0, 0.95),
+                    0 0 960px rgba(255, 215, 0, 0.9),
+                    0 0 1080px rgba(255, 215, 0, 0.85);
+                filter: brightness(2.8) saturate(1.6);
+            }
+        }
+
+        /* Combined spin + enlarge + fade animation
+           Timeline: 3.6s total (3 spins × 1.2s each) - 50% faster than original
+           - Starts from breathing animation's smallest size (scale 1.0)
+           - Enlarges to 2.2x (120% growth) with max 15% padding constraint
+           - 2.4-3.6s (Spin 3): MAGICAL UNVEILING with fast fade
+        */
+        @keyframes secretDoorSpinEnlargeFade {
+            /* Smooth gradual enlargement throughout - no sudden jumps */
+            0% {
+                transform: scale(1.0) rotate3d(0, 0, 1, 0deg);
+                opacity: 1;
+            }
+            25% {
+                transform: scale(1.3) rotate3d(0, 0, 1, 270deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.6) rotate3d(0, 0, 1, 540deg);
+                opacity: 1;
+            }
+            75% {
+                transform: scale(1.9) rotate3d(0, 0, 1, 810deg);
+                opacity: 0.7; /* Start fade */
             }
             100% {
-                transform: scale(3) rotate(1080deg); /* Continue enlarging */
-                opacity: 0; /* Fade out completely */
-                filter: brightness(2.5);
+                transform: scale(2.2) rotate3d(0, 0, 1, 1080deg); /* Complete 3 spins, smooth growth */
+                opacity: 0; /* Fully faded */
             }
         }
 
@@ -1846,7 +1930,7 @@
                 rgba(212, 175, 55, 0.8) 0%,
                 rgba(212, 175, 55, 1) 50%,
                 rgba(193, 84, 193, 0.9) 100%);
-            transition: width 0.3s ease-out;
+            transition: width 0.5s ease-out; /* Smoother, slightly slower transition */
             box-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
             position: relative;
             overflow: hidden;
@@ -1937,7 +2021,7 @@
             <span id="progress-label-current">第</span> <span id="current-q" style="color: var(--color-secondary); font-weight: bold; font-size: 1.15em;">1</span> <span id="progress-label-question">題</span>
             <span style="color: var(--color-mystical);">✧</span>
             <span id="progress-label-total">共</span> <span id="total-q" style="color: var(--color-secondary); font-weight: bold;">4</span> <span id="progress-label-total-questions">題</span>
-            <span style="color: var(--color-mystical);">✦</span>
+            <span style="color: var(--color-mystical);">���</span>
         </div>
 
         <h2 id="question-text" style="margin: 18px auto; line-height: 1.5; max-width: 95%;"></h2>
@@ -2186,7 +2270,7 @@
                 resultDisclaimer: '配對結果純粹娛樂 僅供參考',
                 galleryTitle: '✦ 22 張大阿爾克那 ✦',
                 gallerySubtitle: '孫孫暉日塔羅圖鑑',
-                gallerySubtitleNone: '完成題目以解鎖你的專屬塔羅牌',
+                gallerySubtitleNone: '完成題目以解鎖你���專屬塔羅牌',
                 gallerySubtitleOne: '已解鎖 1/22 張 ✦ {name}',
                 gallerySubtitleMany: '已解鎖 {count}/22 張 ✦ 繼續探索更多塔羅牌',
                 hintTitle: '🔮 解鎖提示',
@@ -2254,28 +2338,28 @@
 
         // Tarot cards data (names are bilingual, descriptions are separate)
         const tarotCards = [
-            { name: "0 愚者 <span class='en-text'>(The Fool)</span>", image: "https://pfst.cf2.poecdn.net/base/image/9827674879461d64b0aea493d8cb19ce40cb72f6dcddae933235132a66bf48e1?w=4096&h=4096", descZh: "🎉 **啟示: 開始的勇氣** 🎉 你正站在一個令人興奮的起點。像一個初生嬰兒般保持對世界的好奇心與開放性，相信直覺會引導你走向美好的未知旅程。放手去闖吧，宇宙會支持你!", descEn: "🎉 **Revelation: The Courage to Begin** 🎉 You stand at an exciting starting point. Maintain the curiosity and openness of a newborn to the world, trusting your intuition to guide you toward a beautiful, unknown journey. Take the leap — the universe supports you!" },
-            { name: "1 魔術師 <span class='en-text'>(The Magician)</span>", image: "https://pfst.cf2.poecdn.net/base/image/b08a6693f2bdb4a2bce89802ec52d73b39296ac1957ce9eec7de726cbea1123f?w=4096&h=4096", descZh: "✨ **啟示: 無限的創造力** ✨ 所有的工具和資源都已在你手中。你擁有強大的意志力去實現夢想，現在正是行動的最佳時機。運用你的天賦創造奇蹟!", descEn: "✨ **Revelation: Infinite Creativity** ✨ All the tools and resources are already in your hands. You possess a powerful will to realize your dreams, and now is the perfect time to act. Use your gifts to create miracles!" },
-            { name: "2 女祭司 <span class='en-text'>(The High Priestess)</span>", image: "https://pfst.cf2.poecdn.net/base/image/f80fa7d6204fc61fbe44dfbee2d89bdc67a129f15df0fdc41a26ae1a87c67834?w=4096&h=4096", descZh: "🧘‍♀️ **啟示: 內在的智慧** 🧘‍♀️ 現在是傾聽內心聲音的時候。你的直覺和潛意識正為你提供最準確的指引。保持沉靜，答案就在你心中深處，靜待揭曉。", descEn: "🧘‍♀️ **Revelation: Inner Wisdom** 🧘‍♀️ Now is the time to listen to your inner voice. Your intuition and subconscious are providing you with the most accurate guidance. Stay calm—the answer lies deep within your heart, waiting to be revealed." },
-            { name: "3 皇后 <span class='en-text'>(The Empress)</span>", image: "https://pfst.cf2.poecdn.net/base/image/522f861eeb6af760ce61f2ce40380a5a3bd70c22c9ce01591e0236ca5df34ffd?w=4096&h=4096", descZh: "🌿 **啟示: 豐盛與滋養** 🌿 你被愛與美包圍。擁抱生活中的豐盛與舒適，照顧好自己和身邊的人。讓創造力開花結果，享受生命的滋養力量。", descEn: "🌿 **Revelation: Abundance and Nourishment** 🌿 You are surrounded by love and beauty. Embrace the abundance and comfort in life, take care of yourself and those around you. Let creativity blossom and enjoy life's nourishing power." },
-            { name: "4 皇帝 <span class='en-text'>(The Emperor)</span>", image: "https://pfst.cf2.poecdn.net/base/image/f7ee0a1abad1f0a1e55c2ccbaf24c7da55b4ca54e1afd26e3b6aade9b7116ea7?w=4096&h=4096", descZh: "🛡️ **啟示: 結構與領導力** 🛡️ 你擁有建立穩固基礎和達成目標的能力。展現你的決斷力與領導力，用清晰的規則和計劃來掌握生活。你是自己的主人!", descEn: "🛡️ **Revelation: Structure and Leadership** 🛡️ You can build a solid foundation and achieve your goals. Demonstrate your decisiveness and leadership, master your life with clear rules and plans. You are your own master!" },
-            { name: "5 教皇 <span class='en-text'>(The Hierophant)</span>", image: "https://pfst.cf2.poecdn.net/base/image/b48ff47486c4ec33cb407dfa31a9254f7902f709ccf3512abc103f66d74049c7?w=4096&h=4096", descZh: " 📜**啟示: 學習與傳承** 📜 尋求智慧與啟發的時刻。你將從傳統、導師或社群中獲得寶貴的指導。保持謙遜，並準備好將所學知識傳遞給他人。", descEn: "📜 **Revelation: Learning and Legacy** 📜 A moment to seek wisdom and inspiration. You will receive valuable guidance from tradition, mentors, or the community. Stay humble and be ready to pass on your knowledge to others." },
-            { name: "6 戀人 <span class='en-text'>(The Lovers)</span>", image: "https://pfst.cf2.poecdn.net/base/image/8bef3fba764a2ef02b89bda3a50d5ff7db3d92c7958f21ca8eb1b25c8e600a3d?w=4096&h=4096", descZh: "💖 **啟示: 和諧的選擇** 💖 這是一張關於和諧、愛與重要抉擇的牌。你的心靈和價值觀已達成一致，勇敢地做出那個最貼近你靈魂的決定。愛將是你的力量。", descEn: "💖 **Revelation: Harmonious Choice** 💖 This card speaks of harmony, love, and important decisions. Your heart and values are aligned—bravely make the choice that resonates most with your soul. Love will be your strength." },
-            { name: "7 戰車 <span class='en-text'>(The Chariot)</span>", image: "https://pfst.cf2.poecdn.net/base/image/7012708ef7f9bc030a2cb3503a03d2bf1db276d8a2fc7f44356bf83c75d1fe7d?w=4096&h=4096", descZh: "🚀 **啟示: 堅定的勝利** 🚀 你正以驚人的速度向目標前進。只要保持專注、自信和內在的平衡，任何挑戰都無法阻擋你。勝利就在不遠的前方!", descEn: "🚀 **Revelation: Determined Victory** 🚀 You're advancing toward your goal at an amazing speed. As long as you stay focused, confident, and internally balanced, no challenge can stop you. Victory lies just ahead!" },
-            { name: "8 力量 <span class='en-text'>(Strength)</span>", image: "https://pfst.cf2.poecdn.net/base/image/37fda1ff9085b01fa4d7eb81f143eb0c69e5daaa76db299cec4abdf8e35d18e2?w=4096&h=4096", descZh: "🦁 **啟示: 溫柔的韌性** 🦁 真正的力量來自於內心的平靜與溫柔。面對困難時，請用愛心和耐心來馴服內在的焦慮。你比自己想像的更強大!", descEn: "🦁 **Revelation: Gentle Resilience** 🦁 True strength comes from inner peace and gentleness. When facing difficulties, use love and patience to tame inner anxiety. You are stronger than you think!" },
-            { name: "9 隱者 <span class='en-text'>(The Hermit)</span>", image: "https://pfst.cf2.poecdn.net/base/image/7fa8b296a7b7f1ef13130918a0e0991204f1bf1e5d45a32c9cc5f61cd031216e?w=4096&h=4096", descZh: "💡 **啟示: 尋找真理** 💡 這是暫時遠離喧囂、自我反思的黃金時期。透過內省，你將獲得清晰的洞察和深刻的個人真理。光芒源於內在。", descEn: "💡 **Revelation: Seeking Truth** 💡 This is a golden period to temporarily distance yourself from noise and engage in self-reflection. Through introspection, you will gain clear insight and profound personal truth. The light comes from within." },
-            { name: "10 ���運之輪 <span class='en-text'>(Wheel of Fortune)</span>", image: "https://pfst.cf2.poecdn.net/base/image/d01071782df20884bcd10f8e36441e72bc3e181ac3780d37558ccf113efe03f4?w=4096&h=4096", descZh: "🍀 **啟示: 轉機與好運** 🍀 命運之輪正為你轉向積極的一面！抓住這個機會，迎接即將到來的改變和意想不到的好運。相信宇宙的安排是完美的。", descEn: "🍀 **Revelation: Turning Point and Good Fortune** 🍀 The Wheel of Fortune is turning toward the positive for you! Seize this opportunity, embrace the coming changes and unexpected good luck. Trust that the universe's arrangement is perfect." },
-            { name: "11 正義 <span class='en-text'>(Justice)</span>", image: "https://pfst.cf2.poecdn.net/base/image/d0feda744bf2db0cd91d362a0f8064483f536525887d2b13b2011a784100e993?w=4096&h=4096", descZh: "⚖️ **啟示: 平衡與公平** ⚖️ 宇宙會帶來公正的結果。現在是時候以清晰、誠實的態度做出決定，你將獲得平衡與和諧。", descEn: "⚖️ **Revelation: Balance and Fairness** ⚖️ The universe will bring justice. Now is the time to make decisions with clarity and honesty, and you will achieve balance and harmony." },
-            { name: "12 倒吊人 <span class='en-text'>(The Hanged Man)</span>", image: "https://pfst.cf2.poecdn.net/base/image/6f60e6bb2e391bc5e9b745677d41d2134434aafe16bd2acc3fe37ce408a88aa9?w=4096&h=4096", descZh: "🔄 **啟示: 嶄新的視角** 🔄 這需要你暫停腳步，從一個全新的角度看待問題。放下控制慾，接受現狀。當你願意換個方向思考時，突破隨之而來。", descEn: "🔄 **Revelation: Fresh Perspective** 🔄 This requires you to pause and view problems from a completely new angle. Let go of the need for control, accept the current situation. When you're willing to think from a different direction, breakthroughs will follow." },
-            { name: "13 死神 <span class='en-text'>(Death)</span>", image: "https://pfst.cf2.poecdn.net/base/image/579e3bf2c73af72a0e0a23990048df8e8c9c3abb00625d194f96a6b356676432?w=4096&h=4096", descZh: "🦋 **啟示: 積極的轉變** 🦋 這不是結束，而是蛻變的開始! 舊的模式、習慣或狀態正在結束，為更美好、更真實的你騰出空間。迎接重生，輕裝前行。", descEn: "🦋 **Revelation: Positive Transformation** 🦋 This is not an ending, but the beginning of transformation! Old patterns, habits, or states are coming to an end, making room for a better, more authentic you. Embrace rebirth and move forward lightly." },
-            { name: "14 節制 <span class='en-text'>(Temperance)</span>", image: "https://pfst.cf2.poecdn.net/base/image/19b42ab117b9bb33516a6bf4f73a1959b54b9740e8bf8ae5ac406b647acc8d11?w=4096&h=4096", descZh: "💧 **啟示: 完美的融合** 💧 保持耐心和中庸之道。透過優雅地混合內在與外在的力量，你將在生活中找到完美的平衡點。和諧與療癒正在發生。", descEn: "💧 **Revelation: Perfect Integration** 💧 Maintain patience and the middle way. By gracefully blending inner and outer forces, you will find the perfect balance point in life. Harmony and healing are taking place." },
-            { name: "15 惡魔 <span class='en-text'>(The Devil)</span>", image: "https://pfst.cf2.poecdn.net/base/image/35c6902e9b4a6c426823bae36c0f9b3afd352cd4cc3a1873a443fdde34ff6ad4?w=4096&h=4096", descZh: "⛓️ **啟示: 掙脫束縛** ⛓️ 覺察那些阻礙你的物質或精神依賴。你擁有掙脫任何限制的力量，只要你願意承認並改變。你是自由的，選擇權在你手上!", descEn: "⛓️ **Revelation: Breaking Free from Bonds** ⛓️ Become aware of the material or spiritual dependencies hindering you. You have the power to break free from any limitation, as long as you're willing to acknowledge and change. You are free — the choice is in your hands!" },
-            { name: "16 塔 <span class='en-text'>(The Tower)</span>", image: "https://pfst.cf2.poecdn.net/base/image/25f78ba4a1feb5455a58764222a82cdea8073fc9da103101b53a031a846c2d38?w=4096&h=4096", descZh: "⚡ **啟示: 突破與釋放** ⚡ 突然的變動正為你清除不穩定的結構，這是一個強大的覺醒時刻。相信舊的崩塌是為了迎接更堅固、更真實的未來，你將重生!", descEn: "⚡ **Revelation: Breakthrough and Release** ⚡ Sudden changes are clearing unstable structures for you — this is a powerful moment of awakening. Trust that the collapse of the old is to welcome a more solid, more authentic future. You will be reborn!" },
-            { name: "17 星星 <span class='en-text'>(The Star)</span>", image: "https://pfst.cf2.poecdn.net/base/image/a14eb4206eee139e821aeb51346995d81664346974d835998a22f8e4d9e68349?w=4096&h=4096", descZh: "🌟 **啟示: 希望與靈感** 🌟 偉大的希望和心靈的平靜正在注入你的生命。相信你的夢想，你正受到宇宙的指引。保持樂觀，你閃耀著獨特的光芒。", descEn: "🌟 **Revelation: Hope and Inspiration** 🌟 Great hope and spiritual peace are being infused into your life. Believe in your dreams — you are being guided by the universe. Stay optimistic; you shine with a unique light." },
-            { name: "18 月亮 <span class='en-text'>(The Moon)</span>", image: "https://pfst.cf2.poecdn.net/base/image/117301bf0dd5c2de7348f87eab6f16e6414e29b12c7f222de9eb3414d8c8b938?w=4096&h=4096", descZh: "🌙 **啟示: 信任直覺** 🌙 雖然路途看起來有些迷霧，但請相信你的內在指引。讓想像力流動，你的直覺會像月光一樣，照亮那些隱藏的真相。別怕未知!", descEn: "🌙 **Revelation: Trust Intuition** 🌙 Though the path may seem foggy, trust your inner guidance. Let imagination flow; your intuition will illuminate hidden truths like moonlight. Don't fear the unknown!" },
-            { name: "19 太陽 <span class='en-text'>(The Sun)</span>", image: "https://pfst.cf2.poecdn.net/base/image/e5de1e208c0709a1648859efe4b0ddede8b8204e45084a09416448476b5f3f09?w=4096&h=4096", descZh: "☀️ **啟示: 喜悅與成功** ☀️ 這是光芒萬丈的一刻！你將獲得巨大的成功、活力與純粹的快樂。自信地表達自己，享受此刻的幸福和清晰的視野。", descEn: "☀️ **Revelation: Joy and Success** ☀️ This is a radiant moment! You will achieve tremendous success, vitality, and pure happiness. Express yourself confidently and enjoy this moment's bliss and clear vision." },
-            { name: "20 審判 <span class='en-text'>(Judgement)</span>", image: "https://pfst.cf2.poecdn.net/base/image/3c173d0638c9f9cf47ef2e6c89f7a7289b15f920af83c2a530fb1984f42ca1d3?w=4096&h=4096", descZh: "🎺 **啟示: 覺醒與重生** 🎺 你正迎來一個重要的心靈覺醒。放下過去的評判，原諒自己。這是你徹底重生，並獲得更高自我理解的時刻。", descEn: "🎺 **Revelation: Awakening and Rebirth** 🎺 You are entering an important spiritual awakening. Release past judgments, forgive yourself. This is your moment of complete rebirth and achieving higher self-understanding." },
-            { name: "21 世界 <span class='en-text'>(The World)</span>", image: "https://pfst.cf2.poecdn.net/base/image/6ad5b90b0d2c496d083b4f0b746147e7c7293bbca13d82580ca753fc6a7c3a0e?w=4096&h=4096", descZh: "🌎 **啟示: 圓滿與完成** 🌎 你已經完成了生命中的一個重要循環。慶祝你的成就！你現在擁有所需的知識和經驗，準備好迎接下一個宏大且圓滿的旅程。", descEn: "🌎 **Revelation: Completion and Fulfillment** 🌎 You have completed an important cycle in life. Celebrate your achievements! You now possess the knowledge and experience needed, ready to embrace the next grand and fulfilling journey." }
+            { name: "0 愚者 <span class='en-text'>(The Fool)</span>", image: "https://pfst.cf2.poecdn.net/base/image/9827674879461d64b0aea493d8cb19ce40cb72f6dcddae933235132a66bf48e1?w=800&h=800", descZh: "🎉 **啟示: 開始的勇氣** 🎉 你正站在一個令人興奮的起點。像一個初生嬰兒般保持對世界的好奇心與開放性，相信直覺會引導你走向美好的未知旅程。放手去闖吧，宇宙會支持你!", descEn: "🎉 **Revelation: The Courage to Begin** 🎉 You stand at an exciting starting point. Maintain the curiosity and openness of a newborn to the world, trusting your intuition to guide you toward a beautiful, unknown journey. Take the leap — the universe supports you!" },
+            { name: "1 魔術師 <span class='en-text'>(The Magician)</span>", image: "https://pfst.cf2.poecdn.net/base/image/b08a6693f2bdb4a2bce89802ec52d73b39296ac1957ce9eec7de726cbea1123f?w=800&h=800", descZh: "✨ **啟示: 無限的創造力** ✨ 所有的工具和資源都已在你手中。你擁有強大的意志力去實現夢想，現在正是行動的最佳時機。運用你的天賦創造奇蹟!", descEn: "✨ **Revelation: Infinite Creativity** ✨ All the tools and resources are already in your hands. You possess a powerful will to realize your dreams, and now is the perfect time to act. Use your gifts to create miracles!" },
+            { name: "2 女祭司 <span class='en-text'>(The High Priestess)</span>", image: "https://pfst.cf2.poecdn.net/base/image/f80fa7d6204fc61fbe44dfbee2d89bdc67a129f15df0fdc41a26ae1a87c67834?w=800&h=800", descZh: "🧘‍♀️ **啟示: 內在的智慧** 🧘‍♀️ 現在是傾聽內心聲音的時候。你的直覺和潛意識正為你提供最準確的指引。保持沉靜，答案就在你心中深處，靜待揭曉。", descEn: "🧘‍♀️ **Revelation: Inner Wisdom** 🧘‍♀️ Now is the time to listen to your inner voice. Your intuition and subconscious are providing you with the most accurate guidance. Stay calm—the answer lies deep within your heart, waiting to be revealed." },
+            { name: "3 皇后 <span class='en-text'>(The Empress)</span>", image: "https://pfst.cf2.poecdn.net/base/image/522f861eeb6af760ce61f2ce40380a5a3bd70c22c9ce01591e0236ca5df34ffd?w=800&h=800", descZh: "🌿 **啟示: 豐盛與滋養** 🌿 你被愛與美包圍。擁抱生活中的豐盛與舒適，照顧好自己和身邊的人。讓創造力開花結果，享受生命的滋養力量。", descEn: "🌿 **Revelation: Abundance and Nourishment** 🌿 You are surrounded by love and beauty. Embrace the abundance and comfort in life, take care of yourself and those around you. Let creativity blossom and enjoy life's nourishing power." },
+            { name: "4 皇帝 <span class='en-text'>(The Emperor)</span>", image: "https://pfst.cf2.poecdn.net/base/image/f7ee0a1abad1f0a1e55c2ccbaf24c7da55b4ca54e1afd26e3b6aade9b7116ea7?w=800&h=800", descZh: "🛡️ **啟示: 結構與領導力** 🛡️ 你擁有建立穩固基礎和達成目標的能力。展現你的決斷力與領導力，用清晰的規則和計劃來掌握生活。你是自己的主人!", descEn: "🛡️ **Revelation: Structure and Leadership** 🛡️ You can build a solid foundation and achieve your goals. Demonstrate your decisiveness and leadership, master your life with clear rules and plans. You are your own master!" },
+            { name: "5 教皇 <span class='en-text'>(The Hierophant)</span>", image: "https://pfst.cf2.poecdn.net/base/image/b48ff47486c4ec33cb407dfa31a9254f7902f709ccf3512abc103f66d74049c7?w=800&h=800", descZh: " 📜**啟示: 學習與傳承** 📜 尋求智慧與啟發的時刻。你將從傳統、導師或社群中獲得寶貴的指導。保持謙遜，並準備好將所學知識傳遞給他人。", descEn: "📜 **Revelation: Learning and Legacy** 📜 A moment to seek wisdom and inspiration. You will receive valuable guidance from tradition, mentors, or the community. Stay humble and be ready to pass on your knowledge to others." },
+            { name: "6 戀人 <span class='en-text'>(The Lovers)</span>", image: "https://pfst.cf2.poecdn.net/base/image/8bef3fba764a2ef02b89bda3a50d5ff7db3d92c7958f21ca8eb1b25c8e600a3d?w=800&h=800", descZh: "💖 **啟示: 和諧的選擇** 💖 這是一張關於和諧、愛與重要抉擇的牌。你的心靈和價值觀已達成一致，勇敢地做出那個最貼近你靈魂的決定。愛將是你的力量。", descEn: "💖 **Revelation: Harmonious Choice** 💖 This card speaks of harmony, love, and important decisions. Your heart and values are aligned—bravely make the choice that resonates most with your soul. Love will be your strength." },
+            { name: "7 戰車 <span class='en-text'>(The Chariot)</span>", image: "https://pfst.cf2.poecdn.net/base/image/7012708ef7f9bc030a2cb3503a03d2bf1db276d8a2fc7f44356bf83c75d1fe7d?w=800&h=800", descZh: "🚀 **啟示: 堅定的勝利** 🚀 你正以驚人的速度向目標前進。只要保持專注、自信和內在的平衡，任何挑戰都無法阻擋你。勝利就在不遠的前方!", descEn: "🚀 **Revelation: Determined Victory** 🚀 You're advancing toward your goal at an amazing speed. As long as you stay focused, confident, and internally balanced, no challenge can stop you. Victory lies just ahead!" },
+            { name: "8 力量 <span class='en-text'>(Strength)</span>", image: "https://pfst.cf2.poecdn.net/base/image/37fda1ff9085b01fa4d7eb81f143eb0c69e5daaa76db299cec4abdf8e35d18e2?w=800&h=800", descZh: "🦁 **啟示: 溫柔的韌性** 🦁 真正的力量來自於內心的平靜與溫柔。面對困難時，請用愛心和耐心來馴服內在的焦慮。你比自己想像的更強大!", descEn: "🦁 **Revelation: Gentle Resilience** 🦁 True strength comes from inner peace and gentleness. When facing difficulties, use love and patience to tame inner anxiety. You are stronger than you think!" },
+            { name: "9 隱者 <span class='en-text'>(The Hermit)</span>", image: "https://pfst.cf2.poecdn.net/base/image/7fa8b296a7b7f1ef13130918a0e0991204f1bf1e5d45a32c9cc5f61cd031216e?w=800&h=800", descZh: "💡 **啟示: 尋找真理** 💡 這是暫時遠離喧囂、自我反思的黃金時期。透過內省，你將獲得清晰的洞察和深刻的個人真理。光芒源於內在。", descEn: "💡 **Revelation: Seeking Truth** 💡 This is a golden period to temporarily distance yourself from noise and engage in self-reflection. Through introspection, you will gain clear insight and profound personal truth. The light comes from within." },
+            { name: "10 ���運之輪 <span class='en-text'>(Wheel of Fortune)</span>", image: "https://pfst.cf2.poecdn.net/base/image/d01071782df20884bcd10f8e36441e72bc3e181ac3780d37558ccf113efe03f4?w=800&h=800", descZh: "🍀 **啟示: 轉機與好運** 🍀 命運之輪正為你轉向積極的一面！抓住這個機會，迎接即將到來的改變和意想不到的好運。相信宇宙的安排是完美的。", descEn: "🍀 **Revelation: Turning Point and Good Fortune** 🍀 The Wheel of Fortune is turning toward the positive for you! Seize this opportunity, embrace the coming changes and unexpected good luck. Trust that the universe's arrangement is perfect." },
+            { name: "11 正義 <span class='en-text'>(Justice)</span>", image: "https://pfst.cf2.poecdn.net/base/image/d0feda744bf2db0cd91d362a0f8064483f536525887d2b13b2011a784100e993?w=800&h=800", descZh: "⚖️ **啟示: 平衡與公平** ⚖️ 宇宙會帶來公正的結果。現在是時候以清晰、誠實的態度做出決定，你將獲得平衡與和諧。", descEn: "⚖️ **Revelation: Balance and Fairness** ⚖️ The universe will bring justice. Now is the time to make decisions with clarity and honesty, and you will achieve balance and harmony." },
+            { name: "12 倒吊人 <span class='en-text'>(The Hanged Man)</span>", image: "https://pfst.cf2.poecdn.net/base/image/6f60e6bb2e391bc5e9b745677d41d2134434aafe16bd2acc3fe37ce408a88aa9?w=800&h=800", descZh: "🔄 **啟示: 嶄新的視角** 🔄 這需要你暫停腳步，從一個全新的角度看待問題。放下控制慾，接受現狀。當你願意換個方向思考時，突破隨之而來。", descEn: "🔄 **Revelation: Fresh Perspective** 🔄 This requires you to pause and view problems from a completely new angle. Let go of the need for control, accept the current situation. When you're willing to think from a different direction, breakthroughs will follow." },
+            { name: "13 死神 <span class='en-text'>(Death)</span>", image: "https://pfst.cf2.poecdn.net/base/image/579e3bf2c73af72a0e0a23990048df8e8c9c3abb00625d194f96a6b356676432?w=800&h=800", descZh: "🦋 **啟示: 積極的轉變** 🦋 這不是結束，而是蛻變的開始! 舊的模式、習慣或狀態正在結束，為更美好、更真實的你騰出空間。迎接重生，輕裝前行。", descEn: "🦋 **Revelation: Positive Transformation** 🦋 This is not an ending, but the beginning of transformation! Old patterns, habits, or states are coming to an end, making room for a better, more authentic you. Embrace rebirth and move forward lightly." },
+            { name: "14 節制 <span class='en-text'>(Temperance)</span>", image: "https://pfst.cf2.poecdn.net/base/image/19b42ab117b9bb33516a6bf4f73a1959b54b9740e8bf8ae5ac406b647acc8d11?w=800&h=800", descZh: "💧 **啟示: 完美的融合** 💧 保持耐心和中庸之道。透過優雅地混合內在與外在的力量，你將在生活中找到完美的平衡點。和諧與療癒正在發生。", descEn: "💧 **Revelation: Perfect Integration** 💧 Maintain patience and the middle way. By gracefully blending inner and outer forces, you will find the perfect balance point in life. Harmony and healing are taking place." },
+            { name: "15 惡魔 <span class='en-text'>(The Devil)</span>", image: "https://pfst.cf2.poecdn.net/base/image/35c6902e9b4a6c426823bae36c0f9b3afd352cd4cc3a1873a443fdde34ff6ad4?w=800&h=800", descZh: "���️ **啟示: 掙脫束縛** ⛓️ 覺察那些阻礙你的物質或精神依賴。你擁有掙脫任何限制的力量，只要你願意承認並改變。你是自由的，選擇權在你手上!", descEn: "⛓️ **Revelation: Breaking Free from Bonds** ⛓️ Become aware of the material or spiritual dependencies hindering you. You have the power to break free from any limitation, as long as you're willing to acknowledge and change. You are free — the choice is in your hands!" },
+            { name: "16 塔 <span class='en-text'>(The Tower)</span>", image: "https://pfst.cf2.poecdn.net/base/image/25f78ba4a1feb5455a58764222a82cdea8073fc9da103101b53a031a846c2d38?w=800&h=800", descZh: "⚡ **啟示: 突破與釋放** ⚡ 突然的變動正為你清除不穩定的結構，這是一個強大的覺醒時刻。相信舊的崩塌是為了迎接更堅固、更真實的未來，你將重生!", descEn: "⚡ **Revelation: Breakthrough and Release** ⚡ Sudden changes are clearing unstable structures for you — this is a powerful moment of awakening. Trust that the collapse of the old is to welcome a more solid, more authentic future. You will be reborn!" },
+            { name: "17 星星 <span class='en-text'>(The Star)</span>", image: "https://pfst.cf2.poecdn.net/base/image/a14eb4206eee139e821aeb51346995d81664346974d835998a22f8e4d9e68349?w=800&h=800", descZh: "🌟 **啟示: 希望與靈感** 🌟 偉大的希望和心靈的平靜正在注入你的生命。相信你的夢想，你正受到宇宙的指引。保持樂觀，你閃耀著獨特的光芒。", descEn: "🌟 **Revelation: Hope and Inspiration** 🌟 Great hope and spiritual peace are being infused into your life. Believe in your dreams — you are being guided by the universe. Stay optimistic; you shine with a unique light." },
+            { name: "18 月亮 <span class='en-text'>(The Moon)</span>", image: "https://pfst.cf2.poecdn.net/base/image/117301bf0dd5c2de7348f87eab6f16e6414e29b12c7f222de9eb3414d8c8b938?w=800&h=800", descZh: "🌙 **啟示: 信任直覺** 🌙 雖然路途看起來有些迷霧，但請相信你的內在指引。讓想像力流動，你的直覺會像月光一樣，照亮那些隱藏的真相。別怕未知!", descEn: "🌙 **Revelation: Trust Intuition** 🌙 Though the path may seem foggy, trust your inner guidance. Let imagination flow; your intuition will illuminate hidden truths like moonlight. Don't fear the unknown!" },
+            { name: "19 太陽 <span class='en-text'>(The Sun)</span>", image: "https://pfst.cf2.poecdn.net/base/image/e5de1e208c0709a1648859efe4b0ddede8b8204e45084a09416448476b5f3f09?w=800&h=800", descZh: "☀️ **啟示: 喜悅與成功** ☀️ 這是光芒萬丈的一刻！你將獲得巨大的成功、活力與純粹的快樂。自信地表達自己，享受此刻的幸福和清晰的視野。", descEn: "☀️ **Revelation: Joy and Success** ☀️ This is a radiant moment! You will achieve tremendous success, vitality, and pure happiness. Express yourself confidently and enjoy this moment's bliss and clear vision." },
+            { name: "20 審判 <span class='en-text'>(Judgement)</span>", image: "https://pfst.cf2.poecdn.net/base/image/3c173d0638c9f9cf47ef2e6c89f7a7289b15f920af83c2a530fb1984f42ca1d3?w=800&h=800", descZh: "🎺 **啟示: 覺醒與重生** 🎺 你正迎來一個重要的心靈覺醒。放下過去的評判，原諒自己。這是你徹底重生，並獲得更高自我理解的時刻。", descEn: "🎺 **Revelation: Awakening and Rebirth** 🎺 You are entering an important spiritual awakening. Release past judgments, forgive yourself. This is your moment of complete rebirth and achieving higher self-understanding." },
+            { name: "21 世界 <span class='en-text'>(The World)</span>", image: "https://pfst.cf2.poecdn.net/base/image/6ad5b90b0d2c496d083b4f0b746147e7c7293bbca13d82580ca753fc6a7c3a0e?w=800&h=800", descZh: "🌎 **啟示: 圓滿與完成** 🌎 你已經完成了生命中的一個重要循環。慶祝你的成就！你現在擁���所需的知識和經驗，準備好迎接下一個宏大且圓滿的旅程。", descEn: "🌎 **Revelation: Completion and Fulfillment** 🌎 You have completed an important cycle in life. Celebrate your achievements! You now possess the knowledge and experience needed, ready to embrace the next grand and fulfilling journey." }
         ];
 
         let currentQuestionIndex = 0;
@@ -4241,7 +4325,87 @@
                     const startTime = now + delays[index];
                     const duration = 0.4;
 
-                
+                    // Soft attack and decay for ethereal quality - increased volume to 50%
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(0.5, startTime + 0.02);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + duration);
+                });
+
+                // Add a subtle shimmer with higher frequency - increased volume
+                const shimmer = audioContext.createOscillator();
+                const shimmerGain = audioContext.createGain();
+
+                shimmer.connect(shimmerGain);
+                shimmerGain.connect(audioContext.destination);
+
+                shimmer.frequency.value = 1318.51; // E6
+                shimmer.type = 'sine';
+
+                const shimmerStart = now + 0.15;
+                shimmerGain.gain.setValueAtTime(0, shimmerStart);
+                shimmerGain.gain.linearRampToValueAtTime(0.3, shimmerStart + 0.01);
+                shimmerGain.gain.exponentialRampToValueAtTime(0.01, shimmerStart + 0.25);
+
+                shimmer.start(shimmerStart);
+                shimmer.stop(shimmerStart + 0.25);
+            } catch (err) {
+                console.log('Audio playback blocked:', err);
+            }
+        }
+
+        // Play a grand celebration sound when all 22 cards are unlocked
+        async function playCelebrationSound() {
+            if (!soundEnabled) return;
+
+            try {
+                const audioContext = getAudioContext();
+                await ensureAudioContextResumed();
+
+                const now = audioContext.currentTime;
+
+                // Create an ascending triumphant arpeggio (C major scale ascending)
+                const frequencies = [
+                    261.63, 329.63, 392.00, 523.25,  // C4, E4, G4, C5
+                    659.25, 783.99, 1046.50          // E5, G5, C6
+                ];
+                const delays = [0, 0.08, 0.16, 0.24, 0.32, 0.40, 0.48];
+
+                frequencies.forEach((freq, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    oscillator.frequency.value = freq;
+                    oscillator.type = 'triangle'; // Warmer, richer tone
+
+                    const startTime = now + delays[index];
+                    const duration = 0.6;
+
+                    // Expressive volume envelope - increased volume to 60%
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(0.6, startTime + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + duration);
+                });
+
+                // Add sparkly high notes for magic - increased volume
+                const sparkleFreqs = [1318.51, 1568.00, 2093.00]; // E6, G6, C7
+                const sparkleDelays = [0.6, 0.65, 0.7];
+
+                sparkleFreqs.forEach((freq, index) => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+
                     osc.frequency.value = freq;
                     osc.type = 'sine';
 
@@ -4429,20 +4593,32 @@
             if (loadingSymbol) {
                 loadingSymbol.classList.add('ready');
             }
-            if (progressContainer) {
-                progressContainer.classList.add('hidden');
-            }
 
-            // Timeline:
-            // 0ms: Animation starts, logo spins
-            // 7200ms: 3 spins complete (2.4s × 3), enlargement begins
-            // 8200ms: Logo is enlarging, start fading in intro page (CROSSFADE BEGINS)
-            // 8700ms: Logo fully faded out, intro page fully visible
-
-            // Start showing intro page while logo is still enlarging (crossfade effect)
+            // Animate progress bar to 100% smoothly, then hide after a delay
             setTimeout(() => {
-                showPage('intro-page'); // Intro page fades in while logo fades out
-            }, 8200); // Start intro fade-in 500ms before logo fully disappears
+                updateLoadingProgress(100);
+                // Hide progress bar after it reaches 100%
+                setTimeout(() => {
+                    if (progressContainer) {
+                        progressContainer.classList.add('hidden');
+                    }
+                }, 300); // Give 300ms for the 100% animation to complete
+            }, 100); // Start immediately
+
+            // New Timeline (50% faster):
+            // 0ms: Animation starts (Spin 1 begins, enlargement starts, normal glow)
+            // 1200ms: Spin 2 begins (stronger glow)
+            // 2400ms: Spin 3 begins - ⚡ GOLDEN BURST at 2.5s (70% keyframe)
+            // 2900ms: Start crossfade (after golden burst is visible)
+            // 3600ms: Animation complete (logo fully faded, intro page unveiled)
+
+            // Delay crossfade to let golden burst shine first!
+            setTimeout(() => {
+                if (loadingScreen) {
+                    loadingScreen.classList.add('crossfading'); // Fade background
+                }
+                showPage('intro-page'); // Intro page slowly unveils behind fading loading screen
+            }, 2900); // Delayed to 2.9s - golden burst visible at 2.5s first!
 
             // Remove loading screen after animation completes
             setTimeout(() => {
@@ -4454,7 +4630,7 @@
                         loadingScreen.parentNode.removeChild(loadingScreen);
                     }
                 }
-            }, 8700); // Total animation time: 7.2s (spins) + 1.5s (enlarge/fade) = 8.7s
+            }, 3800); // Clean up shortly after animation ends (3.6s + 200ms buffer)
         }
 
         // Update loading progress bar
@@ -4510,7 +4686,7 @@
                 imagesStarted = true;
                 updateLoadingProgress(80);
                 checkReadyState();
-            }, 1500); // Minimum 1.5s to show loading animation
+            }, 800); // Reduced from 1500ms - faster loading!
 
             // ==================== IMAGE PROTECTION ====================
             // Prevent context menu on all images to disable long press save
@@ -4593,4 +4769,4 @@
         });
     </script>
 </body>
-</html>
+</html>       
