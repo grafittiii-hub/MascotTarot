@@ -84,19 +84,36 @@
         #cards-container { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
 
         .card-wrapper {
-            position: absolute; left: 0; top: 50%;
-            width: var(--card-w); height: var(--card-h);
-            transform-origin: center left;
-            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-            cursor: pointer; z-index: 100;
+            /* 修正卡牌大小與初始位置，確保不變形成線 */
+.card-wrapper {
+    position: absolute; 
+    left: 50%; /* 改為中間出發 */
+    top: 50%;
+    width: var(--card-w); 
+    height: var(--card-h);
+    margin-left: calc(var(--card-w) / -2); /* 居中對齊 */
+    margin-top: calc(var(--card-h) / -2);
+    transform-origin: center 250%; /* 設置旋轉中心在下方，形成扇形 */
+    transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    cursor: pointer; 
+    z-index: 100;
+    transform: translateY(0) rotate(0deg); /* 初始重疊 */
+}
+
+/* 確保正面圖片置中且不留白 */
+.card-face { 
+    position: absolute; 
+    inset: 0; 
+    backface-visibility: hidden; 
+    border-radius: 8px; 
+    background-size: cover; /* 改回 cover 確保填滿卡框 */
+    background-position: center; 
+    background-repeat: no-repeat;
+    border: 1px solid rgba(255,255,255,0.4); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+}
         }
-        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s; }
-        .card-face { 
-            position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px; 
-            background-size: contain; background-position: center; background-repeat: no-repeat;
-            border: 1px solid rgba(255,255,255,0.4); 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-        }
+
         .card-back { background-image: url('photo-output.png'); background-size: cover; } 
         .card-front { transform: rotateY(180deg); background-color: #fff; }
 
@@ -359,32 +376,40 @@ let currentCat = '';
         }
 
         function renderFanSpread() {
-            document.getElementById('main-page').style.display = 'none';
-            document.getElementById('spread-view').style.display = 'block';
-            const container = document.getElementById('cards-container');
-            remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
+    document.getElementById('main-page').style.display = 'none';
+    document.getElementById('spread-view').style.display = 'block';
+    const container = document.getElementById('cards-container');
+    
+    // 隨機洗牌
+    remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
 
-            for(let i=0; i<remainingCards.length; i++) {
-                const w = document.createElement('div');
-                w.className = 'card-wrapper';
-                w.style.left = '80px'; w.style.top = '50%';
-                w.innerHTML = `
-                    <div class="card-inner">
-                        <div class="card-face card-back"></div>
-                        <div class="card-face card-front" style="background-image:url('${remainingCards[i].img}')"></div>
-                    </div>`;
-                w.onclick = (e) => { e.stopPropagation(); handleSelect(w, i); };
-                container.appendChild(w);
-            }
+    // 清空並生成卡牌
+    container.innerHTML = '';
+    for(let i=0; i<remainingCards.length; i++) {
+        const w = document.createElement('div');
+        w.className = 'card-wrapper';
+        w.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-back"></div>
+                <div class="card-face card-front" style="background-image:url('${remainingCards[i].img}')"></div>
+            </div>`;
+        w.onclick = (e) => { e.stopPropagation(); handleSelect(w, i); };
+        container.appendChild(w);
+    }
 
-            setTimeout(() => {
-                const cards = document.querySelectorAll('.card-wrapper');
-                cards.forEach((card, i) => {
-                    const angle = -75 + (i * 6.5); 
-                    const radius = window.innerWidth * 0.85;
-                    card.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(${radius}px)`;
-                });
-            }, 100);
+    // 動畫延遲：計算扇形分佈，確保不超出螢幕
+    setTimeout(() => {
+        const cards = document.querySelectorAll('.card-wrapper');
+        const totalCards = cards.length;
+        const spreadAngle = 140; // 總扇形張角
+        const step = spreadAngle / (totalCards - 1);
+
+        cards.forEach((card, i) => {
+            const angle = - (spreadAngle / 2) + (i * step);
+            // 使用較小的位移，配合 CSS 的 transform-origin 達成完美扇形
+            card.style.transform = `rotate(${angle}deg) translateY(-20px)`;
+        });
+    }, 100);
         }
 
         function bgClickReset(e) {
