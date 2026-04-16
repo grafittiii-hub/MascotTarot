@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>孫孫暉日 Tarot - Pro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #fffaf5;
+            --accent-main: #d4a373;
+            --accent-glow: rgba(255, 204, 0, 0.4);
+            --text-dark: #5c4033;
+            --card-w: 75px;
+            --card-h: 125px;
+        }
+
+        /* 全局字體與清晰度優化 */
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Noto Serif TC', serif !important;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            line-height: 1.6;
+            letter-spacing: 0.05em;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-dark);
+            height: 100vh; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        /* Loading Page */
+        #loading-screen {
+            position: fixed; inset: 0; background: var(--bg-color);
+            z-index: 3000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; transition: opacity 1s ease;
+        }
+        .loading-logo { letter-spacing: 12px; font-weight: bold; font-size: 1.5rem; z-index: 10; margin-bottom: 20px; color: #a67c52; }
+        .progress-bar { width: 200px; height: 3px; background: #eee; border-radius: 5px; overflow: hidden; z-index: 10; }
+        #progress-fill { width: 0%; height: 100%; background: var(--accent-main); transition: width 0.3s; }
+
+        /* Main Page */
+        #main-page {
+            width: 92%; max-width: 420px; text-align: center;
+            display: none; opacity: 0; transition: 0.8s; padding: 20px;
+        }
+        h1 { font-size: 1.8rem; letter-spacing: 0.4em; margin-bottom: 25px; color: var(--accent-main); font-weight: 700; }
+        .section-label { font-size: 0.85rem; color: #a67c52; text-align: left; margin: 15px 0 8px 10px; font-weight: 700; }
+        
+        textarea {
+            width: 100%; padding: 15px; border: 1px solid #e8e0d0; border-radius: 18px;
+            background: rgba(255,255,255,0.8); font-size: 1rem; resize: none; outline: none;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .cat-btn {
+            padding: 12px 5px; background: #fff; border: 1px solid #f0eada; border-radius: 12px;
+            font-size: 0.9rem; cursor: pointer; transition: 0.3s; color: var(--text-dark);
+        }
+        .cat-btn.active { background: var(--accent-main); color: #fff; border-color: var(--accent-main); box-shadow: 0 4px 10px rgba(212,163,115,0.3); }
+
+        #rel-toggle {
+            display: none; background: #fff; padding: 15px; border-radius: 15px;
+            margin: 15px 0; align-items: center; justify-content: space-between; font-size: 0.9rem;
+        }
+
+        .mode-group { display: flex; gap: 12px; }
+        .mode-btn {
+            flex: 1; padding: 14px; border: 1px solid #e0d5c1; border-radius: 12px;
+            background: #fff; cursor: pointer; transition: 0.3s; font-size: 0.95rem; font-weight: 500;
+        }
+        .mode-btn.active { background: #5c4033; color: #fff; border-color: #5c4033; }
+
+        /* Spread View */
+        #spread-view { display: none; width: 100vw; height: 100vh; position: relative; background: var(--bg-color); }
+        #cards-container { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+
+        .card-wrapper {
+            position: absolute; left: 0; top: 50%;
+            width: var(--card-w); height: var(--card-h);
+            transform-origin: center left;
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            cursor: pointer; z-index: 100;
+        }
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s; }
+        .card-face { 
+            position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px; 
+            background-size: contain; background-position: center; background-repeat: no-repeat;
+            border: 1px solid rgba(255,255,255,0.4); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+        }
+        .card-back { background-image: url('photo-output.png'); background-size: cover; } 
+        .card-front { transform: rotateY(180deg); background-color: #fff; }
+
+        .card-wrapper.selected {
+            transform: translate(220px, -50%) scale(1.3) rotate(0deg) !important;
+            z-index: 1000 !important;
+            filter: drop-shadow(0 0 10px var(--accent-main));
+        }
+        .card-wrapper.flipped .card-inner { transform: rotateY(180deg); }
+        .card-wrapper.fade-out { opacity: 0; pointer-events: none; transform: scale(0.5) !important; }
+
+        #ui-right {
+            position: absolute; right: 25px; top: 50%; transform: translateY(-50%);
+            display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 2000;
+        }
+        .confirm-btn {
+            width: 60px; height: 180px; background: var(--accent-main); color: #fff;
+            border: none; border-radius: 30px; font-weight: bold; cursor: pointer;
+            writing-mode: vertical-rl; letter-spacing: 8px; font-size: 1.1rem;
+            box-shadow: 4px 4px 20px rgba(212, 163, 115, 0.4);
+        }
+
+        /* Result Panel */
+        #result-panel {
+            position: fixed; bottom: 0; width: 100%; height: 70%;
+            background: #fff; border-radius: 35px 35px 0 0;
+            padding: 30px 25px; overflow-y: auto; display: none;
+            transform: translateY(100%); transition: 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+            z-index: 2500; box-shadow: 0 -15px 50px rgba(0,0,0,0.1);
+        }
+        #result-panel.active { transform: translateY(0); }
+        #result-panel::-webkit-scrollbar { display: none; }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 25px; padding-bottom: 20px; }
+        .action-btn {
+            flex: 1; padding: 16px 5px; border-radius: 15px; border: 1.5px solid var(--accent-main);
+            background: #fff; font-weight: bold; color: var(--accent-main); cursor: pointer; font-size: 0.95rem;
+        }
+        .action-btn.primary { background: var(--accent-main); color: #fff; }
+
+        .watermark { position: fixed; top: 12px; left: 12px; font-size: 10px; color: rgba(0,0,0,0.06); pointer-events: none; z-index: 5000; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="watermark">SUNSUN TAROT AUTHENTIC PRO</div>
+
+    <div id="loading-screen">
+        <div class="loading-logo">孫孫暉日</div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        <div id="load-status" style="font-size: 0.8rem; margin-top: 15px; color: #a67c52; letter-spacing: 2px;">連結星象儀中...</div>
+    </div>
+
+    <div id="main-page">
+        <h1>孫孫暉日</h1>
+        <div class="section-label">寫下你的困惑</div>
+        <textarea id="question-input" rows="2" placeholder="在此釐清你的問題..."></textarea>
+        <div class="section-label">占卜範疇</div>
+        <div class="category-grid">
+            <button class="cat-btn" onclick="setCat(this, '學業')">學業</button>
+            <button class="cat-btn" onclick="setCat(this, '事業')">事業</button>
+            <button class="cat-btn" onclick="setCat(this, '愛情')">愛情</button>
+            <button class="cat-btn" onclick="setCat(this, '親友')">親友</button>
+            <button class="cat-btn" onclick="setCat(this, '健康')">健康</button>
+            <button class="cat-btn" onclick="setCat(this, '心靈')">心靈</button>
+            <button class="cat-btn" onclick="setCat(this, '旅程')">旅程</button>
+            <button class="cat-btn" onclick="setCat(this, '決策')">決策</button>
+            <button class="cat-btn" onclick="setCat(this, '其他')">其他</button>
+        </div>
+        <div id="rel-toggle">
+            <span>是查問你與他/她的關係嗎？</span>
+            <input type="checkbox" id="relation-check" style="width: 22px; height: 22px; accent-color: #d4a373;">
+        </div>
+        <div class="section-label">牌陣</div>
+        <div class="mode-group">
+            <button class="mode-btn active" id="btn-single" onclick="setMode('single')">單牌指引</button>
+            <button class="mode-btn" id="btn-triple" onclick="setMode('triple')">三牌陣</button>
+        </div>
+        <button class="action-btn primary" style="width: 100%; margin-top: 30px; height: 60px; font-size: 1.1rem;" onclick="startJourney()">開啟啟示</button>
+    </div>
+
+    <div id="spread-view" onclick="bgClickReset(event)">
+        <div id="cards-container"></div>
+        <div id="ui-right">
+            <div id="selection-tip" style="font-size: 0.8rem; color: #d4a373; margin-bottom: 5px; font-weight: bold;">請選擇牌</div>
+            <button class="confirm-btn" onclick="confirmCards()">確 認 牌 陣</button>
+        </div>
+    </div>
+
+    <div id="result-panel">
+        <div id="result-content"></div>
+        <div class="btn-row">
+            <button class="action-btn" onclick="location.href=location.href">完全重置</button>
+            <button class="action-btn primary" onclick="resetApp()">重新占卜</button>
+        </div>
+    </div>
+
+    <script>
+        const tarotData = [
+            { id: "0", name: "愚者", img: "card0.png", element: "Air", type: "solo", gaze: "right",
+                upright: { keywords: ["開始", "純真", "冒險"], general_meaning: "代表一個全新的開始，充滿無限可能與冒險精神。", spread_meanings: { past: "過去的大膽抉擇影響至今。", present: "現在是踏入新階段的時機。", future: "未來有意外的機遇。", my_view: "你充滿好奇與衝動。", their_view: "對方覺得你難以預測。", current_status: "輕鬆且不穩定的初期。" }, advice: "勇敢跳出舒適圈。" },
+                reversed: { keywords: ["魯莽", "疏忽", "遲疑"], general_meaning: "警告不要衝動行事，或因為恐懼而停滯不前。", spread_meanings: { past: "過去的輕率造成了阻礙。", present: "當前猶豫不決錯失良機。", future: "前路可能存在風險。", my_view: "你感到迷茫且不安。", their_view: "對方覺得你缺乏責任感。", current_status: "計畫停滯不前。" }, advice: "在躍下前先看清腳下。" }
+            },
+            { id: "1", name: "魔術師", img: "card1.png", element: "Air", type: "solo", gaze: "forward",
+                upright: { keywords: ["創造力", "意志", "顯化"], general_meaning: "你具備將夢想轉化為現實的所有資源與能力。", spread_meanings: { past: "過去的努力奠定了現有能力。", present: "展現才華的關鍵時刻。", future: "目標將在你的掌握中實現。", my_view: "你感到自信且有主控權。", their_view: "對方被你的才氣所吸引。", current_status: "充滿活力與溝通順暢。" }, advice: "善用你的天賦與資源。" },
+                reversed: { keywords: ["操縱", "幻滅", "溝通不順"], general_meaning: "小心被誤導，或因缺乏專注而導致失敗。", spread_meanings: { past: "曾有過被誤導的經驗。", present: "感到力不從心或受挫。", future: "計畫可能遭遇變卦。", my_view: "你覺得事情失控了。", their_view: "對方覺得你不夠真誠。", current_status: "存在信息不對稱。" }, advice: "重新檢視你的動機。" }
+            },
+            { id: "2", name: "女教皇", img: "card2.png", element: "Water", type: "solo", gaze: "forward",
+                upright: { keywords: ["直覺", "神秘", "內在智慧"], general_meaning: "暗示現在應跟隨直覺，而非表面邏輯。", spread_meanings: { past: "過去的靜觀積累了智慧。", present: "隱藏的真相即將顯露。", future: "答案會在潛意識中浮現。", my_view: "你正處於精神高度集中。", their_view: "對方覺得你很有層次。", current_status: "精神層面的深度交流。" }, advice: "靜觀其變，傾聽內心。" },
+                reversed: { keywords: ["忽視直覺", "淺薄", "祕密洩漏"], general_meaning: "可能過於表面，或因忽視內心警告而犯錯。", spread_meanings: { past: "曾因過於理智而失策。", present: "情緒不穩定且焦慮。", future: "隱藏的阻礙將會曝光。", my_view: "你感到內心空洞。", their_view: "對方覺得你情緒化。", current_status: "信任感出現裂痕。" }, advice: "誠實面對你的潛意識。" }
+            },
+            { id: "3", name: "女皇", img: "card3.png", element: "Earth", type: "solo", gaze: "forward",
+                upright: { keywords: ["豐盛", "母性", "自然"], general_meaning: "象徵創造力、繁榮與情感的滋養。", spread_meanings: { past: "過去的累積帶來現在的富足。", present: "生活正進入豐盛期。", future: "計畫將結出豐碩果實。", my_view: "你感到充滿愛與動力。", their_view: "對方覺得你溫暖可親。", current_status: "關係穩固且充滿生機。" }, advice: "溫柔地培育你的想法。" },
+                reversed: { keywords: ["依賴", "窒息的愛", "創造力受阻"], general_meaning: "可能感到資源匱乏，或因過度保護而失去自由。", spread_meanings: { past: "過去的過度放縱留後患。", present: "感到被瑣事困擾而疲累。", future: "物質上可能出現短缺。", my_view: "你覺得付出得不到回報。", their_view: "對方覺得你控制欲強。", current_status: "情感失衡且停滯。" }, advice: "找回獨立，學會放手。" }
+            },
+            { id: "4", name: "皇帝", img: "card4.png", element: "Fire", type: "solo", gaze: "forward",
+                upright: { keywords: ["權威", "結構", "穩定"], general_meaning: "代表紀律、領導力與穩定的結構。", spread_meanings: { past: "穩固的基礎是成功的關鍵。", present: "需要理智與果斷的決策。", future: "將會獲得長期的穩定。", my_view: "你希望掌握全局。", their_view: "對方視你為可靠的人。", current_status: "組織严密且有序發展。" }, advice: "運用邏輯與意志力。" },
+                reversed: { keywords: ["專橫", "僵化", "缺乏自律"], general_meaning: "警告不要過於固執，或因缺乏秩序而失控。", spread_meanings: { past: "曾受困於嚴苛的規則。", present: "感到壓力過大或受制於人。", future: "結構可能因僵化而崩解。", my_view: "你覺得深受束縛。", their_view: "對方覺得你太霸道。", current_status: "權力鬥爭或管理不善。" }, advice: "放鬆控制，展現靈活性。" }
+            },
+            { id: "5", name: "教皇", img: "card5.png", element: "Earth", type: "solo", gaze: "forward",
+                upright: { keywords: ["傳統", "信仰", "指引"], general_meaning: "尋求共識、學習與傳統價值觀的認同。", spread_meanings: { past: "傳統教育影響深遠。", present: "尋求專業建議或導師。", future: "將獲得社會或群體的認可。", my_view: "你追求精神的歸屬感。", their_view: "對方覺得你值得尊敬。", current_status: "穩定且符合規範的關係。" }, advice: "遵循已證實有效的路徑。" },
+                reversed: { keywords: ["叛逆", "不合常規", "虛偽"], general_meaning: "挑戰現狀，或對傳統價值產生質疑。", spread_meanings: { past: "曾試圖打破現有的束縛。", present: "感到想法與大眾格格不入。", future: "面臨價值觀的重建。", my_view: "你想尋求改變與突破。", their_view: "對方覺得你離經叛道。", current_status: "溝通出現價值分歧。" }, advice: "思考你的真實信念。" }
+            },
+            { id: "6", name: "戀人", img: "card6.png", element: "Air", type: "group", gaze: "center",
+                upright: { keywords: ["和諧", "選擇", "契合"], general_meaning: "代表重要的抉擇以及靈魂層面的連結。", spread_meanings: { past: "一個關鍵決定奠定現況。", present: "正面臨心靈的選擇。", future: "會有和諧的伴侶或夥伴關係。", my_view: "你感到與對方高度共鳴。", their_view: "對方深深被你吸引。", current_status: "熱情且契合的發展。" }, advice: "跟隨心靈的聲音去選擇。" },
+                reversed: { keywords: ["失衡", "不負責任", "衝突"], general_meaning: "內在的不和諧，或是面臨誘惑導致的錯誤決定。", spread_meanings: { past: "過去的選擇導致了遺憾。", present: "面臨難以抉擇的困境。", future: "關係可能遭遇裂痕。", my_view: "你感到內心猶豫不決。", their_view: "對方覺得雙方不合拍。", current_status: "存在價值觀衝突。" }, advice: "找回內心的平衡與誠實。" }
+            },
+            { id: "7", name: "戰車", img: "card7.png", element: "Water", type: "solo", gaze: "forward",
+                upright: { keywords: ["意志力", "勝利", "自律"], general_meaning: "透過強大的意志與專注克服重重困難。", spread_meanings: { past: "過去的勝利歸功於堅持。", present: "掌握局勢全力衝刺。", future: "最終將獲得成功的報償。", my_view: "你充滿鬥志與信心。", their_view: "對方視你為強悍競爭者。", current_status: "進展迅速且具有目標性。" }, advice: "保持專注，直擊目標。" },
+                reversed: { keywords: ["失控", "魯莽", "挫敗"], general_meaning: "因缺乏方向或意志力動搖而導致停滯。", spread_meanings: { past: "曾因過於衝動而失敗。", present: "感到混亂且失去主動權。", future: "前路可能遭遇強烈阻力。", my_view: "你感到受挫且力不從心。", their_view: "對方覺得你過於強勢。", current_status: "計畫遭遇突發障礙。" }, advice: "重新校準你的能量方向。" }
+            },
+            { id: "8", name: "力量", img: "card8.png", element: "Fire", type: "solo", gaze: "forward",
+                upright: { keywords: ["勇氣", "耐性", "溫柔的控制"], general_meaning: "並非強硬壓制，而是以內在的力量與慈悲征服恐懼。", spread_meanings: { past: "堅韌的品格讓你度過難關。", present: "需要展現內在的定力。", future: "你將成功馴服內心的野獸。", my_view: "你感到充滿內在平靜。", their_view: "對方敬佩你的氣度。", current_status: "穩定發展且有包容力。" }, advice: "用溫柔而非暴力解決問題。" },
+                reversed: { keywords: ["懦弱", "自卑", "濫用武力"], general_meaning: "內心感到恐懼，或在不當的時候展現攻擊性。", spread_meanings: { past: "曾因缺乏自信而退縮。", present: "情緒失控或感到焦慮。", future: "意志力將面臨嚴峻考驗。", my_view: "你感到自我懷疑。", their_view: "對方覺得你難以捉摸。", current_status: "缺乏動力與自信。" }, advice: "找回你的自尊與勇氣。" }
+            },
+            { id: "9", name: "隱士", img: "card9.png", element: "Earth", type: "solo", gaze: "left",
+                upright: { keywords: ["內省", "獨處", "尋求真理"], general_meaning: "這是一個向內看、尋求靈魂指引的階段。", spread_meanings: { past: "過去的沈思成就了現有深度。", present: "需要一段時間的安靜與獨處。", future: "將會獲得重要的智慧體悟。", my_view: "你希望遠離塵囂。", their_view: "對方覺得你有些高冷。", current_status: "進展緩慢且側重內在。" }, advice: "沉澱心靈，不要急於行動。" },
+                reversed: { keywords: ["孤立", "偏執", "拒絕指引"], general_meaning: "可能過於封閉自我，或因逃避現實而感到孤單。", spread_meanings: { past: "過去的過度封閉造成隔閡。", present: "感到孤獨且不被理解。", future: "可能陷入自尋煩惱的怪圈。", my_view: "你感到與世隔絕。", their_view: "對方覺得你難以溝通。", current_status: "缺乏交流的冷處理階段。" }, advice: "適度向外尋求支持。" }
+            },
+            { id: "10", name: "命運之輪", img: "card10.png", element: "Fire", type: "solo", gaze: "center",
+                upright: { keywords: ["轉捩點", "運氣", "循環"], general_meaning: "命運的齒輪開始轉動，好運即將到來。", spread_meanings: { past: "一個循環已經圓滿結束。", present: "正在經歷重大的變遷。", future: "轉機將在不經意間出現。", my_view: "你感到命運的推動力。", their_view: "對方視你為幸運星。", current_status: "變化多端且充滿契機。" }, advice: "擁抱變化，把握時機。" },
+                reversed: { keywords: ["不幸", "阻力", "無法掌控"], general_meaning: "事情發展不如預期，或被迫接受不想要的改變。", spread_meanings: { past: "曾遭遇突如其來的打擊。", present: "感到正處於谷底。", future: "運勢短期內難以好轉。", my_view: "你覺得運氣很差。", their_view: "對方覺得局勢混亂。", current_status: "計畫偏離軌道。" }, advice: "耐心等待逆境過去。" }
+            },
+            { id: "11", name: "正義", img: "card11.png", element: "Air", type: "solo", gaze: "forward",
+                upright: { keywords: ["公正", "因果", "誠信"], general_meaning: "這是一個評估與平衡的時刻，種瓜得瓜。", spread_meanings: { past: "過去的行為現在獲得回饋。", present: "需要做出公正的裁決。", future: "事情將會獲得公平的結果。", my_view: "你堅持客觀與原則。", their_view: "對方覺得你是非分明。", current_status: "平衡且注重邏輯的狀態。" }, advice: "負起責任，坦誠相待。" },
+                reversed: { keywords: ["偏見", "不公", "拒絕承擔"], general_meaning: "可能面臨不公平的對待，或是拒絕承認錯誤。", spread_meanings: { past: "曾受困於不當的指責。", present: "感到受到不公的待遇。", future: "法律或文書可能出錯。", my_view: "你感到內心憤恨不平。", their_view: "對方覺得你太愛計較。", current_status: "失衡且充滿抱怨。" }, advice: "檢視你是否有失偏頗。" }
+            },
+            { id: "12", name: "倒吊人", img: "card12.png", element: "Water", type: "solo", gaze: "forward",
+                upright: { keywords: ["犧牲", "新視角", "等待"], general_meaning: "換一個角度看世界，暫時的停頓是為了更好的跨越。", spread_meanings: { past: "過去的付出現在開始發酵。", present: "目前的停滯是必要的修行。", future: "豁然開朗的覺醒即將到來。", my_view: "你願意為了目標等待。", their_view: "對方覺得你有些被動。", current_status: "沉思期，看似無進展。" }, advice: "放掉控制慾，學習隨遇而安。" },
+                reversed: { keywords: ["無謂的犧牲", "拖延", "僵持"], general_meaning: "做無功而返的努力，或是拒絕改變觀點。", spread_meanings: { past: "曾做了錯誤的犧牲。", present: "不願改變導致毫無進展。", future: "可能會遭遇更長的延誤。", my_view: "你感到身心俱疲。", their_view: "對方覺得你在做無用功。", current_status: "陷入僵局且無人讓步。" }, advice: "停止徒勞，主動尋求改變。" }
+            },
+            { id: "13", name: "死神", img: "card13.png", element: "Water", type: "solo", gaze: "left",
+                upright: { keywords: ["結束", "轉化", "新舊更迭"], general_meaning: "並非實質死亡，而是一個階段徹底結束並迎來新生。", spread_meanings: { past: "一段關係或時期已成過去。", present: "正在經歷必要的斷捨離。", future: "徹底翻篇後迎來曙光。", my_view: "你已準備好迎接新生活。", their_view: "對方感到與你已不同路。", current_status: "徹底變化的關鍵時刻。" }, advice: "放下執著，讓該去的離去。" },
+                reversed: { keywords: ["抗拒改變", "停滯", "舊情復燃"], general_meaning: "不願面對結束，導致自己陷入長期的痛苦與拖累。", spread_meanings: { past: "過去的陰影尚未消除。", present: "感到恐懼且不敢邁步。", future: "進展將會異常痛苦緩慢。", my_view: "你對未來感到極度不安。", their_view: "對方覺得你死纏爛打。", current_status: "關係名存實亡卻難分。" }, advice: "勇敢面對腐朽，尋求重生。" }
+            },
+            { id: "14", name: "節制", img: "card14.png", element: "Fire", type: "solo", gaze: "forward",
+                upright: { keywords: ["平衡", "融合", "療癒"], general_meaning: "結合不同的元素，達成和諧與中庸之道。", spread_meanings: { past: "適度的調整帶來了平靜。", present: "需要平衡情感與理智。", future: "將達成各方滿意的共識。", my_view: "你情緒穩定且理性。", their_view: "對方覺得你非常有修養。", current_status: "流動且和諧的發展。" }, advice: "凡事適可而止，尋求共贏。" },
+                reversed: { keywords: ["失衡", "過度", "缺乏溝通"], general_meaning: "生活失調，或是情緒過激導致局勢崩潰。", spread_meanings: { past: "曾因極端行為導致混亂。", present: "生活節奏紊亂感到焦躁。", future: "計畫可能因分配不當受阻。", my_view: "你感到精疲力竭。", their_view: "對方覺得你反覆無常。", current_status: "充斥衝突與不理解。" }, advice: "重新找回生活重心。" }
+            },
+            { id: "15", name: "惡魔", img: "card15.png", element: "Earth", type: "group", gaze: "forward",
+                upright: { keywords: ["束縛", "慾望", "物質主義"], general_meaning: "被成癮、誘惑或錯誤的價值觀所禁錮。", spread_meanings: { past: "過去的依賴影響至今。", present: "正處於某種危險的吸引中。", future: "需警惕物質或毒性的誘惑。", my_view: "你感到極致的渴求。", their_view: "對方覺得你極具誘惑力。", current_status: "充滿激情但具備依賴性。" }, advice: "審視你的恐懼與癮頭。" },
+                reversed: { keywords: ["解脫", "覺醒", "找回主動"], general_meaning: "意識到束縛的存在，並開始嘗試擺脫陰暗面。", spread_meanings: { past: "曾成功克服過心魔。", present: "準備切斷有害的關係。", future: "最終會重獲自由。", my_view: "你開始反思現有的關係。", their_view: "對方感到掌控力在減弱。", current_status: "試圖打破慣性的過渡。" }, advice: "勇敢切斷有毒的連結。" }
+            },
+            { id: "16", name: "高塔", img: "card16.png", element: "Fire", type: "solo", gaze: "center",
+                upright: { keywords: ["劇變", "覺醒", "災難性突破"], general_meaning: "突如其來的打擊摧毀了虛偽的基礎，為真相鋪路。", spread_meanings: { past: "過去的一場突變重塑了你。", present: "防禦崩塌，需面對現實。", future: "突發事件將徹底改變計畫。", my_view: "你感到震撼且難以接受。", their_view: "對方覺得一切都毀了。", current_status: "混亂但必經的轉型期。" }, advice: "不要試圖挽救崩塌，順應它。" },
+                reversed: { keywords: ["延遲災難", "抗拒真相", "逃過一劫"], general_meaning: "察覺到危險但試圖逃避，或是痛苦的過程被拉長。", spread_meanings: { past: "曾驚險避開一場危機。", present: "在破敗中苟延殘喘。", future: "若不徹底改革，後患無窮。", my_view: "你感到極度壓抑。", their_view: "對方覺得你在粉飾太平。", current_status: "局勢不穩但尚未爆發。" }, advice: "主動改革勝過被動毀滅。" }
+            },
+            { id: "17", name: "星星", img: "card17.png", element: "Air", type: "solo", gaze: "forward",
+                upright: { keywords: ["希望", "靈感", "療癒"], general_meaning: "在黑暗後迎來平靜，象徵靈魂的洗滌與光明的未來。", spread_meanings: { past: "過去的理想引導你前進。", present: "感受到內在的平靜與希望。", future: "夢想有實現的強烈可能。", my_view: "你感到前所未有的澄澈。", their_view: "對方視你為純潔的靈魂。", current_status: "充滿希望且溫和的發展。" }, advice: "對宇宙保持信任。" }
+            },
+            { id: "18", name: "月亮", img: "card18.png", element: "Water", type: "solo", gaze: "forward",
+                upright: { keywords: ["不安", "幻象", "潛意識"], general_meaning: "局勢不明朗，充滿不安感，需防範隱藏的敵手。", spread_meanings: { past: "曾受困於混亂的情緒。", present: "感到恐懼或看不清未來。", future: "前方充滿變數需謹慎。", my_view: "你感到莫名的擔憂。", their_view: "對方覺得你深不可測。", current_status: "曖昧且不明朗的階段。" }, advice: "面對你的恐懼，不要被表象蒙蔽。" },
+                reversed: { keywords: ["真相大白", "克服恐懼", "解除幻象"], general_meaning: "迷霧漸散，開始看清事情的真面貌。", spread_meanings: { past: "曾從混亂中清醒過來。", present: "秘密正逐漸浮出水面。", future: "混亂即將告一段落。", my_view: "你開始找回理智。", their_view: "對方覺得你變得務實。", current_status: "由暗轉明的過渡期。" }, advice: "相信你的直覺，真相將現。" }
+            },
+            { id: "19", name: "太陽", img: "card19.png", element: "Fire", type: "solo", gaze: "forward",
+                upright: { keywords: ["成功", "活力", "喜悅"], general_meaning: "代表光明、成功與純粹的快樂。", spread_meanings: { past: "過去的努力奠定光明基調。", present: "正處於最輝煌的時刻。", future: "結果將令你非常滿意。", my_view: "你感到自信且充滿能量。", their_view: "對方視你為生命中的陽光。", current_status: "坦誠布公且活力十足。" }, advice: "大膽展示你的光芒。" },
+                reversed: { keywords: ["短暫陰雲", "過度自信", "延遲成功"], general_meaning: "雖然整體依然積極，但可能會有小波折或暫時的沮喪。", spread_meanings: { past: "曾因過於樂觀而疏忽。", present: "感到有些疲憊或被遮擋。", future: "成功會來得稍晚一些。", my_view: "你覺得事情不夠完美。", their_view: "對方覺得你有些自大。", current_status: "有隔閡但方向正確。" }, advice: "保持童心，烏雲終會散去。" }
+            },
+            { id: "20", name: "審判", img: "card20.png", element: "Fire", type: "solo", gaze: "forward",
+                upright: { keywords: ["覺醒", "重生", "呼喚"], general_meaning: "評估過去的行為，迎接生命的召喚與徹底的新生。", spread_meanings: { past: "一次關鍵覺醒改變了你。", present: "到了做出終極決定的時刻。", future: "將迎來命運的重大獎賞。", my_view: "你感到靈魂的昇華。", their_view: "對方視你為涅槃重生者。", current_status: "關鍵的轉折與定局。" }, advice: "傾聽內心的召喚，採取行動。" },
+                reversed: { keywords: ["遲疑", "逃避責備", "拒絕召喚"], general_meaning: "不願面對過去的後果，或是錯失了重生的機會。", spread_meanings: { past: "曾錯失過一次重大的改變。", present: "感到正被過去所糾纏。", future: "若不決斷，將陷入惡性循環。", my_view: "你感到自責與猶豫。", their_view: "對方覺得你停滯不前。", current_status: "糾結於舊帳，進展受阻。" }, advice: "勇敢承擔過去，才能走向未來。" }
+            },
+            { id: "21", name: "世界", img: "card21.png", element: "Earth", type: "solo", gaze: "forward",
+                upright: { keywords: ["圓滿", "成就", "旅程終點"], general_meaning: "一個循環的完美終結，象徵成功、旅行或融入整體。", spread_meanings: { past: "過去的努力達成了現有成就。", present: "一切皆在完美的控制中。", future: "將會獲得最終的圓滿成功。", my_view: "你感到與世界和諧統一。", their_view: "對方視你為理想的伴侶。", current_status: "穩定且接近完美的狀態。" }, advice: "慶祝你的成就，準備新的開始。" },
+                reversed: { keywords: ["未竟之志", "延遲圓滿", "缺乏成就感"], general_meaning: "雖然接近成功，但總差那臨門一腳，感到遺憾。", spread_meanings: { past: "曾有過未能完成的遺憾。", present: "感到目標近在咫尺卻難達成。", future: "成功需要比預期更久的努力。", my_view: "你覺得缺少了一點關鍵。", their_view: "對方覺得你要求過高。", current_status: "大致穩定但仍有空缺。" }, advice: "重新檢視細節，完成最後一步。" }
+            },
+            { id: "c3", name: "聖杯三", img: "3 of Cups.png", element: "Water", type: "group", gaze: "center",
+                upright: { keywords: ["慶祝", "友誼", "情感連結"], general_meaning: "與朋友分享快樂，象徵群體間的情感支持與歡愉。", spread_meanings: { past: "愉快的社交活動支持了你。", present: "正與人分享成功的喜悅。", future: "將迎來值得慶祝的聚會。", my_view: "你渴望與人分享喜悅。", their_view: "對方覺得你是極佳的夥伴。", current_status: "和諧且充滿笑聲的氛圍。" }, advice: "分享你的快樂，加強社交。" },
+                reversed: { keywords: ["過度放縱", "流言蜚語", "人際疏離"], general_meaning: "過度的派對生活影響健康，或是在群體中感到被孤立。", spread_meanings: { past: "曾因社交過度感到疲憊。", present: "感到被小團體排擠。", future: "需警惕人際關係中的爭端。", my_view: "你感到與社交圈不合。", their_view: "對方覺得你有些浮誇。", current_status: "存在不和諧音或第三方干擾。" }, advice: "減少無效社交，回歸內心。" }
+            },
+            { id: "w4", name: "權杖四", img: "4 of Wands.png", element: "Fire", type: "group", gaze: "center",
+                upright: { keywords: ["穩定", "家園", "慶典"], general_meaning: "象徵一個穩定的階段，具有安全感與歸屬感。", spread_meanings: { past: "穩固的基業為你遮風擋雨。", present: "享受階段性的平靜與快樂。", future: "將步入穩定發展或同居/結婚。", my_view: "你渴望安定的生活。", their_view: "對方覺得你很踏實可靠。", current_status: "和諧且具備長期潛力的關係。" }, advice: "享受當下的安寧與幸福。" },
+                reversed: { keywords: ["內心不穩", "家庭摩擦", "儀式感缺失"], general_meaning: "表面平靜下潛藏著不安，或是期待的慶祝被延遲。", spread_meanings: { past: "曾有過根基動搖的經驗。", present: "對目前的安穩感到懷疑。", future: "預期的穩定可能會延後。", my_view: "你感到缺乏安全感。", their_view: "對方覺得關係變得乏味。", current_status: "有些小摩擦需要修復。" }, advice: "從內部尋找安定的力量。" }
+            }
+        ];
+let currentCat = '';
+        let currentMode = 'single';
+        let selectedWrappers = [];
+        let remainingCards = [];
+        let finalSelection = [];
+
+        window.onload = () => {
+            let loaded = 0;
+            const images = ['photo-output.png', ...tarotData.map(d => d.img)];
+            images.forEach(src => {
+                const img = new Image();
+                img.onload = img.onerror = () => {
+                    loaded++;
+                    let p = Math.floor((loaded / images.length) * 100);
+                    document.getElementById('progress-fill').style.width = p + '%';
+                    document.getElementById('load-status').innerText = `同步星象儀中 ${p}%`;
+                    if (loaded === images.length) setTimeout(revealApp, 800);
+                };
+                img.src = src;
+            });
+            setTimeout(() => { if(document.getElementById('loading-screen').style.display !== 'none') revealApp(); }, 8000);
+        };
+
+        function revealApp() {
+            document.getElementById('loading-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.display = 'none';
+                const main = document.getElementById('main-page');
+                main.style.display = 'block';
+                setTimeout(() => main.style.opacity = '1', 50);
+            }, 1000);
+        }
+
+        function resetApp() {
+            document.getElementById('result-panel').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('result-panel').style.display = 'none';
+                document.getElementById('spread-view').style.display = 'none';
+                document.getElementById('cards-container').innerHTML = '';
+                const main = document.getElementById('main-page');
+                main.style.display = 'block';
+                main.style.opacity = '1';
+                selectedWrappers = [];
+                finalSelection = [];
+            }, 800);
+        }
+
+        function setCat(btn, cat) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentCat = cat;
+            document.getElementById('rel-toggle').style.display = (cat === '愛情' || cat === '親友') ? 'flex' : 'none';
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-single').classList.toggle('active', mode === 'single');
+            document.getElementById('btn-triple').classList.toggle('active', mode === 'triple');
+        }
+
+        function startJourney() {
+            if(!currentCat) return alert("請先選擇占卜範疇");
+            document.getElementById('main-page').style.opacity = '0';
+            setTimeout(renderFanSpread, 600);
+        }
+
+        function renderFanSpread() {
+            document.getElementById('main-page').style.display = 'none';
+            document.getElementById('spread-view').style.display = 'block';
+            const container = document.getElementById('cards-container');
+            remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
+
+            for(let i=0; i<remainingCards.length; i++) {
+                const w = document.createElement('div');
+                w.className = 'card-wrapper';
+                w.style.left = '80px'; w.style.top = '50%';
+                w.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-face card-back"></div>
+                        <div class="card-face card-front" style="background-image:url('${remainingCards[i].img}')"></div>
+                    </div>`;
+                w.onclick = (e) => { e.stopPropagation(); handleSelect(w, i); };
+                container.appendChild(w);
+            }
+
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.card-wrapper');
+                cards.forEach((card, i) => {
+                    const angle = -75 + (i * 6.5); 
+                    const radius = window.innerWidth * 0.85;
+                    card.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(${radius}px)`;
+                });
+            }, 100);
+        }
+
+        function bgClickReset(e) {
+            if(e.target.id === 'spread-view' || e.target.id === 'cards-container') {
+                selectedWrappers.forEach(el => el.classList.remove('selected'));
+                selectedWrappers = [];
+                updateUI();
+            }
+        }
+
+        function handleSelect(el, idx) {
+            const limit = currentMode === 'single' ? 1 : 3;
+            if(el.classList.contains('selected')) {
+                el.classList.remove('selected');
+                selectedWrappers = selectedWrappers.filter(c => c !== el);
+            } else if(selectedWrappers.length < limit) {
+                el.classList.add('selected');
+                selectedWrappers.push(el);
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            const limit = currentMode === 'single' ? 1 : 3;
+            document.getElementById('ui-right').style.display = selectedWrappers.length === limit ? 'flex' : 'none';
+            document.getElementById('selection-tip').innerText = `已選 ${selectedWrappers.length} / ${limit}`;
+        }
+
+        async function confirmCards() {
+            document.getElementById('ui-right').style.display = 'none';
+            document.querySelectorAll('.card-wrapper').forEach(w => {
+                if(!selectedWrappers.includes(w)) w.classList.add('fade-out');
+            });
+
+            const limit = selectedWrappers.length;
+            for(let i=0; i<limit; i++) {
+                const el = selectedWrappers[i];
+                const isRev = Math.random() > 0.5;
+                const idx = Array.from(el.parentNode.children).indexOf(el);
+                finalSelection.push({ ...remainingCards[idx], isRev });
+
+                let xOffset;
+                if(limit === 1) xOffset = 'calc(50vw - 40px)';
+                else xOffset = `calc(50vw - ${(limit*50)}px + ${(i*100)}px)`;
+
+                el.style.transform = `translate(${xOffset}, -50%) scale(1.6) rotate(0deg)`;
+                if(isRev) el.style.transform += ` rotateZ(180deg)`;
+                
+                await new Promise(r => setTimeout(r, 600));
+                el.classList.add('flipped');
+            }
+            setTimeout(displayResults, 1200);
+        }
+
+        function displayResults() {
+            const panel = document.getElementById('result-panel');
+            const content = document.getElementById('result-content');
+            const isRelMode = document.getElementById('relation-check').checked;
+
+            selectedWrappers.forEach((el, i) => {
+                const limit = selectedWrappers.length;
+                let xOffset;
+                if(limit === 1) xOffset = 'calc(50vw - 40px)';
+                else xOffset = `calc(50vw - ${(limit*45)}px + ${(i*90)}px)`;
+                
+                el.style.top = '15%'; 
+                el.style.transform = `translate(${xOffset}, 0) scale(1.1) rotate(0deg)`;
+                if(finalSelection[i].isRev) el.style.transform += ` rotateZ(180deg)`;
+            });
+
+            let html = `<h2 style="color:var(--accent-main); text-align:center; font-weight:700;">「${currentCat}」啟示報告</h2>`;
+            html += `<p style="font-size:0.85rem; text-align:center; color:#999; margin:10px 0 25px;">提問：${document.getElementById('question-input').value || "誠心解讀"}</p>`;
+
+            const spreadConfig = (currentMode === 'triple' && isRelMode) 
+                ? [ { label: "我的看法", key: "my_view" }, { label: "對方的看法", key: "their_view" }, { label: "現況結果", key: "current_status" } ]
+                : [ { label: "過去", key: "past" }, { label: "現在", key: "present" }, { label: "未來", key: "future" } ];
+
+            finalSelection.forEach((res, i) => {
+                const stateData = res.isRev ? res.reversed : res.upright;
+                const positionLabel = currentMode === 'single' ? "核心指引" : spreadConfig[i].label;
+                const meaning = currentMode === 'triple' ? stateData.spread_meanings[spreadConfig[i].key] : stateData.general_meaning;
+
+                html += `
+                    <div style="margin-bottom:30px; border-bottom: 1px solid #f0e6d2; padding-bottom: 20px;">
+                        <h3 style="color:var(--accent-main); font-size:1.15rem; margin-bottom: 8px;">
+                            ${positionLabel}：${res.name} ${res.isRev ? '(逆位)' : '(正位)'}
+                        </h3>
+                        <p style="font-size: 0.9rem; color: #a67c52; margin-bottom: 10px; font-weight: 500;">
+                            能量特質：${stateData.keywords.join(" · ")}
+                        </p>
+                        <p style="font-size:1rem; color: #4a3628; margin-bottom: 12px;">
+                            ${meaning}
+                        </p>
+                        <p style="font-size:0.95rem; color: #6e5c53; border-left: 3px solid var(--accent-main); padding-left: 10px; font-style: italic;">
+                            <strong>牌面箴言：</strong>${stateData.advice}
+                        </p>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = html;
+            panel.style.display = 'block';
+            setTimeout(() => panel.classList.add('active'), 100);
+        }
+    </script>
+</body>
+</html>
