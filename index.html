@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>孫孫暉日 Tarot</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #fffaf5;
+            --accent-main: #d4a373;
+            --accent-glow: rgba(255, 204, 0, 0.4);
+            --text-dark: #5c4033;
+            --card-w: 75px;
+            --card-h: 125px;
+        }
+
+        /* --- 安全防護：禁止所有選擇行為 --- */
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background: var(--bg-color);
+            color: var(--text-dark);
+            height: 100vh; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        /* --- Loading Screen + 互動動畫 --- */
+        #loading-screen {
+            position: fixed; inset: 0; background: var(--bg-color);
+            z-index: 3000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; transition: opacity 1s ease;
+        }
+        .loading-glow {
+            position: absolute; width: 300px; height: 300px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            animation: pulseGlow 3s infinite ease-in-out;
+            pointer-events: none;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 0.8; }
+        }
+        .ripple {
+            position: absolute; border: 2px solid #ffcc00; border-radius: 50%;
+            transform: scale(0); animation: rippleEffect 0.8s ease-out;
+            pointer-events: none;
+        }
+        @keyframes rippleEffect {
+            to { transform: scale(4); opacity: 0; }
+        }
+        .loading-logo { letter-spacing: 12px; font-weight: bold; font-size: 1.4rem; z-index: 10; margin-bottom: 20px; color: #a67c52; }
+        .progress-bar { width: 200px; height: 2px; background: #eee; border-radius: 5px; overflow: hidden; z-index: 10; }
+        #progress-fill { width: 0%; height: 100%; background: #ffcc00; transition: width 0.3s; }
+
+        /* --- Home Page --- */
+        #main-page {
+            width: 90%; max-width: 400px; text-align: center;
+            display: none; opacity: 0; transition: 1s; padding-bottom: 20px;
+        }
+        h1 { font-size: 1.6rem; letter-spacing: 0.4em; margin-bottom: 20px; color: var(--accent-main); }
+        .section-label { font-size: 0.75rem; color: #a67c52; text-align: left; margin: 15px 0 5px 10px; font-weight: bold; letter-spacing: 1px; }
+        
+        textarea {
+            width: 100%; padding: 14px; border: 1px solid #e8e0d0; border-radius: 20px;
+            background: rgba(255,255,255,0.7); font-family: inherit; resize: none; outline: none;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        /* 疊影圓角矩形按鈕 */
+        .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .cat-btn {
+            position: relative; padding: 10px; background: #fff; border: none; border-radius: 12px;
+            font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: 0.3s;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.03);
+        }
+        .cat-btn.active { background: var(--accent-main); color: #fff; transform: translateY(-2px); }
+        .cat-btn.active::after {
+            content: ''; position: absolute; inset: -3px; border: 1px solid var(--accent-main);
+            border-radius: 15px; opacity: 0.5;
+        }
+
+        #rel-toggle {
+            display: none; background: #fff; padding: 15px; border-radius: 15px;
+            margin: 15px 0; align-items: center; justify-content: space-between; font-size: 0.85rem;
+        }
+
+        .mode-group { display: flex; gap: 10px; }
+        .mode-btn {
+            flex: 1; padding: 12px; border: 1px solid #e0d5c1; border-radius: 12px;
+            background: #fff; cursor: pointer; transition: 0.3s; font-size: 0.9rem;
+        }
+        .mode-btn.active { background: #5c4033; color: #fff; border-color: #5c4033; }
+
+        /* --- Spread View --- */
+        #spread-view { display: none; width: 100vw; height: 100vh; position: relative; }
+        .cards-container { position: absolute; left: -120px; top: 0; width: 100%; height: 100%; }
+
+        .card-wrapper {
+            position: absolute; left: 0; top: 50%;
+            width: var(--card-w); height: var(--card-h);
+            transform-origin: center left;
+            transition: all 1.2s cubic-bezier(0.2, 1, 0.3, 1);
+            cursor: pointer;
+        }
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s; }
+        .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px; background-size: cover; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card-back { background-image: url('photo-output.jpg'); }
+        .card-front { transform: rotateY(180deg); }
+
+        .card-wrapper.selected {
+            transform: translate(200px, -50%) scale(1.4) rotate(0deg) !important;
+            z-index: 1000 !important;
+        }
+        .card-wrapper.flipped .card-inner { transform: rotateY(180deg); }
+        .card-wrapper.fade-out { opacity: 0; pointer-events: none; transition: 0.6s; }
+
+        /* 右側操作按鈕 */
+        #ui-right {
+            position: absolute; right: 25px; top: 50%; transform: translateY(-50%);
+            display: none; flex-direction: column; align-items: center; gap: 20px;
+        }
+        .confirm-btn {
+            width: 65px; height: 200px; background: var(--accent-main); color: #fff;
+            border: none; border-radius: 35px; font-weight: bold; cursor: pointer;
+            writing-mode: vertical-rl; letter-spacing: 8px; font-size: 1.1rem;
+            box-shadow: 4px 4px 20px rgba(212, 163, 115, 0.4);
+            animation: slideInRight 0.5s ease forwards;
+        }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* --- Result Panel --- */
+        #result-panel {
+            position: fixed; bottom: 0; width: 100%; height: 75%;
+            background: #fff; border-radius: 40px 40px 0 0;
+            padding: 35px 25px; overflow-y: auto; display: none;
+            transform: translateY(100%); transition: 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+            z-index: 2000; box-shadow: 0 -15px 50px rgba(0,0,0,0.08);
+        }
+        #result-panel.active { transform: translateY(0); }
+        #result-panel::-webkit-scrollbar { display: none; }
+
+        .stellar-whisper {
+            background: #fffcf0; border-radius: 18px; padding: 20px; margin: 25px 0;
+            font-style: italic; font-size: 0.85rem; color: #b088a8; border: 1px dashed #d4a373;
+            line-height: 1.6;
+        }
+
+        .btn-row { display: flex; gap: 12px; margin-top: 30px; }
+        .action-btn {
+            flex: 1; padding: 16px; border-radius: 18px; border: 1px solid var(--accent-main);
+            background: #fff; font-family: inherit; font-weight: bold; color: var(--accent-main); cursor: pointer;
+            transition: 0.2s;
+        }
+        .action-btn.primary { background: var(--accent-main); color: #fff; }
+        .action-btn:active { transform: scale(0.96); }
+
+        .watermark { position: fixed; top: 10px; left: 10px; font-size: 10px; color: rgba(0,0,0,0.05); pointer-events: none; z-index: 5000; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div class="watermark">SUNSUN TAROT AUTHENTIC PRO</div>
+
+    <div id="loading-screen" onclick="createRipple(event)">
+        <div class="loading-glow"></div>
+        <div class="loading-logo">孫孫暉日塔羅</div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        <div id="load-status" style="font-size: 0.7rem; margin-top: 15px; color: #a67c52; letter-spacing: 2px;">連結星象儀中 0%</div>
+    </div>
+
+    <div id="main-page">
+        <h1>孫孫暉日</h1>
+        
+        <div class="section-label">寫下你的困惑</div>
+        <textarea id="question-input" rows="2" placeholder="在此釐清你的問題..."></textarea>
+
+        <div class="section-label">占卜範疇</div>
+        <div class="category-grid">
+            <button class="cat-btn" onclick="setCat(this, '學業')">學業</button>
+            <button class="cat-btn" onclick="setCat(this, '事業')">事業</button>
+            <button class="cat-btn" onclick="setCat(this, '愛情')">愛情</button>
+            <button class="cat-btn" onclick="setCat(this, '親友')">親友</button>
+            <button class="cat-btn" onclick="setCat(this, '健康')">健康</button>
+            <button class="cat-btn" onclick="setCat(this, '心靈')">心靈</button>
+            <button class="cat-btn" onclick="setCat(this, '旅程')">旅程</button>
+            <button class="cat-btn" onclick="setCat(this, '決策')">決策</button>
+            <button class="cat-btn" onclick="setCat(this, '其他')">其他</button>
+        </div>
+
+        <div id="rel-toggle">
+            <span>是查問你與他/她的關係嗎？</span>
+            <input type="checkbox" id="relation-check" style="width: 22px; height: 22px; accent-color: #d4a373;">
+        </div>
+
+        <div class="section-label">牌陣</div>
+        <div class="mode-group">
+            <button class="mode-btn active" id="btn-single" onclick="setMode('single')">單牌指引</button>
+            <button class="mode-btn" id="btn-triple" onclick="setMode('triple')">三牌陣</button>
+        </div>
+
+        <button class="action-btn primary" style="width: 100%; margin-top: 25px; height: 60px;" onclick="startJourney()">開啟啟示</button>
+    </div>
+
+    <div id="spread-view">
+        <div class="cards-container" id="cards-container"></div>
+        <div id="ui-right">
+            <div id="selection-tip" style="font-size: 0.75rem; color: #d4a373; margin-bottom: 5px;">請選擇 1 張牌</div>
+            <button class="confirm-btn" onclick="confirmCards()">確 認 牌 陣</button>
+        </div>
+    </div>
+
+    <div id="result-panel">
+        <div id="result-content"></div>
+        <div id="followup-area" style="display:none; margin-top:30px; border-top:1px dashed #eee; padding-top:20px;"></div>
+        
+        <div class="btn-row">
+            <button class="action-btn" id="btn-followup" onclick="drawSuggestion()">追問建議</button>
+            <button class="action-btn" onclick="exportImage()">下載圖片</button>
+            <button class="action-btn primary" onclick="location.reload()">重新占卜</button>
+        </div>
+    </div>
+
+    <canvas id="canvas-export" style="display:none;"></canvas>
+
+    <script>
+        // --- 1. 初始化卡牌數據 ---
+        const tarotData = [];
+        for(let i=0; i<=21; i++) tarotData.push({ id: i, name: `大阿卡納 ${i}`, img: `card${i}.jpg`, msg: `關於此牌在 ${i} 號位的能量，暗示著一段內在轉化與覺醒的過程。` });
+        tarotData.push({ name: '權杖四', img: '4 of Wands.jpg', msg: '這代表著一種穩固的歡愉，是一個適合慶祝與建立歸屬感的時刻。' });
+        tarotData.push({ name: '星幣一', img: 'card23.jpg', msg: '新的物質機遇正在萌芽，請專注於當下的踏實感。' });
+
+        let currentCat = '';
+        let currentMode = 'single';
+        let selectedWrappers = [];
+        let remainingCards = [];
+        let finalSelection = [];
+
+        // --- 2. Loading 互動與圖片預載 ---
+        function createRipple(e) {
+            const ripple = document.createElement("div");
+            ripple.className = "ripple";
+            ripple.style.left = `${e.clientX - 25}px`;
+            ripple.style.top = `${e.clientY - 25}px`;
+            document.getElementById('loading-screen').appendChild(ripple);
+            setTimeout(() => ripple.remove(), 800);
+        }
+
+        window.onload = () => {
+            let loaded = 0;
+            const images = ['photo-output.jpg', ...tarotData.map(d => d.img)];
+            images.forEach(src => {
+                const img = new Image();
+                img.src = src;
+                img.onload = () => {
+                    loaded++;
+                    let p = Math.floor((loaded/images.length)*100);
+                    document.getElementById('progress-fill').style.width = p+'%';
+                    document.getElementById('load-status').innerText = `同步星象儀中 ${p}%`;
+                    if(p >= 85) setTimeout(revealApp, 800);
+                };
+                img.onerror = () => { loaded++; };
+            });
+        };
+
+        function revealApp() {
+            document.getElementById('loading-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.display = 'none';
+                const main = document.getElementById('main-page');
+                main.style.display = 'block';
+                setTimeout(() => main.style.opacity = '1', 50);
+            }, 1000);
+        }
+
+        // --- 3. 首頁邏輯 ---
+        function setCat(btn, cat) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentCat = cat;
+            document.getElementById('rel-toggle').style.display = (cat === '愛情' || cat === '親友') ? 'flex' : 'none';
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-single').classList.toggle('active', mode === 'single');
+            document.getElementById('btn-triple').classList.toggle('active', mode === 'triple');
+        }
+
+        function startJourney() {
+            if(!currentCat) return alert("請先選擇占卜範疇");
+            document.getElementById('main-page').style.opacity = '0';
+            setTimeout(renderFanSpread, 800);
+        }
+
+        // --- 4. 24張左側垂直扇形掃開 ---
+        function renderFanSpread() {
+            document.getElementById('main-page').style.display = 'none';
+            document.getElementById('spread-view').style.display = 'block';
+            const container = document.getElementById('cards-container');
+            remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
+
+            for(let i=0; i<24; i++) {
+                const w = document.createElement('div');
+                w.className = 'card-wrapper';
+                w.style.left = '80px'; w.style.top = '50%';
+                w.innerHTML = `<div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front" style="background-image:url('${remainingCards[i].img}')"></div></div>`;
+                container.appendChild(w);
+            }
+
+            // 觸發掃開動畫
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.card-wrapper');
+                cards.forEach((card, i) => {
+                    // 從左上 (-75度) 往左下 (75度)
+                    const angle = -75 + (i * 6.52); 
+                    const radius = window.innerWidth * 0.82;
+                    card.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(${radius}px)`;
+                    card.onclick = () => handleSelect(card, i);
+                });
+            }, 100);
+        }
+
+        function handleSelect(el, idx) {
+            const limit = currentMode === 'single' ? 1 : 3;
+            if(el.classList.contains('selected')) {
+                el.classList.remove('selected');
+                selectedWrappers = selectedWrappers.filter(c => c !== el);
+            } else if(selectedWrappers.length < limit) {
+                el.classList.add('selected');
+                selectedWrappers.push(el);
+            }
+            document.getElementById('ui-right').style.display = selectedWrappers.length === limit ? 'flex' : 'none';
+            document.getElementById('selection-tip').innerText = `已選 ${selectedWrappers.length} / ${limit} 張`;
+        }
+
+        // --- 5. 翻牌與分層解讀 ---
+        async function confirmCards() {
+            document.getElementById('ui-right').style.display = 'none';
+            document.querySelectorAll('.card-wrapper').forEach(w => {
+                if(!selectedWrappers.includes(w)) w.classList.add('fade-out');
+            });
+
+            for(let i=0; i<selectedWrappers.length; i++) {
+                const el = selectedWrappers[i];
+                const isRev = Math.random() > 0.5;
+                const idx = Array.from(el.parentNode.children).indexOf(el);
+                finalSelection.push({ ...remainingCards[idx], isRev });
+
+                // 移動到正中央準備翻牌
+                el.style.transform = `translate(calc(50vw - 40px), calc(-50% + ${(i-1)*70}px)) scale(1.6) rotate(0deg)`;
+                if(isRev) el.style.transform += ` rotateZ(180deg)`;
+                
+                await new Promise(r => setTimeout(r, 600));
+                el.classList.add('flipped');
+            }
+
+            // 更新剩餘牌堆（24 - 已抽張數）供追問
+            const chosenIdxs = selectedWrappers.map(el => Array.from(el.parentNode.children).indexOf(el));
+            remainingCards = remainingCards.filter((_, idx) => !chosenIdxs.includes(idx));
+
+            setTimeout(displayResults, 1200);
+        }
+
+        function displayResults() {
+            const panel = document.getElementById('result-panel');
+            const content = document.getElementById('result-content');
+            const isRelMode = document.getElementById('relation-check').checked;
+
+            let html = `<h2 style="color:var(--accent-main); letter-spacing:3px;">「${currentCat}」啟示</h2>`;
+            html += `<p style="font-size:0.8rem; color:#999; margin:10px 0 25px;">問題：${document.getElementById('question-input').value || "隨喜占卜"}</p>`;
+
+            // 牌陣標籤邏輯
+            const labelsStd = ["過去", "現在", "未來"];
+            const labelsRel = ["我的看法", "對方的看法", "現況結果"];
+            const activeLabels = (currentMode === 'triple' && isRelMode) ? labelsRel : labelsStd;
+
+            finalSelection.forEach((res, i) => {
+                const tag = currentMode === 'single' ? "核心建議" : activeLabels[i];
+                html += `
+                    <div style="margin-bottom:25px; animation: slideInRight 0.5s ease forwards;">
+                        <strong style="color:var(--accent-main); font-size:1rem;">${tag}：${res.name} ${res.isRev?'(逆位)':'(正位)'}</strong>
+                        <p style="margin-top:8px; line-height:1.7; font-size:0.95rem;">${res.msg}</p>
+                    </div>
+                `;
+            });
+
+            if(Math.random() < 0.4) {
+                html += `<div class="stellar-whisper"><strong>星靈私語：</strong> 宇宙正關注著你的選擇。當前牌面流動著一股不尋常的平靜，這代表你所擔心的事情，或許已有轉機。</div>`;
+            }
+
+            content.innerHTML = html;
+            panel.style.display = 'block';
+            setTimeout(() => panel.classList.add('active'), 100);
+        }
+
+        // --- 6. 追問邏輯 ---
+        function drawSuggestion() {
+            if(remainingCards.length === 0) return;
+            document.getElementById('btn-followup').disabled = true;
+            document.getElementById('btn-followup').style.opacity = '0.5';
+
+            const card = remainingCards[Math.floor(Math.random()*remainingCards.length)];
+            const area = document.getElementById('followup-area');
+            area.style.display = 'block';
+            area.innerHTML = `
+                <h4 style="margin-bottom:15px; color:#d4a373;">追問建議 (由剩下的 ${remainingCards.length} 張中抽出)</h4>
+                <div style="display:flex; gap:15px; align-items:flex-start;">
+                    <div style="width:60px; height:100px; background-image:url('${card.img}'); background-size:cover; border-radius:8px; flex-shrink:0; box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
+                    <div style="font-size:0.9rem; line-height:1.6;">
+                        <strong>${card.name}</strong><br>額外的啟示提醒你：${card.msg.substring(0, 30)}... 
+                    </div>
+                </div>
+            `;
+            finalSelection.push({ ...card, isRev: false, isFollowup: true });
+        }
+
+        // --- 7. 下達與防盜 ---
+        function exportImage() {
+            const canvas = document.getElementById('canvas-export');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 600; canvas.height = 1100;
+            
+            ctx.fillStyle = "#fffaf5"; ctx.fillRect(0,0,600,1100);
+            ctx.fillStyle = "#d4a373"; ctx.font = "bold 34px 'Noto Serif TC'"; ctx.fillText("孫孫暉日 Tarot 解讀報告", 50, 80);
+            
+            // 繪製水印防盜
+            ctx.globalAlpha = 0.05;
+            ctx.fillStyle = "#000";
+            for(let i=0; i<10; i++) ctx.fillText("SUNSUN MASCOT TAROT URU", 50, i*120);
+            ctx.globalAlpha = 1;
+
+            alert("圖片生成中，請在彈出的視窗長按圖片保存至手機。");
+            const dataUrl = canvas.toDataURL("image/png");
+            const w = window.open();
+            w.document.write(`<img src="${dataUrl}" style="width:100%"/>`);
+        }
+    </script>
+</body>
+</html>
