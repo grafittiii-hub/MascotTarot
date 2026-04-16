@@ -109,7 +109,7 @@
         }
         .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s; }
         .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px; background-size: cover; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .card-back { background-image: url('photo-output.jpg'); }
+        .card-back { background-image: url('photo-output.jpg'); } /* 若牌背也改為png，請手動更改此處 */
         .card-front { transform: rotateY(180deg); }
 
         .card-wrapper.selected {
@@ -235,10 +235,10 @@
     <canvas id="canvas-export" style="display:none;"></canvas>
 
     <script>
-        // --- 高精細度卡牌數據庫 (Rider-Waite 邏輯 + 孫孫視覺指引) ---
+        // --- 替換為 .png 副檔名以匹配 GitHub 上傳檔案 ---
         const tarotData = [
             {
-                id: "card0", name: "愚者", img: "card0.jpg", element: "Air", type: "solo", gaze: "right",
+                id: "card0", name: "愚者", img: "card0.png", element: "Air", type: "solo", gaze: "right",
                 upright: {
                     keywords: ["新開始", "冒險", "隨心所欲", "純真"],
                     general_meaning: "一段純粹的開始，充滿無限可能與勇氣，不畏懼未知的旅程。",
@@ -254,7 +254,7 @@
                 mascot_details: [{ feature: "輕裝的綠衣孫孫與小白狗", meaning: "畫中穿著綠色星星連身裝的主角毫無防備地走向崖邊，腳步輕盈且視線向右方（未來）望去；身旁的小白狗象徵著直覺的守護與警告，提醒你在自由奔放之餘，仍需留意當下的環境。" }]
             },
             {
-                id: "card1", name: "魔術師", img: "card1.jpg", element: "Air", type: "solo", gaze: "forward",
+                id: "card1", name: "魔術師", img: "card1.png", element: "Air", type: "solo", gaze: "forward",
                 upright: {
                     keywords: ["創造力", "意志", "資源具備", "顯化"],
                     general_meaning: "你具備將願景轉化為現實的意志力，所有的資源已在你手中。",
@@ -270,7 +270,7 @@
                 mascot_details: [{ feature: "魔術帽中的黑兔孫孫與四元素", meaning: "畫中的黑兔主角在魔術帽中俏皮地揮舞魔杖，上方懸浮著無限大符號；桌面上備齊了聖杯、星幣、寶劍，這顯示你已具備所有「四大元素」的潛能，只待你用意志力將其統合與顯化。" }]
             },
             {
-                id: "card2", name: "女教皇", img: "card2.jpg", element: "Water", type: "solo", gaze: "forward",
+                id: "card2", name: "女教皇", img: "card2.png", element: "Water", type: "solo", gaze: "forward",
                 upright: {
                     keywords: ["直覺", "潛意識", "靜默", "內在智慧"],
                     general_meaning: "內在的直覺正引導著你，此時適合靜默冥想，聆聽潛意識的聲音。",
@@ -286,7 +286,7 @@
                 mascot_details: [{ feature: "端坐雙柱間的熊貓孫孫與新月", meaning: "熊貓主角身穿藍色星月法袍，安穩地坐在黑白雙柱（B與J，象徵二元對立）之間；頭頂的新月與背後的水波，指引你必須在黑白、對錯之外，尋找潛意識深處的寧靜智慧。" }]
             },
             {
-                id: "card3", name: "女皇", img: "card3.jpg", element: "Earth", type: "solo", gaze: "forward",
+                id: "card3", name: "女皇", img: "card3.png", element: "Earth", type: "solo", gaze: "forward",
                 upright: {
                     keywords: ["豐盛", "母性", "滋養", "感官享受"],
                     general_meaning: "豐盛、母性與生命力的湧現，代表著物質與情感的悉心滋養。",
@@ -302,7 +302,7 @@
                 mascot_details: [{ feature: "戴橘色帽的白貓孫孫與南瓜小麥", meaning: "畫中的白貓主角慵懶且安心地坐在紅色寶座上，周圍環繞著南瓜與小麥。這些作物強烈暗示著大地母親般的孕育與豐收，提醒你放慢腳步，享受當下物質與情感的富足。" }]
             },
             {
-                id: "card4", name: "皇帝", img: "card4.jpg", element: "Fire", type: "solo", gaze: "forward",
+                id: "card4", name: "皇帝", img: "card4.png", element: "Fire", type: "solo", gaze: "forward",
                 upright: {
                     keywords: ["權威", "秩序", "結構", "父親形象"],
                     general_meaning: "結構、權威與掌控，這是建立秩序並以理性引領局勢的時刻。",
@@ -318,7 +318,7 @@
                 mascot_details: [{ feature: "戴皇冠的企鵝孫孫與腳下的籃球", meaning: "企鵝主角身披紅袍，端坐在飾有公羊頭（象徵白羊座的開創與火元素）的石座上。特別的是腳下的籃球，它暗示著即使擁有至高的世俗權威與秩序，仍需要具備如同球體般靈活應變的手腕。" }]
             },
             {
-                id: "card5", name: "教皇", img: "card5.jpg", element: "Earth", type: "solo", gaze: "forward",
+                id: "card5", name: "教皇", img: "card5.png", element: "Earth", type: "solo", gaze: "forward",
                 upright: {
                     keywords: ["信仰", "傳統", "教育", "精神指引"],
                     general_meaning: "尋求傳統智慧或靈性的指引，在這個階段，共識與信仰至關重要。",
@@ -334,7 +334,7 @@
                 mascot_details: [{ feature: "雙色法袍的孫孫與黑白雙貓信徒", meaning: "畫中主角身穿對稱的橘黑雙色法袍，手持三重十字杖，下方有兩隻黑白貓咪如同信徒般仰望。這象徵著透過教育與信仰將二元對立整合，指引你在此時應尋求群體共識與傳統智慧的庇護。" }]
             },
             {
-                id: "card6", name: "戀人", img: "card6.jpg", element: "Air", type: "group", gaze: "center",
+                id: "card6", name: "戀人", img: "card6.png", element: "Air", type: "group", gaze: "center",
                 upright: {
                     keywords: ["結合", "選擇", "愛情", "價值觀契合"],
                     general_meaning: "面臨選擇的時刻，唯有跟隨內心的價值觀，方能達成情感或目標的完美契合。",
@@ -350,11 +350,11 @@
                 mascot_details: [{ feature: "牽手的主角與上方的天使柴犬", meaning: "畫面中一黑一白、代表天秤與天蠍特質（頭上的角與火焰）的主角緊緊牽手，上方的天使柴犬見證了這份純粹的連結。這強烈指示著：比起理性的分析，現在更需要憑藉「心的共鳴」來做出重大抉擇。" }]
             },
             {
-                id: "card19", name: "太陽", img: "card19.jpg", element: "Fire", type: "solo", gaze: "forward",
+                id: "card19", name: "太陽", img: "card19.png", element: "Fire", type: "solo", gaze: "forward",
                 upright: {
                     keywords: ["成功", "活力", "喜悅", "真相"],
                     general_meaning: "這是一個充滿光明的時刻，所有的陰霾都將散去，萬事如意。",
-                    spread_meanings: { past: "過去的努力奠定了現在穩固且充滿光明的基礎。", present: "現在是你綻放光芒、展現真實自我的最佳時機。", future: "未來將迎來令人欣喜的成果與純粹的快樂。", my_view: "你對這段關係充滿信心與熱情。", their_view: "對方視你為生命中的陽光，感到溫暖無比。", current_status: "雙方坦誠相待，關係正處於充滿活力的升溫期。" },
+                    spread_meanings: { past: "過去的努力奠定了現在穩固且充滿光明的基礎。", present: "現在是你綻放光芒、展現真實自我的最佳時機。", future: "未來將迎來令人欣喜的成果與純粹的快樂。", my_view: "你對這段關係充滿信心與熱情。", their_view: "對方視這個關係為生命中的陽光，感到溫暖無比。", current_status: "雙方坦誠相待，關係正處於充滿活力的升溫期。" },
                     advice: "保持樂觀的心態，像孩子般單純地享受當下的陽光。"
                 },
                 reversed: {
@@ -366,7 +366,7 @@
                 mascot_details: [{ feature: "陽光下的向日葵與孩童特質", meaning: "雖然主角被花瓣包裹，但其本質如孩童般純粹，身後的向日葵永遠朝向光明。這提醒你，放下成人的複雜算計，用最本真的面貌去迎接屬於你的成功。" }]
             },
             {
-                id: "card22", name: "聖杯三", img: "3 of Cups.jpg", element: "Water", type: "group", gaze: "center",
+                id: "card22", name: "聖杯三", img: "3 of Cups.png", element: "Water", type: "group", gaze: "center",
                 upright: {
                     keywords: ["慶祝", "友誼", "共鳴", "群體歡愉"],
                     general_meaning: "慶祝情感的連結與友誼，這是群體共享喜悅與支持的時刻。",
@@ -375,14 +375,14 @@
                 },
                 reversed: {
                     keywords: ["過度放縱", "人際疏離", "八卦流言", "三人行"],
-                    general_meaning: "可能因為過度沉溺於社交而忽略了內在，或群體中出現了不和諧的聲音。",
+                    general_meaning: "可能因為過度沉溺於社交而忽略了內心的感受，或群體中出現了不和諧的聲音。",
                     spread_meanings: { past: "過去可能因為人際關係的糾紛而消耗了心神。", present: "目前感到在人群中有些孤立，或社交活動讓你感到疲憊。", future: "需留意未來可能出現的小團體排擠或流言蜚語。", my_view: "你覺得這段關係缺乏深度，僅停留在表面吃喝玩樂。", their_view: "對方可能覺得感情被外界或朋友過度干涉。", current_status: "關係中可能牽扯了第三方，導致焦點模糊與不安。" },
                     advice: "將注意力拉回自己身上，重質不重量地經營人際關係。"
                 },
                 mascot_details: [{ feature: "橘貓、兔子與熊貓孫孫的舉杯同慶", meaning: "畫中三位不同種族的主角在星芒魔法陣上舉起金杯相互碰撞。這幅畫面強烈傳達了「情感共鳴」與「包容多元」的能量，指引你去尋找能讓你安心分享喜悅的靈魂伴侶或社群。" }]
             },
             {
-                id: "card23", name: "權杖四", img: "4 of Wands.jpg", element: "Fire", type: "group", gaze: "center",
+                id: "card23", name: "權杖四", img: "4 of Wands.png", element: "Fire", type: "group", gaze: "center",
                 upright: {
                     keywords: ["穩定", "歡慶", "歸屬感", "里程碑"],
                     general_meaning: "穩定的關係與和諧的環境，這是建立避風港並為當前成就歡慶的里程碑。",
@@ -399,12 +399,12 @@
             }
         ];
 
-        // 補齊剩餘未上傳的牌 (保持代碼完整性)
+        // 補齊剩餘未上傳的牌 (確保佔位圖片也使用png)
         const definedIds = [0, 1, 2, 3, 4, 5, 6, 19, 22, 23];
         for(let i=1; i<=21; i++) {
             if(!definedIds.includes(i)) {
                 tarotData.push({
-                    id: `card${i}`, name: `大阿卡納 ${i}`, img: `card${i}.jpg`, element: "Unknown", type: "solo", gaze: "forward",
+                    id: `card${i}`, name: `大阿卡納 ${i}`, img: `card${i}.png`, element: "Unknown", type: "solo", gaze: "forward",
                     upright: {
                         keywords: ["能量流動", "進展"], general_meaning: "能量順暢運作，顯示著正面的推進力。",
                         spread_meanings: { past: "過去的積累", present: "現在的展現", future: "未來的發展", my_view: "你的善意", their_view: "對方的接納", current_status: "關係平穩" },
@@ -438,18 +438,34 @@
         window.onload = () => {
             let loaded = 0;
             const images = ['photo-output.jpg', ...tarotData.map(d => d.img)];
+            
+            // 修復點 1：將更新進度條獨立成一個函數
+            function updateProgress() {
+                loaded++;
+                let p = Math.floor((loaded / images.length) * 100);
+                document.getElementById('progress-fill').style.width = p + '%';
+                document.getElementById('load-status').innerText = `同步星象儀中 ${p}%`;
+                
+                // 修復點 2：無論圖片載入成功或失敗，只要算力跑到 100% 就一定解鎖
+                if (loaded === images.length) {
+                    setTimeout(revealApp, 800);
+                }
+            }
+
             images.forEach(src => {
                 const img = new Image();
+                img.onload = updateProgress;
+                img.onerror = updateProgress; // 修復點 3：失敗時也會觸發 updateProgress 避免死循環
                 img.src = src;
-                img.onload = () => {
-                    loaded++;
-                    let p = Math.floor((loaded/images.length)*100);
-                    document.getElementById('progress-fill').style.width = p+'%';
-                    document.getElementById('load-status').innerText = `同步星象儀中 ${p}%`;
-                    if(p >= 85) setTimeout(revealApp, 800);
-                };
-                img.onerror = () => { loaded++; };
             });
+
+            // 修復點 4：終極防卡死保底機制。8秒後若 loading 還在，強制進入主畫面
+            setTimeout(() => {
+                const loader = document.getElementById('loading-screen');
+                if (loader.style.display !== 'none') {
+                    revealApp();
+                }
+            }, 8000);
         };
 
         function revealApp() {
@@ -601,20 +617,17 @@
                 const c2 = finalSelection[1];
                 const c3 = finalSelection[2];
 
-                // 邏輯 1: 群體與個體的演變
                 if (c1.type === "solo" && c3.type === "group") {
                     threadMsg += "觀看牌面主角的變化，這是一段從「個體探索」走向「群體共鳴」的旅程，宇宙正引導你打開心房，接納他人的力量。<br><br>";
                 } else if (c1.type === "group" && c3.type === "solo") {
                     threadMsg += "從牌面動態來看，能量正從熱鬧的群體收斂回歸到你個人的本心。此時的你，需要更多的獨處與沉澱。<br><br>";
                 }
 
-                // 邏輯 2: 元素共鳴
                 if (c1.element === c2.element && c2.element === c3.element && c1.element !== "Unknown") {
                     const elName = {"Fire":"火(行動/熱情)","Water":"水(情感/潛意識)","Earth":"土(物質/穩定)","Air":"風(思想/溝通)"}[c1.element];
                     threadMsg += `三張牌的主角皆處於 **${elName}** 元素的能量場域中，這顯示你當前的課題極度聚焦，強烈的單一元素共鳴正在推動事態的極致發展。<br><br>`;
                 }
 
-                // 邏輯 3: 視線與動態引導
                 if (c1.gaze === "right" && c2.gaze === "forward") {
                     threadMsg += "「過去」位置的主角視線向右方(未來)望去，而「現在」的主角正視前方。這暗示你過去的經歷正成為強大的推力，讓你如今能專注面對眼前的挑戰。";
                 } else if (c2.gaze === "center" || c3.gaze === "center") {
@@ -673,7 +686,7 @@
             for(let i=0; i<10; i++) ctx.fillText("SUNSUN TAROT AUTHENTIC", 50, i*120);
             ctx.globalAlpha = 1;
 
-            alert("圖片生成中，請在彈出的視窗長按圖片保存");
+            alert("圖片生成中，請在彈出的視窗長按圖片保存至手機。");
             const dataUrl = canvas.toDataURL("image/png");
             const w = window.open();
             w.document.write(`<img src="${dataUrl}" style="width:100%"/>`);
