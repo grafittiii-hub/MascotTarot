@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>孫孫暉日 Tarot</title>
-    
+    
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
@@ -17,7 +17,6 @@
             --card-h: 125px;
         }
 
-        /* --- 安全防護：禁止所有選擇行為 --- */
         * {
             margin: 0; padding: 0; box-sizing: border-box;
             -webkit-touch-callout: none;
@@ -34,7 +33,6 @@
             display: flex; justify-content: center; align-items: center;
         }
 
-        /* --- Loading Screen + 互動動畫 --- */
         #loading-screen {
             position: fixed; inset: 0; background: var(--bg-color);
             z-index: 3000; display: flex; flex-direction: column;
@@ -62,21 +60,19 @@
         .progress-bar { width: 200px; height: 2px; background: #eee; border-radius: 5px; overflow: hidden; z-index: 10; }
         #progress-fill { width: 0%; height: 100%; background: #ffcc00; transition: width 0.3s; }
 
-        /* --- Home Page --- */
         #main-page {
             width: 90%; max-width: 400px; text-align: center;
             display: none; opacity: 0; transition: 1s; padding-bottom: 20px;
         }
         h1 { font-size: 1.6rem; letter-spacing: 0.4em; margin-bottom: 20px; color: var(--accent-main); }
         .section-label { font-size: 0.75rem; color: #a67c52; text-align: left; margin: 15px 0 5px 10px; font-weight: bold; letter-spacing: 1px; }
-        
+        
         textarea {
             width: 100%; padding: 14px; border: 1px solid #e8e0d0; border-radius: 20px;
             background: rgba(255,255,255,0.7); font-family: inherit; resize: none; outline: none;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
         }
 
-        /* 疊影圓角矩形按鈕 */
         .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .cat-btn {
             position: relative; padding: 10px; background: #fff; border: none; border-radius: 12px;
@@ -101,7 +97,6 @@
         }
         .mode-btn.active { background: #5c4033; color: #fff; border-color: #5c4033; }
 
-        /* --- Spread View --- */
         #spread-view { display: none; width: 100vw; height: 100vh; position: relative; }
         .cards-container { position: absolute; left: -120px; top: 0; width: 100%; height: 100%; }
 
@@ -114,7 +109,7 @@
         }
         .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s; }
         .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px; background-size: cover; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .card-back { background-image: url('photo-output.png'); }
+        .card-back { background-image: url('photo-output.jpg'); }
         .card-front { transform: rotateY(180deg); }
 
         .card-wrapper.selected {
@@ -124,7 +119,6 @@
         .card-wrapper.flipped .card-inner { transform: rotateY(180deg); }
         .card-wrapper.fade-out { opacity: 0; pointer-events: none; transition: 0.6s; }
 
-        /* 右側操作按鈕 */
         #ui-right {
             position: absolute; right: 25px; top: 50%; transform: translateY(-50%);
             display: none; flex-direction: column; align-items: center; gap: 20px;
@@ -138,9 +132,8 @@
         }
         @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 
-        /* --- Result Panel --- */
         #result-panel {
-            position: fixed; bottom: 0; width: 100%; height: 75%;
+            position: fixed; bottom: 0; width: 100%; height: 78%;
             background: #fff; border-radius: 40px 40px 0 0;
             padding: 35px 25px; overflow-y: auto; display: none;
             transform: translateY(100%); transition: 0.8s cubic-bezier(0.2, 1, 0.3, 1);
@@ -151,9 +144,18 @@
 
         .stellar-whisper {
             background: #fffcf0; border-radius: 18px; padding: 20px; margin: 25px 0;
-            font-style: italic; font-size: 0.85rem; color: #b088a8; border: 1px dashed #d4a373;
+            font-size: 0.9rem; color: #b088a8; border: 1px dashed #d4a373;
             line-height: 1.6;
         }
+        .stellar-whisper strong { color: #8e6c88; font-weight: bold; }
+
+        .energy-thread-box {
+            background: linear-gradient(135deg, #fdfbf7, #f6eedf); border-radius: 18px; padding: 22px; 
+            margin: 35px 0; font-size: 0.95rem; color: #5c4033; border: 1px solid #e8e0d0;
+            box-shadow: 0 5px 15px rgba(212, 163, 115, 0.1); line-height: 1.7;
+            animation: slideInRight 0.8s ease forwards;
+        }
+        .energy-thread-box h4 { color: #a67c52; margin-bottom: 12px; letter-spacing: 1px; text-align: center; font-size: 1.1rem; }
 
         .btn-row { display: flex; gap: 12px; margin-top: 30px; }
         .action-btn {
@@ -173,14 +175,14 @@
 
     <div id="loading-screen" onclick="createRipple(event)">
         <div class="loading-glow"></div>
-        <div class="loading-logo">孫孫暉日塔羅</div>
+        <div class="loading-logo">孫孫暉日</div>
         <div class="progress-bar"><div id="progress-fill"></div></div>
         <div id="load-status" style="font-size: 0.7rem; margin-top: 15px; color: #a67c52; letter-spacing: 2px;">連結星象儀中 0%</div>
     </div>
 
     <div id="main-page">
         <h1>孫孫暉日</h1>
-        
+        
         <div class="section-label">寫下你的困惑</div>
         <textarea id="question-input" rows="2" placeholder="在此釐清你的問題..."></textarea>
 
@@ -222,7 +224,7 @@
     <div id="result-panel">
         <div id="result-content"></div>
         <div id="followup-area" style="display:none; margin-top:30px; border-top:1px dashed #eee; padding-top:20px;"></div>
-        
+        
         <div class="btn-row">
             <button class="action-btn" id="btn-followup" onclick="drawSuggestion()">追問建議</button>
             <button class="action-btn" onclick="exportImage()">下載圖片</button>
@@ -233,80 +235,197 @@
     <canvas id="canvas-export" style="display:none;"></canvas>
 
     <script>
-        // 初始化卡牌數據庫
-const tarotData = [];
+        // --- 高精細度卡牌數據庫 (Rider-Waite 邏輯 + 孫孫視覺指引) ---
+        const tarotData = [
+            {
+                id: "card0", name: "愚者", img: "card0.jpg", element: "Air", type: "solo", gaze: "right",
+                upright: {
+                    keywords: ["新開始", "冒險", "隨心所欲", "純真"],
+                    general_meaning: "一段純粹的開始，充滿無限可能與勇氣，不畏懼未知的旅程。",
+                    spread_meanings: { past: "過去的一次大膽決定，將你推向了現在的軌道。", present: "此時此刻，你需要放下包袱，勇敢踏出舒適圈。", future: "前方有一段意想不到的旅程正等待著你。", my_view: "你對這段關係抱持著開放、不設限的態度。", their_view: "對方覺得你充滿新鮮感，但也有些難以掌握。", current_status: "關係處於輕鬆的探索階段，沒有太多的壓力與承諾。" },
+                    advice: "跟隨你的直覺，帶著純粹的信任躍入未知。"
+                },
+                reversed: {
+                    keywords: ["魯莽", "停滯", "逃避責任", "輕信"],
+                    general_meaning: "可能過於衝動，或是因為恐懼未知而不敢前進。",
+                    spread_meanings: { past: "過去的某次輕率決定，留下了需要處理的後遺症。", present: "你可能正在逃避某些必須面對的現實責任。", future: "如果不稍加計畫，未來的路徑可能會充滿不必要的風險。", my_view: "你對這段關係的未來感到迷惘，缺乏安全感。", their_view: "對方可能認為你對感情不夠成熟或缺乏擔當。", current_status: "雙方步調不一致，容易產生不切實際的期待。" },
+                    advice: "在躍下懸崖前，請先看清腳下的落腳點與現實。"
+                },
+                mascot_details: [{ feature: "輕裝的綠衣孫孫與小白狗", meaning: "畫中穿著綠色星星連身裝的主角毫無防備地走向崖邊，腳步輕盈且視線向右方（未來）望去；身旁的小白狗象徵著直覺的守護與警告，提醒你在自由奔放之餘，仍需留意當下的環境。" }]
+            },
+            {
+                id: "card1", name: "魔術師", img: "card1.jpg", element: "Air", type: "solo", gaze: "forward",
+                upright: {
+                    keywords: ["創造力", "意志", "資源具備", "顯化"],
+                    general_meaning: "你具備將願景轉化為現實的意志力，所有的資源已在你手中。",
+                    spread_meanings: { past: "你過去所學習的技能與資源，如今成為了你的力量。", present: "現在正是採取行動、發揮影響力的最佳時機。", future: "你將能夠掌控局勢，將理想化為現實。", my_view: "你覺得自己能引導這段關係的發展。", their_view: "對方被你的才華與自信所吸引，覺得你充滿魅力。", current_status: "雙方溝通順暢，能夠共同創造美好的體驗。" },
+                    advice: "善用你手邊的工具，自信地展現你的能力。"
+                },
+                reversed: {
+                    keywords: ["操縱", "潛能未展", "缺乏計畫", "溝通不良"],
+                    general_meaning: "雖然擁有才能，但可能因為缺乏專注或別有用心而無法發揮。",
+                    spread_meanings: { past: "過去可能錯失了展現才華的機會，或曾被不實的表象迷惑。", present: "目前感到力不從心，無法有效整合手邊的資源。", future: "當心未來的計畫可能因為執行不力而落空。", my_view: "你可能在關係中過度包裝自己，或試圖操控對方。", their_view: "對方覺得你有些油腔滑調，或缺乏真誠。", current_status: "關係中存在溝通障礙或資訊不對等的問題。" },
+                    advice: "誠實面對自己的意圖，並將精力集中在單一目標上。"
+                },
+                mascot_details: [{ feature: "魔術帽中的黑兔孫孫與四元素", meaning: "畫中的黑兔主角在魔術帽中俏皮地揮舞魔杖，上方懸浮著無限大符號；桌面上備齊了聖杯、星幣、寶劍，這顯示你已具備所有「四大元素」的潛能，只待你用意志力將其統合與顯化。" }]
+            },
+            {
+                id: "card2", name: "女教皇", img: "card2.jpg", element: "Water", type: "solo", gaze: "forward",
+                upright: {
+                    keywords: ["直覺", "潛意識", "靜默", "內在智慧"],
+                    general_meaning: "內在的直覺正引導著你，此時適合靜默冥想，聆聽潛意識的聲音。",
+                    spread_meanings: { past: "過去的一段沉潛期，培養了你敏銳的洞察力。", present: "目前你需要退一步，用直覺去感受表面下的真相。", future: "未來會有隱藏的訊息浮現，請相信你的第六感。", my_view: "你對這段關係有著深刻但難以言喻的感受。", their_view: "對方覺得你神祕、有深度，但也有些難以親近。", current_status: "關係處於一種靜謐、精神交流大於言語的狀態。" },
+                    advice: "答案不在外界，請向內尋求你靈魂的指引。"
+                },
+                reversed: {
+                    keywords: ["忽視直覺", "表面化", "情緒壓抑", "隱藏的秘密"],
+                    general_meaning: "可能過於依賴理性而忽略了內心的警告，或有未知的秘密影響著局勢。",
+                    spread_meanings: { past: "過去曾因為忽視直覺而做出了錯誤的判斷。", present: "你正處於情緒壓抑中，無法看清自己的真實需求。", future: "隱藏的問題可能即將爆發，需小心應對。", my_view: "你對這段關係感到不安，覺得對方有所隱瞞。", their_view: "對方覺得你情緒起伏不定，或過於封閉自我。", current_status: "表面平靜，但暗地裡潛藏著未解的心結與猜疑。" },
+                    advice: "靜下心來，誠實面對你一直不願承認的感受。"
+                },
+                mascot_details: [{ feature: "端坐雙柱間的熊貓孫孫與新月", meaning: "熊貓主角身穿藍色星月法袍，安穩地坐在黑白雙柱（B與J，象徵二元對立）之間；頭頂的新月與背後的水波，指引你必須在黑白、對錯之外，尋找潛意識深處的寧靜智慧。" }]
+            },
+            {
+                id: "card3", name: "女皇", img: "card3.jpg", element: "Earth", type: "solo", gaze: "forward",
+                upright: {
+                    keywords: ["豐盛", "母性", "滋養", "感官享受"],
+                    general_meaning: "豐盛、母性與生命力的湧現，代表著物質與情感的悉心滋養。",
+                    spread_meanings: { past: "過去的悉心照料與耕耘，為你帶來了現在的富足。", present: "此時是充滿創造力與愛護能量的豐收期。", future: "未來將迎來物質與情感雙豐收的美好階段。", my_view: "你願意毫無保留地給予這段關係愛與照顧。", their_view: "對方覺得你充滿溫暖與包容，極具吸引力。", current_status: "關係充滿了愛、關懷與舒適的物質享受。" },
+                    advice: "擁抱大自然與感官的美好，慷慨地分享你的愛。"
+                },
+                reversed: {
+                    keywords: ["過度溺愛", "匱乏", "創造力受阻", "依賴"],
+                    general_meaning: "可能出現過度保護、物質匱乏或無法感受到生活樂趣的狀況。",
+                    spread_meanings: { past: "過去的過度放縱或溺愛，導致了現在的失衡。", present: "目前感到情感或創作能量枯竭，無法給予或接收愛。", future: "可能面臨物質上的小短缺，或關係中的過度依賴。", my_view: "你在關係中感到窒息，或覺得付出沒有得到回報。", their_view: "對方可能覺得你控制慾太強，或過於情緒化。", current_status: "關係中出現了不對等的依賴，缺乏獨立的空間。" },
+                    advice: "先學會滋養自己，再將愛給予他人。"
+                },
+                mascot_details: [{ feature: "戴橘色帽的白貓孫孫與南瓜小麥", meaning: "畫中的白貓主角慵懶且安心地坐在紅色寶座上，周圍環繞著南瓜與小麥。這些作物強烈暗示著大地母親般的孕育與豐收，提醒你放慢腳步，享受當下物質與情感的富足。" }]
+            },
+            {
+                id: "card4", name: "皇帝", img: "card4.jpg", element: "Fire", type: "solo", gaze: "forward",
+                upright: {
+                    keywords: ["權威", "秩序", "結構", "父親形象"],
+                    general_meaning: "結構、權威與掌控，這是建立秩序並以理性引領局勢的時刻。",
+                    spread_meanings: { past: "過去嚴格的紀律與規範，塑造了你現在的穩固基礎。", present: "目前你需要展現領導力，用理智與邏輯來解決問題。", future: "透過持續的努力與組織，你將獲得實質的掌控權。", my_view: "你在這段關係中傾向於扮演保護者與引導者的角色。", their_view: "對方視你為可靠的依靠，但有時覺得你過於強勢。", current_status: "關係穩定且具有清晰的界線與未來規劃。" },
+                    advice: "建立清晰的規則與界線，勇敢承擔起領導的責任。"
+                },
+                reversed: {
+                    keywords: ["專制", "僵化", "缺乏自律", "濫用權力"],
+                    general_meaning: "可能過於固執、控制慾過強，或是完全缺乏紀律與責任感。",
+                    spread_meanings: { past: "過去曾受制於嚴苛的權威，或因缺乏自律而導致失敗。", present: "你可能表現得過於專橫，讓人感到壓迫。", future: "若不改變僵化的思維，未來將面臨結構的崩解。", my_view: "你試圖強硬控制這段關係，導致了雙方的緊張。", their_view: "對方覺得你不可理喻、冷酷無情。", current_status: "關係中出現了權力鬥爭，缺乏柔軟與同理心。" },
+                    advice: "放下無謂的控制慾，學習剛柔並濟的領導藝術。"
+                },
+                mascot_details: [{ feature: "戴皇冠的企鵝孫孫與腳下的籃球", meaning: "企鵝主角身披紅袍，端坐在飾有公羊頭（象徵白羊座的開創與火元素）的石座上。特別的是腳下的籃球，它暗示著即使擁有至高的世俗權威與秩序，仍需要具備如同球體般靈活應變的手腕。" }]
+            },
+            {
+                id: "card5", name: "教皇", img: "card5.jpg", element: "Earth", type: "solo", gaze: "forward",
+                upright: {
+                    keywords: ["信仰", "傳統", "教育", "精神指引"],
+                    general_meaning: "尋求傳統智慧或靈性的指引，在這個階段，共識與信仰至關重要。",
+                    spread_meanings: { past: "過去所受的傳統教育或宗教信仰，深深影響著你。", present: "現在你需要遵循既定的規則，或尋求專業長輩的建議。", future: "你將會加入某個群體，或找到心靈的歸屬與導師。", my_view: "你非常看重這段關係的傳統價值（如婚姻、承諾）。", their_view: "對方覺得你值得尊敬，是個可以信賴的伴侶。", current_status: "關係受到傳統價值觀念的保護，發展穩定而正派。" },
+                    advice: "遵循已驗證的傳統路徑，從體制與群體中獲取力量。"
+                },
+                reversed: {
+                    keywords: ["盲從", "打破常規", "權威挑戰", "非正統"],
+                    general_meaning: "可能對傳統感到束縛，渴望打破教條，或遭遇了虛偽的心靈導師。",
+                    spread_meanings: { past: "過去曾反抗過權威或體制，留下了叛逆的印記。", present: "你正質疑現有的價值觀，試圖走出自己的路。", future: "未來可能會面臨傳統與創新的衝突。", my_view: "你覺得這段關係過於沉悶，渴望打破傳統的框架。", their_view: "對方可能覺得你的想法過於驚世駭俗或難以理解。", current_status: "雙方在價值觀或信仰上產生了分歧，需要重新磨合。" },
+                    advice: "在打破規則之前，先確認你已真正理解它的意義。"
+                },
+                mascot_details: [{ feature: "雙色法袍的孫孫與黑白雙貓信徒", meaning: "畫中主角身穿對稱的橘黑雙色法袍，手持三重十字杖，下方有兩隻黑白貓咪如同信徒般仰望。這象徵著透過教育與信仰將二元對立整合，指引你在此時應尋求群體共識與傳統智慧的庇護。" }]
+            },
+            {
+                id: "card6", name: "戀人", img: "card6.jpg", element: "Air", type: "group", gaze: "center",
+                upright: {
+                    keywords: ["結合", "選擇", "愛情", "價值觀契合"],
+                    general_meaning: "面臨選擇的時刻，唯有跟隨內心的價值觀，方能達成情感或目標的完美契合。",
+                    spread_meanings: { past: "過去的一次重要抉擇，或是某段深刻的關係，奠定了現在的你。", present: "你正面臨一個需要用「心」去決定的選擇。", future: "即將迎來一段和諧的合作關係或美好的愛情。", my_view: "你覺得對方就是你的靈魂伴侶，彼此完美互補。", their_view: "對方深深被你吸引，認為這是一段命中注定的相遇。", current_status: "關係充滿了熱情、浪漫與高度的精神共鳴。" },
+                    advice: "做決定時，請忠於你內心最真實的渴望與愛。"
+                },
+                reversed: {
+                    keywords: ["分離", "錯誤選擇", "價值觀衝突", "不和諧"],
+                    general_meaning: "可能做出了違背內心的選擇，或在關係中出現了無法調和的矛盾。",
+                    spread_meanings: { past: "過去的錯誤選擇或逝去的戀情，仍讓你感到遺憾。", present: "你正處於進退兩難的困境，內外價值觀產生衝突。", future: "合作可能破裂，或關係面臨嚴峻的考驗。", my_view: "你開始懷疑雙方是否真的適合，感覺漸行漸遠。", their_view: "對方覺得你搖擺不定，無法給予明確的承諾。", current_status: "雙方存在溝通不良或價值觀的根本分歧。" },
+                    advice: "重新審視你的選擇，不要為了一時的誘惑而妥協。"
+                },
+                mascot_details: [{ feature: "牽手的主角與上方的天使柴犬", meaning: "畫面中一黑一白、代表天秤與天蠍特質（頭上的角與火焰）的主角緊緊牽手，上方的天使柴犬見證了這份純粹的連結。這強烈指示著：比起理性的分析，現在更需要憑藉「心的共鳴」來做出重大抉擇。" }]
+            },
+            {
+                id: "card19", name: "太陽", img: "card19.jpg", element: "Fire", type: "solo", gaze: "forward",
+                upright: {
+                    keywords: ["成功", "活力", "喜悅", "真相"],
+                    general_meaning: "這是一個充滿光明的時刻，所有的陰霾都將散去，萬事如意。",
+                    spread_meanings: { past: "過去的努力奠定了現在穩固且充滿光明的基礎。", present: "現在是你綻放光芒、展現真實自我的最佳時機。", future: "未來將迎來令人欣喜的成果與純粹的快樂。", my_view: "你對這段關係充滿信心與熱情。", their_view: "對方視你為生命中的陽光，感到溫暖無比。", current_status: "雙方坦誠相待，關係正處於充滿活力的升溫期。" },
+                    advice: "保持樂觀的心態，像孩子般單純地享受當下的陽光。"
+                },
+                reversed: {
+                    keywords: ["遲延", "短暫陰影", "過度自信", "活力不足"],
+                    general_meaning: "雖然陽光還在，但可能被雲層暫時遮擋，或你對自己缺乏信心。",
+                    spread_meanings: { past: "過去曾有過度樂觀而忽略細節的情況。", present: "目前感到有些疲倦，需要重新找回內在的動力。", future: "成功的到來可能比預期晚一點，需耐心等待。", my_view: "你開始懷疑這段關係是否如表面般美好。", their_view: "對方可能覺得你最近有些情緒化或難以捉摸。", current_status: "溝通出現小隔閡，需要多一點體諒與包容。" },
+                    advice: "烏雲只是暫時的，找回你內在純真的力量再出發。"
+                },
+                mascot_details: [{ feature: "陽光下的向日葵與孩童特質", meaning: "雖然主角被花瓣包裹，但其本質如孩童般純粹，身後的向日葵永遠朝向光明。這提醒你，放下成人的複雜算計，用最本真的面貌去迎接屬於你的成功。" }]
+            },
+            {
+                id: "card22", name: "聖杯三", img: "3 of Cups.jpg", element: "Water", type: "group", gaze: "center",
+                upright: {
+                    keywords: ["慶祝", "友誼", "共鳴", "群體歡愉"],
+                    general_meaning: "慶祝情感的連結與友誼，這是群體共享喜悅與支持的時刻。",
+                    spread_meanings: { past: "過去良好的人際互動為你帶來了現在的力量。", present: "現在是與親友相聚，分享喜悅的最佳時機。", future: "即將迎來值得慶祝的事件或融洽的團隊合作。", my_view: "你非常享受與對方在一起時的輕鬆愉快。", their_view: "對方將你視為極佳的陪伴者，相處無壓力。", current_status: "周遭充滿和諧的氛圍，可能會有共同的朋友圈交集。" },
+                    advice: "敞開心扉，接納來自周遭的善意與陪伴，與群體同樂。"
+                },
+                reversed: {
+                    keywords: ["過度放縱", "人際疏離", "八卦流言", "三人行"],
+                    general_meaning: "可能因為過度沉溺於社交而忽略了內在，或群體中出現了不和諧的聲音。",
+                    spread_meanings: { past: "過去可能因為人際關係的糾紛而消耗了心神。", present: "目前感到在人群中有些孤立，或社交活動讓你感到疲憊。", future: "需留意未來可能出現的小團體排擠或流言蜚語。", my_view: "你覺得這段關係缺乏深度，僅停留在表面吃喝玩樂。", their_view: "對方可能覺得感情被外界或朋友過度干涉。", current_status: "關係中可能牽扯了第三方，導致焦點模糊與不安。" },
+                    advice: "將注意力拉回自己身上，重質不重量地經營人際關係。"
+                },
+                mascot_details: [{ feature: "橘貓、兔子與熊貓孫孫的舉杯同慶", meaning: "畫中三位不同種族的主角在星芒魔法陣上舉起金杯相互碰撞。這幅畫面強烈傳達了「情感共鳴」與「包容多元」的能量，指引你去尋找能讓你安心分享喜悅的靈魂伴侶或社群。" }]
+            },
+            {
+                id: "card23", name: "權杖四", img: "4 of Wands.jpg", element: "Fire", type: "group", gaze: "center",
+                upright: {
+                    keywords: ["穩定", "歡慶", "歸屬感", "里程碑"],
+                    general_meaning: "穩定的關係與和諧的環境，這是建立避風港並為當前成就歡慶的里程碑。",
+                    spread_meanings: { past: "過去建立的穩固基礎，讓你現在感到安心。", present: "目前正處於一個安全且值得慶祝的階段。", future: "即將步入一段穩定、和諧的發展期，可能是成家或立業。", my_view: "你認為這是一段可以長久發展，給予你歸屬感的關係。", their_view: "對方覺得與你在一起非常有家的感覺，踏實且溫暖。", current_status: "關係穩固，可能正在計畫同居、見家長等進一步的發展。" },
+                    advice: "享受當下的安穩，與重要的人分享你辛勤建設的成果。"
+                },
+                reversed: {
+                    keywords: ["短暫動盪", "歸屬感缺失", "基礎不穩", "延遲的慶祝"],
+                    general_meaning: "雖然整體架構還在，但內部可能出現了一些小摩擦或不安定的感覺。",
+                    spread_meanings: { past: "過去的基礎不夠扎實，導致現在需要重新修補。", present: "目前對於身處的環境或關係缺乏安全感與歸屬感。", future: "預期的穩定狀態可能會延遲，需要更多時間磨合。", my_view: "你對於這段關係的未來感到一絲動搖，覺得似乎少了點什麼。", their_view: "對方可能覺得目前的狀態過於僵化，渴望一些改變。", current_status: "表面上看似平靜，但私下需要重新對焦彼此的價值觀與生活步調。" },
+                    advice: "回到原點，檢視是什麼破壞了你的內在平靜與安全感。"
+                },
+                mascot_details: [{ feature: "花環下演奏的惡魔與藍熊孫孫", meaning: "畫面中，帶著耳機的藍熊與彈奏吉他的惡魔主角，在花草搭建的四柱拱門下快樂舞動，後方還有花朵精靈。這象徵著跨越差異的和平與庇護所的建立，提醒你成就感來自於當下穩定的心境。" }]
+            }
+        ];
 
-// 1. 自動推播 22 張大阿卡納 (0-21)
-const majorArcanaNames = [
-    "愚者", "魔術師", "女教皇", "女皇", "皇帝", "教皇", 
-    "戀人", "戰車", "力量", "隱士", "命運之輪", "正義", 
-    "倒吊人", "死神", "節制", "惡魔", "高塔", "星星", 
-    "月亮", "太陽", "審判", "世界"
-];
+        // 補齊剩餘未上傳的牌 (保持代碼完整性)
+        const definedIds = [0, 1, 2, 3, 4, 5, 6, 19, 22, 23];
+        for(let i=1; i<=21; i++) {
+            if(!definedIds.includes(i)) {
+                tarotData.push({
+                    id: `card${i}`, name: `大阿卡納 ${i}`, img: `card${i}.jpg`, element: "Unknown", type: "solo", gaze: "forward",
+                    upright: {
+                        keywords: ["能量流動", "進展"], general_meaning: "能量順暢運作，顯示著正面的推進力。",
+                        spread_meanings: { past: "過去的積累", present: "現在的展現", future: "未來的發展", my_view: "你的善意", their_view: "對方的接納", current_status: "關係平穩" },
+                        advice: "順勢而為。"
+                    },
+                    reversed: {
+                        keywords: ["能量內化", "阻力"], general_meaning: "能量出現阻滯或需要向內反省。",
+                        spread_meanings: { past: "過去的遺憾", present: "當前的阻力", future: "未來的挑戰", my_view: "你的遲疑", their_view: "對方的防備", current_status: "需要溝通" },
+                        advice: "停下腳步審視內心。"
+                    },
+                    mascot_details: [{ feature: "畫中元素", meaning: "這張牌的畫中指引正在等待宇宙進一步解碼..." }]
+                });
+            }
+        }
 
-const majorArcanaMsgs = [
-    "一段純粹的開始，充滿無限可能與勇氣，不畏懼未知的旅程。",
-    "你具備將願景轉化為現實的意志力，所有的資源已在你手中。",
-    "內在的直覺正引導著你，此時適合靜默冥想，聆聽潛意識的聲音。",
-    "豐盛、母性與生命力的湧現，代表著物質與情感的悉心滋養。",
-    "結構、權威與掌控，這是建立秩序並以理性引領局勢的時刻。",
-    "尋求傳統智慧或靈性的指引，在這個階段，共識與信仰至關重要。",
-    "面臨選擇的時刻，唯有跟隨內心的價值觀，方能達成情感的契合。",
-    "意志力的勝利，請保持專注與自律，衝破眼前的重重障礙。",
-    "溫柔的力量能克服最狂野的恐懼，這是內在勇氣與韌性的展現。",
-    "暫時從外界抽離，在孤獨與自省中，尋找真正屬於你的光點。",
-    "命運的轉輪正在轉動，接受不可控的變化，這也是轉運的契機。",
-    "因果律的平衡，誠實面對自己與他人，客觀的判斷將帶來公正結果。",
-    "換一個角度看世界，有時有意的停滯與犧牲，是為了更大的覺醒。",
-    "舊有的模式即將終結，唯有徹底的放下，才能迎來新生的黎明。",
-    "在對立中尋求平衡與煉金般的融合，耐心是轉化能量的關鍵。",
-    "警惕物質與慾望的枷鎖，這張牌提醒你覺察內心的暗影與依附。",
-    "突如其來的劇變將摧毀脆弱的假象，崩塌是為了重建更穩固的根基。",
-    "在黑暗過後看見希望之光，這是心靈療癒與宇宙祝福的時刻。",
-    "進入潛意識的迷霧，恐懼與幻象並存，請信任直覺而非表象。",
-    "純粹的喜悅、成功與陽光照耀，所有的真相與榮耀都將顯現。",
-    "靈魂的召喚，過去的經驗正在整合，這是一個重生與覺醒的時刻。",
-    "旅程的完滿，你已達成階段性的圓滿，與宇宙的能量和諧共振。"
-];
-
-// 執行 Major Arcana 推播
-majorArcanaNames.forEach((name, i) => {
-    tarotData.push({
-        id: i,
-        name: name,
-        img: `card${i}.png`, // 對應 card0.jpg 到 card21.jpg
-        msg: majorArcanaMsgs[i]
-    });
-});
-
-// 2. 推播指定的 小阿卡納 (Minor Arcana) 以補足 24 張牌
-// 聖杯三 (3 of Cups)
-tarotData.push({
-    id: 22,
-    name: "聖杯三",
-    img: "3 of Cups.png",
-    msg: "慶祝情感的連結與友誼，這是群體共享喜悅、共鳴與支持的時刻。"
-});
-
-// 權杖四 (4 of Wands)
-tarotData.push({
-    id: 23,
-    name: "權杖四",
-    img: "4 of Wands.png",
-    msg: "穩定的關係與和諧的環境，這是建立避風港並為當前成就歡慶的里程碑。"
-});
-
-// 打亂牌堆供抽選
-remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
-
-        
         let currentCat = '';
         let currentMode = 'single';
         let selectedWrappers = [];
         let remainingCards = [];
         let finalSelection = [];
 
-        // --- 2. Loading 互動與圖片預載 ---
         function createRipple(e) {
             const ripple = document.createElement("div");
             ripple.className = "ripple";
@@ -343,7 +462,6 @@ remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
             }, 1000);
         }
 
-        // --- 3. 首頁邏輯 ---
         function setCat(btn, cat) {
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -363,7 +481,6 @@ remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
             setTimeout(renderFanSpread, 800);
         }
 
-        // --- 4. 24張左側垂直扇形掃開 ---
         function renderFanSpread() {
             document.getElementById('main-page').style.display = 'none';
             document.getElementById('spread-view').style.display = 'block';
@@ -378,12 +495,10 @@ remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
                 container.appendChild(w);
             }
 
-            // 觸發掃開動畫
             setTimeout(() => {
                 const cards = document.querySelectorAll('.card-wrapper');
                 cards.forEach((card, i) => {
-                    // 從左上 (-75度) 往左下 (75度)
-                    const angle = -75 + (i * 6.52); 
+                    const angle = -75 + (i * 6.52); 
                     const radius = window.innerWidth * 0.82;
                     card.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(${radius}px)`;
                     card.onclick = () => handleSelect(card, i);
@@ -404,7 +519,6 @@ remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
             document.getElementById('selection-tip').innerText = `已選 ${selectedWrappers.length} / ${limit} 張`;
         }
 
-        // --- 5. 翻牌與分層解讀 ---
         async function confirmCards() {
             document.getElementById('ui-right').style.display = 'none';
             document.querySelectorAll('.card-wrapper').forEach(w => {
@@ -417,15 +531,13 @@ remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
                 const idx = Array.from(el.parentNode.children).indexOf(el);
                 finalSelection.push({ ...remainingCards[idx], isRev });
 
-                // 移動到正中央準備翻牌
                 el.style.transform = `translate(calc(50vw - 40px), calc(-50% + ${(i-1)*70}px)) scale(1.6) rotate(0deg)`;
                 if(isRev) el.style.transform += ` rotateZ(180deg)`;
-                
+                
                 await new Promise(r => setTimeout(r, 600));
                 el.classList.add('flipped');
             }
 
-            // 更新剩餘牌堆（24 - 已抽張數）供追問
             const chosenIdxs = selectedWrappers.map(el => Array.from(el.parentNode.children).indexOf(el));
             remainingCards = remainingCards.filter((_, idx) => !chosenIdxs.includes(idx));
 
@@ -438,25 +550,85 @@ remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
             const isRelMode = document.getElementById('relation-check').checked;
 
             let html = `<h2 style="color:var(--accent-main); letter-spacing:3px;">「${currentCat}」啟示</h2>`;
-            html += `<p style="font-size:0.8rem; color:#999; margin:10px 0 25px;">問題：${document.getElementById('question-input').value || "隨喜占卜"}</p>`;
+            html += `<p style="font-size:0.8rem; color:#999; margin:10px 0 25px;">問題：${document.getElementById('question-input').value || "隨心解讀"}</p>`;
 
-            // 牌陣標籤邏輯
-            const labelsStd = ["過去", "現在", "未來"];
-            const labelsRel = ["我的看法", "對方的看法", "現況結果"];
-            const activeLabels = (currentMode === 'triple' && isRelMode) ? labelsRel : labelsStd;
+            const spreadConfig = (currentMode === 'triple' && isRelMode) 
+                ? [ { label: "我的看法", key: "my_view" }, { label: "對方的看法", key: "their_view" }, { label: "現況結果", key: "current_status" } ]
+                : [ { label: "過去", key: "past" }, { label: "現在", key: "present" }, { label: "未來", key: "future" } ];
 
             finalSelection.forEach((res, i) => {
-                const tag = currentMode === 'single' ? "核心建議" : activeLabels[i];
+                const stateData = res.isRev ? res.reversed : res.upright;
+                const positionLabel = currentMode === 'single' ? "核心指引" : spreadConfig[i].label;
+                
+                let specificMeaning = stateData.general_meaning;
+                if(currentMode === 'triple') {
+                    specificMeaning = stateData.spread_meanings[spreadConfig[i].key];
+                }
+
+                let mascotHtml = "";
+                if(res.mascot_details && res.mascot_details.length > 0) {
+                    const mascot = res.mascot_details[0];
+                    mascotHtml = `
+                    <div class="stellar-whisper">
+                        <strong>【畫中指引：${mascot.feature}】</strong><br>
+                        ${mascot.meaning}
+                    </div>`;
+                }
+
                 html += `
-                    <div style="margin-bottom:25px; animation: slideInRight 0.5s ease forwards;">
-                        <strong style="color:var(--accent-main); font-size:1rem;">${tag}：${res.name} ${res.isRev?'(逆位)':'(正位)'}</strong>
-                        <p style="margin-top:8px; line-height:1.7; font-size:0.95rem;">${res.msg}</p>
+                    <div style="margin-bottom:30px; border-bottom: 1px solid #f0e6d2; padding-bottom: 20px; animation: slideInRight 0.5s ease forwards;">
+                        <h3 style="color:var(--accent-main); font-size:1.1rem; margin-bottom: 10px;">
+                            ${positionLabel}：${res.name} ${res.isRev ? '(逆位)' : '(正位)'}
+                        </h3>
+                        <p style="font-size: 0.8rem; color: #a67c52; margin-bottom: 8px;">
+                            關鍵詞：${stateData.keywords.join(" / ")}
+                        </p>
+                        <p style="line-height:1.7; font-size:0.95rem; margin-bottom: 10px; color: #4a3628;">
+                            ${specificMeaning}
+                        </p>
+                        <p style="line-height:1.6; font-size:0.9rem; color: #6e5c53;">
+                            <strong>牌面箴言：</strong>${stateData.advice}
+                        </p>
+                        ${mascotHtml}
                     </div>
                 `;
             });
 
-            if(Math.random() < 0.4) {
-                html += `<div class="stellar-whisper"><strong>星靈私語：</strong> 宇宙正關注著你的選擇。當前牌面流動著一股不尋常的平靜，這代表你所擔心的事情，或許已有轉機。</div>`;
+            // --- The Energy Threading (三牌陣 Mascot 共鳴邏輯) ---
+            if(currentMode === 'triple') {
+                let threadMsg = "";
+                const c1 = finalSelection[0];
+                const c2 = finalSelection[1];
+                const c3 = finalSelection[2];
+
+                // 邏輯 1: 群體與個體的演變
+                if (c1.type === "solo" && c3.type === "group") {
+                    threadMsg += "觀看牌面主角的變化，這是一段從「個體探索」走向「群體共鳴」的旅程，宇宙正引導你打開心房，接納他人的力量。<br><br>";
+                } else if (c1.type === "group" && c3.type === "solo") {
+                    threadMsg += "從牌面動態來看，能量正從熱鬧的群體收斂回歸到你個人的本心。此時的你，需要更多的獨處與沉澱。<br><br>";
+                }
+
+                // 邏輯 2: 元素共鳴
+                if (c1.element === c2.element && c2.element === c3.element && c1.element !== "Unknown") {
+                    const elName = {"Fire":"火(行動/熱情)","Water":"水(情感/潛意識)","Earth":"土(物質/穩定)","Air":"風(思想/溝通)"}[c1.element];
+                    threadMsg += `三張牌的主角皆處於 **${elName}** 元素的能量場域中，這顯示你當前的課題極度聚焦，強烈的單一元素共鳴正在推動事態的極致發展。<br><br>`;
+                }
+
+                // 邏輯 3: 視線與動態引導
+                if (c1.gaze === "right" && c2.gaze === "forward") {
+                    threadMsg += "「過去」位置的主角視線向右方(未來)望去，而「現在」的主角正視前方。這暗示你過去的經歷正成為強大的推力，讓你如今能專注面對眼前的挑戰。";
+                } else if (c2.gaze === "center" || c3.gaze === "center") {
+                    threadMsg += "牌陣中出現了強烈的「互動與中心聚焦」特質，這提醒你，無論外在環境如何變化，關係中的連結與溝通將是破局的關鍵。";
+                } else {
+                    threadMsg += "畫中主角們各自處於穩定的狀態，這股平緩的能量流提醒你，以不變應萬變，是現階段最佳的策略。";
+                }
+
+                html += `
+                <div class="energy-thread-box">
+                    <h4>✦ 牌陣能量共鳴 ✦</h4>
+                    <p>${threadMsg}</p>
+                </div>
+                `;
             }
 
             content.innerHTML = html;
@@ -464,43 +636,44 @@ remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
             setTimeout(() => panel.classList.add('active'), 100);
         }
 
-        // --- 6. 追問邏輯 ---
         function drawSuggestion() {
             if(remainingCards.length === 0) return;
             document.getElementById('btn-followup').disabled = true;
             document.getElementById('btn-followup').style.opacity = '0.5';
 
             const card = remainingCards[Math.floor(Math.random()*remainingCards.length)];
+            const stateData = card.upright;
+
             const area = document.getElementById('followup-area');
             area.style.display = 'block';
             area.innerHTML = `
                 <h4 style="margin-bottom:15px; color:#d4a373;">追問建議 (由剩下的 ${remainingCards.length} 張中抽出)</h4>
                 <div style="display:flex; gap:15px; align-items:flex-start;">
                     <div style="width:60px; height:100px; background-image:url('${card.img}'); background-size:cover; border-radius:8px; flex-shrink:0; box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
-                    <div style="font-size:0.9rem; line-height:1.6;">
-                        <strong>${card.name}</strong><br>額外的啟示提醒你：${card.msg.substring(0, 30)}... 
+                    <div style="font-size:0.9rem; line-height:1.6; color: #4a3628;">
+                        <strong>${card.name}</strong><br>
+                        ${stateData.general_meaning}<br>
+                        <span style="color: #a67c52;">箴言：${stateData.advice}</span>
                     </div>
                 </div>
             `;
             finalSelection.push({ ...card, isRev: false, isFollowup: true });
         }
 
-        // --- 7. 下達與防盜 ---
         function exportImage() {
             const canvas = document.getElementById('canvas-export');
             const ctx = canvas.getContext('2d');
             canvas.width = 600; canvas.height = 1100;
-            
+            
             ctx.fillStyle = "#fffaf5"; ctx.fillRect(0,0,600,1100);
             ctx.fillStyle = "#d4a373"; ctx.font = "bold 34px 'Noto Serif TC'"; ctx.fillText("孫孫暉日 Tarot 解讀報告", 50, 80);
-            
-            // 繪製水印防盜
+            
             ctx.globalAlpha = 0.05;
             ctx.fillStyle = "#000";
-            for(let i=0; i<10; i++) ctx.fillText("SUNSUN MASCOT TAROT URU", 50, i*120);
+            for(let i=0; i<10; i++) ctx.fillText("SUNSUN TAROT AUTHENTIC", 50, i*120);
             ctx.globalAlpha = 1;
 
-            alert("圖片生成中，請在彈出的視窗長按圖片保存至手機。");
+            alert("圖片生成中，請在彈出的視窗長按圖片保存");
             const dataUrl = canvas.toDataURL("image/png");
             const w = window.open();
             w.document.write(`<img src="${dataUrl}" style="width:100%"/>`);
