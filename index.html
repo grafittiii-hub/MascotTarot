@@ -3,176 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>孫孫暉日 Tarot - Pro</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>孫孫暉日 Tarot</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --bg-color: #fffaf5;
             --accent-main: #d4a373;
-            --accent-glow: rgba(255, 204, 0, 0.4);
             --text-dark: #5c4033;
-            --card-w: 75px;
-            --card-h: 125px;
+            --card-w: 80px;
+            --card-h: 135px;
         }
 
-        /* 全局字體與清晰度優化 */
+        /* 安全防護：全站禁止選擇 */
         * {
             margin: 0; padding: 0; box-sizing: border-box;
-            font-family: 'Noto Serif TC', serif !important;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            line-height: 1.6;
-            letter-spacing: 0.05em;
+            -webkit-touch-callout: none; -webkit-user-select: none;
+            user-select: none; -webkit-tap-highlight-color: transparent;
         }
 
         body {
+            font-family: 'Noto Serif TC', serif;
             background: var(--bg-color);
             color: var(--text-dark);
             height: 100vh; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
         }
 
-        /* Loading Page */
+        /* Loading Screen */
         #loading-screen {
             position: fixed; inset: 0; background: var(--bg-color);
-            z-index: 3000; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; transition: opacity 1s ease;
+            z-index: 2000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; transition: opacity 0.8s;
         }
-        .loading-logo { letter-spacing: 12px; font-weight: bold; font-size: 1.5rem; z-index: 10; margin-bottom: 20px; color: #a67c52; }
-        .progress-bar { width: 200px; height: 3px; background: #eee; border-radius: 5px; overflow: hidden; z-index: 10; }
-        #progress-fill { width: 0%; height: 100%; background: var(--accent-main); transition: width 0.3s; }
+        .progress-bar { width: 180px; height: 3px; background: #eee; margin-top: 20px; border-radius: 5px; overflow: hidden; }
+        #progress-fill { width: 0%; height: 100%; background: #ffcc00; transition: width 0.3s; }
 
-        /* Main Page */
+        /* Home Page */
         #main-page {
             width: 92%; max-width: 420px; text-align: center;
-            display: none; opacity: 0; transition: 0.8s; padding: 20px;
+            display: none; opacity: 0; transition: 1s;
         }
-        h1 { font-size: 1.8rem; letter-spacing: 0.4em; margin-bottom: 25px; color: var(--accent-main); font-weight: 700; }
-        .section-label { font-size: 0.85rem; color: #a67c52; text-align: left; margin: 15px 0 8px 10px; font-weight: 700; }
-        
+        h1 { font-size: 1.8rem; letter-spacing: 0.3em; margin-bottom: 25px; color: var(--accent-main); }
+        .section-label { font-size: 0.8rem; color: #a67c52; text-align: left; margin: 15px 0 5px 10px; font-weight: bold; }
+        
         textarea {
-            width: 100%; padding: 15px; border: 1px solid #e8e0d0; border-radius: 18px;
-            background: rgba(255,255,255,0.8); font-size: 1rem; resize: none; outline: none;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+            width: 100%; padding: 12px; border: 1px solid #e8e0d0; border-radius: 18px;
+            background: rgba(255,255,255,0.6); font-family: inherit; resize: none; outline: none;
         }
 
-        .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .option-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .mode-btn {
+            flex: 1; padding: 10px; border: 1px solid #e0d5c1; border-radius: 12px;
+            background: #fff; cursor: pointer; transition: 0.3s; font-size: 0.9rem;
+        }
+        .mode-btn.active { background: var(--accent-main); color: #fff; border-color: var(--accent-main); }
+
+        .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .cat-btn {
-            padding: 12px 5px; background: #fff; border: 1px solid #f0eada; border-radius: 12px;
-            font-size: 0.9rem; cursor: pointer; transition: 0.3s; color: var(--text-dark);
+            padding: 10px; background: #fff; border: none; border-radius: 10px;
+            font-family: inherit; font-size: 0.85rem; cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.03); transition: 0.3s;
         }
-        .cat-btn.active { background: var(--accent-main); color: #fff; border-color: var(--accent-main); box-shadow: 0 4px 10px rgba(212,163,115,0.3); }
+        .cat-btn.active { background: var(--accent-main); color: #fff; transform: scale(1.05); }
 
-        #rel-toggle {
+        #rel-area {
             display: none; background: #fff; padding: 15px; border-radius: 15px;
             margin: 15px 0; align-items: center; justify-content: space-between; font-size: 0.9rem;
         }
 
-        .mode-group { display: flex; gap: 12px; }
-        .mode-btn {
-            flex: 1; padding: 14px; border: 1px solid #e0d5c1; border-radius: 12px;
-            background: #fff; cursor: pointer; transition: 0.3s; font-size: 0.95rem; font-weight: 500;
-        }
-        .mode-btn.active { background: #5c4033; color: #fff; border-color: #5c4033; }
-
         /* Spread View */
-        #spread-view { display: none; width: 100vw; height: 100vh; position: relative; background: var(--bg-color); }
-        #cards-container { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+        #spread-view { display: none; width: 100vw; height: 100vh; position: relative; }
+        .cards-container { position: absolute; left: -100px; top: 0; width: 100%; height: 100%; }
 
         .card-wrapper {
-            /* 修正卡牌大小與初始位置，確保不變形成線 */
-.card-wrapper {
-    position: absolute; 
-    left: 50%; /* 改為中間出發 */
-    top: 50%;
-    width: var(--card-w); 
-    height: var(--card-h);
-    margin-left: calc(var(--card-w) / -2); /* 居中對齊 */
-    margin-top: calc(var(--card-h) / -2);
-    transform-origin: center 250%; /* 設置旋轉中心在下方，形成扇形 */
-    transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-    cursor: pointer; 
-    z-index: 100;
-    transform: translateY(0) rotate(0deg); /* 初始重疊 */
-}
-
-/* 確保正面圖片置中且不留白 */
-.card-face { 
-    position: absolute; 
-    inset: 0; 
-    backface-visibility: hidden; 
-    border-radius: 8px; 
-    background-size: cover; /* 改回 cover 確保填滿卡框 */
-    background-position: center; 
-    background-repeat: no-repeat;
-    border: 1px solid rgba(255,255,255,0.4); 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-}
+            position: absolute; left: 0; top: 50%;
+            width: var(--card-w); height: var(--card-h);
+            transform-origin: center left;
+            transition: all 1.2s cubic-bezier(0.2, 1, 0.3, 1);
+            cursor: pointer;
         }
-
-        .card-back { background-image: url('photo-output.png'); background-size: cover; } 
-        .card-front { transform: rotateY(180deg); background-color: #fff; }
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s; }
+        .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px; background-size: cover; border: 1px solid rgba(255,255,255,0.5); }
+        .card-back { background-image: url('photo-output.jpg'); }
+        .card-front { transform: rotateY(180deg); }
 
         .card-wrapper.selected {
-            transform: translate(220px, -50%) scale(1.3) rotate(0deg) !important;
+            transform: translate(180px, -50%) scale(1.3) rotate(0deg) !important;
             z-index: 1000 !important;
-            filter: drop-shadow(0 0 10px var(--accent-main));
         }
         .card-wrapper.flipped .card-inner { transform: rotateY(180deg); }
-        .card-wrapper.fade-out { opacity: 0; pointer-events: none; transform: scale(0.5) !important; }
+        .card-wrapper.fade-out { opacity: 0; pointer-events: none; }
 
         #ui-right {
             position: absolute; right: 25px; top: 50%; transform: translateY(-50%);
-            display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 2000;
+            display: none; flex-direction: column; align-items: center; gap: 20px;
         }
         .confirm-btn {
             width: 60px; height: 180px; background: var(--accent-main); color: #fff;
             border: none; border-radius: 30px; font-weight: bold; cursor: pointer;
-            writing-mode: vertical-rl; letter-spacing: 8px; font-size: 1.1rem;
-            box-shadow: 4px 4px 20px rgba(212, 163, 115, 0.4);
+            writing-mode: vertical-rl; letter-spacing: 6px; font-size: 1.1rem;
+            box-shadow: 4px 4px 15px rgba(212, 163, 115, 0.3);
         }
 
         /* Result Panel */
         #result-panel {
-            position: fixed; bottom: 0; width: 100%; height: 70%;
+            position: fixed; bottom: 0; width: 100%; height: 72%;
             background: #fff; border-radius: 35px 35px 0 0;
             padding: 30px 25px; overflow-y: auto; display: none;
             transform: translateY(100%); transition: 0.8s cubic-bezier(0.2, 1, 0.3, 1);
-            z-index: 2500; box-shadow: 0 -15px 50px rgba(0,0,0,0.1);
+            z-index: 1500; box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
         }
         #result-panel.active { transform: translateY(0); }
-        #result-panel::-webkit-scrollbar { display: none; }
 
-        .btn-row { display: flex; gap: 10px; margin-top: 25px; padding-bottom: 20px; }
+        .stellar-whisper {
+            background: #fffaf0; border-radius: 15px; padding: 15px; margin-top: 20px;
+            font-style: italic; font-size: 0.85rem; color: #b088a8; border: 1px dashed #d4a373;
+        }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 30px; }
         .action-btn {
-            flex: 1; padding: 16px 5px; border-radius: 15px; border: 1.5px solid var(--accent-main);
-            background: #fff; font-weight: bold; color: var(--accent-main); cursor: pointer; font-size: 0.95rem;
+            flex: 1; padding: 15px; border-radius: 15px; border: 1px solid var(--accent-main);
+            background: #fff; font-family: inherit; font-weight: bold; color: var(--accent-main); cursor: pointer;
         }
         .action-btn.primary { background: var(--accent-main); color: #fff; }
 
-        .watermark { position: fixed; top: 12px; left: 12px; font-size: 10px; color: rgba(0,0,0,0.06); pointer-events: none; z-index: 5000; }
+        .watermark { position: fixed; bottom: 10px; right: 10px; font-size: 9px; color: rgba(0,0,0,0.05); pointer-events: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div class="watermark">SUNSUN TAROT AUTHENTIC PRO</div>
+    <div class="watermark">SUNSUN TAROT AUTHENTIC SYSTEM</div>
 
     <div id="loading-screen">
-        <div class="loading-logo">孫孫暉日</div>
+        <div style="letter-spacing: 10px; font-weight: bold;">孫孫暉日</div>
         <div class="progress-bar"><div id="progress-fill"></div></div>
-        <div id="load-status" style="font-size: 0.8rem; margin-top: 15px; color: #a67c52; letter-spacing: 2px;">連結星象儀中...</div>
+        <div id="load-status" style="font-size: 0.75rem; margin-top: 10px; color: #a67c52;">正在同步星象儀 0%</div>
     </div>
 
     <div id="main-page">
         <h1>孫孫暉日</h1>
-        <div class="section-label">寫下你的困惑</div>
-        <textarea id="question-input" rows="2" placeholder="在此釐清你的問題..."></textarea>
+        
+        <div class="section-label">釐清你的問題</div>
+        <textarea id="question-input" rows="2" placeholder="在此輸入具體問題..."></textarea>
+
         <div class="section-label">占卜範疇</div>
-        <div class="category-grid">
+        <div class="category-grid" id="cat-grid">
             <button class="cat-btn" onclick="setCat(this, '學業')">學業</button>
             <button class="cat-btn" onclick="setCat(this, '事業')">事業</button>
             <button class="cat-btn" onclick="setCat(this, '愛情')">愛情</button>
@@ -183,36 +160,45 @@
             <button class="cat-btn" onclick="setCat(this, '決策')">決策</button>
             <button class="cat-btn" onclick="setCat(this, '其他')">其他</button>
         </div>
-        <div id="rel-toggle">
+
+        <div id="rel-area">
             <span>是查問你與他/她的關係嗎？</span>
-            <input type="checkbox" id="relation-check" style="width: 22px; height: 22px; accent-color: #d4a373;">
+            <input type="checkbox" id="is-relation-check" style="width: 22px; height: 22px;">
         </div>
-        <div class="section-label">牌陣</div>
-        <div class="mode-group">
-            <button class="mode-btn active" id="btn-single" onclick="setMode('single')">單牌指引</button>
-            <button class="mode-btn" id="btn-triple" onclick="setMode('triple')">三牌陣</button>
+
+        <div class="section-label">牌陣模式</div>
+        <div class="option-group">
+            <button class="mode-btn active" id="mode-single" onclick="setMode('single')">單牌指引</button>
+            <button class="mode-btn" id="mode-triple" onclick="setMode('triple')">三牌陣</button>
         </div>
-        <button class="action-btn primary" style="width: 100%; margin-top: 30px; height: 60px; font-size: 1.1rem;" onclick="startJourney()">開啟啟示</button>
+
+        <button class="action-btn primary" style="width: 100%; height: 55px; font-size: 1.1rem; margin-top: 20px;" onclick="startSession()">開始占卜</button>
     </div>
 
-    <div id="spread-view" onclick="bgClickReset(event)">
-        <div id="cards-container"></div>
+    <div id="spread-view">
+        <div class="cards-container" id="cards-container"></div>
         <div id="ui-right">
-            <div id="selection-tip" style="font-size: 0.8rem; color: #d4a373; margin-bottom: 5px; font-weight: bold;">請選擇牌</div>
-            <button class="confirm-btn" onclick="confirmCards()">確 認 牌 陣</button>
+            <div id="selection-count" style="font-size: 0.8rem; color: var(--accent-main); margin-bottom:10px;">請選擇 1 張牌</div>
+            <button class="confirm-btn" onclick="confirmDraw()">確 認 牌 面</button>
         </div>
     </div>
 
     <div id="result-panel">
         <div id="result-content"></div>
+        <div id="followup-area" style="margin-top:25px; display:none; border-top:1px dashed #ddd; padding-top:20px;"></div>
+        
         <div class="btn-row">
-            <button class="action-btn" onclick="location.href=location.href">完全重置</button>
-            <button class="action-btn primary" onclick="resetApp()">重新占卜</button>
+            <button class="action-btn" id="ask-btn" onclick="drawFollowup()">追問建議</button>
+            <button class="action-btn" onclick="downloadResult()">下載圖片</button>
+            <button class="action-btn primary" onclick="location.reload()">重新占卜</button>
         </div>
     </div>
 
+    <canvas id="canvas-export" style="display:none;"></canvas>
+
     <script>
-        const tarotData = [
+        // --- 核心數據 ---
+                const tarotData = [
             { id: "0", name: "愚者", img: "card0.png", element: "Air", type: "solo", gaze: "right",
                 upright: { keywords: ["開始", "純真", "冒險"], general_meaning: "代表一個全新的開始，充滿無限可能與冒險精神。", spread_meanings: { past: "過去的大膽抉擇影響至今。", present: "現在是踏入新階段的時機。", future: "未來有意外的機遇。", my_view: "你充滿好奇與衝動。", their_view: "對方覺得你難以預測。", current_status: "輕鬆且不穩定的初期。" }, advice: "勇敢跳出舒適圈。" },
                 reversed: { keywords: ["魯莽", "疏忽", "遲疑"], general_meaning: "警告不要衝動行事，或因為恐懼而停滯不前。", spread_meanings: { past: "過去的輕率造成了阻礙。", present: "當前猶豫不決錯失良機。", future: "前路可能存在風險。", my_view: "你感到迷茫且不安。", their_view: "對方覺得你缺乏責任感。", current_status: "計畫停滯不前。" }, advice: "在躍下前先看清腳下。" }
@@ -309,210 +295,197 @@
                 reversed: { keywords: ["內心不穩", "家庭摩擦", "儀式感缺失"], general_meaning: "表面平靜下潛藏著不安，或是期待的慶祝被延遲。", spread_meanings: { past: "曾有過根基動搖的經驗。", present: "對目前的安穩感到懷疑。", future: "預期的穩定可能會延後。", my_view: "你感到缺乏安全感。", their_view: "對方覺得關係變得乏味。", current_status: "有些小摩擦需要修復。" }, advice: "從內部尋找安定的力量。" }
             }
         ];
-let currentCat = '';
+        let currentCat = '';
         let currentMode = 'single';
-        let selectedWrappers = [];
+        let selectedCards = [];
         let remainingCards = [];
-        let finalSelection = [];
+        let finalResults = [];
 
+        // --- 圖片預載 ---
         window.onload = () => {
             let loaded = 0;
-            const images = ['photo-output.png', ...tarotData.map(d => d.img)];
+            const images = ['photo-output.jpg', ...tarotDeck.map(d => d.img)];
             images.forEach(src => {
                 const img = new Image();
-                img.onload = img.onerror = () => {
-                    loaded++;
-                    let p = Math.floor((loaded / images.length) * 100);
-                    document.getElementById('progress-fill').style.width = p + '%';
-                    document.getElementById('load-status').innerText = `同步星象儀中 ${p}%`;
-                    if (loaded === images.length) setTimeout(revealApp, 800);
-                };
                 img.src = src;
+                img.onload = () => {
+                    loaded++;
+                    let p = Math.floor((loaded/images.length)*100);
+                    document.getElementById('progress-fill').style.width = p+'%';
+                    if(p >= 90) setTimeout(showMain, 500);
+                }
+                img.onerror = () => { loaded++; };
             });
-            setTimeout(() => { if(document.getElementById('loading-screen').style.display !== 'none') revealApp(); }, 8000);
         };
 
-        function revealApp() {
+        function showMain() {
             document.getElementById('loading-screen').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('loading-screen').style.display = 'none';
-                const main = document.getElementById('main-page');
-                main.style.display = 'block';
-                setTimeout(() => main.style.opacity = '1', 50);
-            }, 1000);
-        }
-
-        function resetApp() {
-            document.getElementById('result-panel').classList.remove('active');
-            setTimeout(() => {
-                document.getElementById('result-panel').style.display = 'none';
-                document.getElementById('spread-view').style.display = 'none';
-                document.getElementById('cards-container').innerHTML = '';
-                const main = document.getElementById('main-page');
-                main.style.display = 'block';
-                main.style.opacity = '1';
-                selectedWrappers = [];
-                finalSelection = [];
+                document.getElementById('main-page').style.display = 'block';
+                setTimeout(() => document.getElementById('main-page').style.opacity = '1', 50);
             }, 800);
         }
 
+        // --- 首頁互動 ---
         function setCat(btn, cat) {
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentCat = cat;
-            document.getElementById('rel-toggle').style.display = (cat === '愛情' || cat === '親友') ? 'flex' : 'none';
+            document.getElementById('rel-area').style.display = (cat === '愛情' || cat === '親友') ? 'flex' : 'none';
         }
 
         function setMode(mode) {
             currentMode = mode;
-            document.getElementById('btn-single').classList.toggle('active', mode === 'single');
-            document.getElementById('btn-triple').classList.toggle('active', mode === 'triple');
+            document.getElementById('mode-single').classList.toggle('active', mode === 'single');
+            document.getElementById('mode-triple').classList.toggle('active', mode === 'triple');
         }
 
-        function startJourney() {
+        function startSession() {
             if(!currentCat) return alert("請先選擇占卜範疇");
             document.getElementById('main-page').style.opacity = '0';
-            setTimeout(renderFanSpread, 600);
+            setTimeout(renderCards, 800);
         }
 
-        function renderFanSpread() {
-    document.getElementById('main-page').style.display = 'none';
-    document.getElementById('spread-view').style.display = 'block';
-    const container = document.getElementById('cards-container');
-    
-    // 隨機洗牌
-    remainingCards = [...tarotData].sort(() => Math.random() - 0.5);
+        // --- 扇形與選擇邏輯 ---
+        function renderCards() {
+            document.getElementById('main-page').style.display = 'none';
+            document.getElementById('spread-view').style.display = 'block';
+            const container = document.getElementById('cards-container');
+            remainingCards = [...tarotDeck].sort(() => Math.random() - 0.5);
 
-    // 清空並生成卡牌
-    container.innerHTML = '';
-    for(let i=0; i<remainingCards.length; i++) {
-        const w = document.createElement('div');
-        w.className = 'card-wrapper';
-        w.innerHTML = `
-            <div class="card-inner">
-                <div class="card-face card-back"></div>
-                <div class="card-face card-front" style="background-image:url('${remainingCards[i].img}')"></div>
-            </div>`;
-        w.onclick = (e) => { e.stopPropagation(); handleSelect(w, i); };
-        container.appendChild(w);
-    }
-
-    // 動畫延遲：計算扇形分佈，確保不超出螢幕
-    setTimeout(() => {
-        const cards = document.querySelectorAll('.card-wrapper');
-        const totalCards = cards.length;
-        const spreadAngle = 140; // 總扇形張角
-        const step = spreadAngle / (totalCards - 1);
-
-        cards.forEach((card, i) => {
-            const angle = - (spreadAngle / 2) + (i * step);
-            // 使用較小的位移，配合 CSS 的 transform-origin 達成完美扇形
-            card.style.transform = `rotate(${angle}deg) translateY(-20px)`;
-        });
-    }, 100);
-        }
-
-        function bgClickReset(e) {
-            if(e.target.id === 'spread-view' || e.target.id === 'cards-container') {
-                selectedWrappers.forEach(el => el.classList.remove('selected'));
-                selectedWrappers = [];
-                updateUI();
+            for(let i=0; i<24; i++) {
+                const w = document.createElement('div');
+                w.className = 'card-wrapper';
+                w.style.left = '100px'; w.style.top = '50%';
+                w.innerHTML = `<div class="card-inner"><div class="card-face card-back"></div><div class="card-face card-front" style="background-image:url('${remainingCards[i].img}')"></div></div>`;
+                container.appendChild(w);
             }
+
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.card-wrapper');
+                cards.forEach((card, i) => {
+                    const angle = -70 + (i * 6.2); // 24張精準分布
+                    const radius = window.innerWidth * 0.78;
+                    card.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(${radius}px)`;
+                    card.onclick = () => selectCard(card, i);
+                });
+            }, 100);
         }
 
-        function handleSelect(el, idx) {
+        function selectCard(el, idx) {
             const limit = currentMode === 'single' ? 1 : 3;
             if(el.classList.contains('selected')) {
                 el.classList.remove('selected');
-                selectedWrappers = selectedWrappers.filter(c => c !== el);
-            } else if(selectedWrappers.length < limit) {
+                selectedCards = selectedCards.filter(c => c !== el);
+            } else if(selectedCards.length < limit) {
                 el.classList.add('selected');
-                selectedWrappers.push(el);
+                selectedCards.push(el);
             }
-            updateUI();
+            document.getElementById('ui-right').style.display = selectedCards.length === limit ? 'flex' : 'none';
+            document.getElementById('selection-count').innerText = `已選 ${selectedCards.length} / ${limit} 張`;
         }
 
-        function updateUI() {
-            const limit = currentMode === 'single' ? 1 : 3;
-            document.getElementById('ui-right').style.display = selectedWrappers.length === limit ? 'flex' : 'none';
-            document.getElementById('selection-tip').innerText = `已選 ${selectedWrappers.length} / ${limit}`;
-        }
-
-        async function confirmCards() {
+        // --- 翻牌與三牌陣特殊邏輯 ---
+        async function confirmDraw() {
             document.getElementById('ui-right').style.display = 'none';
             document.querySelectorAll('.card-wrapper').forEach(w => {
-                if(!selectedWrappers.includes(w)) w.classList.add('fade-out');
+                if(!selectedCards.includes(w)) w.classList.add('fade-out');
             });
 
-            const limit = selectedWrappers.length;
-            for(let i=0; i<limit; i++) {
-                const el = selectedWrappers[i];
+            for(let i=0; i<selectedCards.length; i++) {
+                const el = selectedCards[i];
                 const isRev = Math.random() > 0.5;
                 const idx = Array.from(el.parentNode.children).indexOf(el);
-                finalSelection.push({ ...remainingCards[idx], isRev });
+                finalResults.push({ ...remainingCards[idx], isRev });
 
-                let xOffset;
-                if(limit === 1) xOffset = 'calc(50vw - 40px)';
-                else xOffset = `calc(50vw - ${(limit*50)}px + ${(i*100)}px)`;
-
-                el.style.transform = `translate(${xOffset}, -50%) scale(1.6) rotate(0deg)`;
+                el.style.transform = `translate(calc(50vw - 40px), calc(-50% + ${(i-1)*60}px)) scale(1.6) rotate(0deg)`;
                 if(isRev) el.style.transform += ` rotateZ(180deg)`;
                 
                 await new Promise(r => setTimeout(r, 600));
                 el.classList.add('flipped');
             }
-            setTimeout(displayResults, 1200);
+
+            // 移除已抽走的牌，剩下的供追問
+            const chosenIndices = selectedCards.map(el => Array.from(el.parentNode.children).indexOf(el));
+            remainingCards = remainingCards.filter((_, idx) => !chosenIndices.includes(idx));
+
+            setTimeout(showInterpret, 1200);
         }
 
-        function displayResults() {
+        function showInterpret() {
             const panel = document.getElementById('result-panel');
             const content = document.getElementById('result-content');
-            const isRelMode = document.getElementById('relation-check').checked;
+            const isRelation = document.getElementById('is-relation-check').checked;
 
-            selectedWrappers.forEach((el, i) => {
-                const limit = selectedWrappers.length;
-                let xOffset;
-                if(limit === 1) xOffset = 'calc(50vw - 40px)';
-                else xOffset = `calc(50vw - ${(limit*45)}px + ${(i*90)}px)`;
-                
-                el.style.top = '15%'; 
-                el.style.transform = `translate(${xOffset}, 0) scale(1.1) rotate(0deg)`;
-                if(finalSelection[i].isRev) el.style.transform += ` rotateZ(180deg)`;
-            });
+            let html = `<h2 style="color:var(--accent-main); margin-bottom:5px;">孫孫暉日：${currentCat}解讀</h2>`;
+            html += `<p style="font-size:0.85rem; color:#888; margin-bottom:20px;">問題：${document.getElementById('question-input').value || "當前狀態指引"}</p>`;
 
-            let html = `<h2 style="color:var(--accent-main); text-align:center; font-weight:700;">「${currentCat}」啟示報告</h2>`;
-            html += `<p style="font-size:0.85rem; text-align:center; color:#999; margin:10px 0 25px;">提問：${document.getElementById('question-input').value || "誠心解讀"}</p>`;
+            // 三牌陣標籤邏輯
+            const labelsTime = ["過去", "現在", "未來"];
+            const labelsRel = ["我的看法", "對方的看法", "現況結果"];
+            const activeLabels = (currentMode === 'triple' && isRelation) ? labelsRel : labelsTime;
 
-            const spreadConfig = (currentMode === 'triple' && isRelMode) 
-                ? [ { label: "我的看法", key: "my_view" }, { label: "對方的看法", key: "their_view" }, { label: "現況結果", key: "current_status" } ]
-                : [ { label: "過去", key: "past" }, { label: "現在", key: "present" }, { label: "未來", key: "future" } ];
-
-            finalSelection.forEach((res, i) => {
-                const stateData = res.isRev ? res.reversed : res.upright;
-                const positionLabel = currentMode === 'single' ? "核心指引" : spreadConfig[i].label;
-                const meaning = currentMode === 'triple' ? stateData.spread_meanings[spreadConfig[i].key] : stateData.general_meaning;
-
+            finalResults.forEach((res, i) => {
+                const title = currentMode === 'single' ? "核心指引" : activeLabels[i];
                 html += `
-                    <div style="margin-bottom:30px; border-bottom: 1px solid #f0e6d2; padding-bottom: 20px;">
-                        <h3 style="color:var(--accent-main); font-size:1.15rem; margin-bottom: 8px;">
-                            ${positionLabel}：${res.name} ${res.isRev ? '(逆位)' : '(正位)'}
-                        </h3>
-                        <p style="font-size: 0.9rem; color: #a67c52; margin-bottom: 10px; font-weight: 500;">
-                            能量特質：${stateData.keywords.join(" · ")}
-                        </p>
-                        <p style="font-size:1rem; color: #4a3628; margin-bottom: 12px;">
-                            ${meaning}
-                        </p>
-                        <p style="font-size:0.95rem; color: #6e5c53; border-left: 3px solid var(--accent-main); padding-left: 10px; font-style: italic;">
-                            <strong>牌面箴言：</strong>${stateData.advice}
-                        </p>
+                    <div style="margin-bottom:20px;">
+                        <strong style="color:var(--accent-main);">${title}：${res.name} ${res.isRev?'(逆位)':'(正位)'}</strong>
+                        <p style="margin-top:5px; line-height:1.6; font-size:0.95rem;">${res.msg}</p>
                     </div>
                 `;
             });
 
+            if(Math.random() < 0.4) {
+                html += `<div class="stellar-whisper"><strong>額外啟示：</strong> 牌面顯示你當前的能量有些停滯，建議在抽牌後的 24 小時內多留意水邊的訊息。</div>`;
+            }
+
             content.innerHTML = html;
             panel.style.display = 'block';
             setTimeout(() => panel.classList.add('active'), 100);
+        }
+
+        // --- 追問建議 ---
+        function drawFollowup() {
+            if(remainingCards.length === 0) return;
+            document.getElementById('ask-btn').style.opacity = '0.5';
+            document.getElementById('ask-btn').disabled = true;
+
+            const card = remainingCards[Math.floor(Math.random()*remainingCards.length)];
+            const area = document.getElementById('followup-area');
+            area.style.display = 'block';
+            area.innerHTML = `
+                <h4 style="margin-bottom:12px;">追問建議 (由剩下的 ${remainingCards.length} 張中抽出)</h4>
+                <div style="display:flex; gap:15px; align-items:flex-start;">
+                    <div style="width:55px; height:90px; background-image:url('${card.img}'); background-size:cover; border-radius:5px; border:1px solid #eee; flex-shrink:0;"></div>
+                    <div style="font-size:0.9rem; line-height:1.5;">
+                        <strong>${card.name}</strong><br>針對你的現況，宇宙的額外建議是：${card.msg}
+                    </div>
+                </div>
+            `;
+            finalResults.push({ ...card, isRev: false, isFollowup: true });
+        }
+
+        // --- 下載圖片 (Canvas) ---
+        function downloadResult() {
+            const canvas = document.getElementById('canvas-export');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 600; canvas.height = 1000;
+            
+            ctx.fillStyle = "#fffaf5"; ctx.fillRect(0,0,600,1000);
+            ctx.fillStyle = "#d4a373"; ctx.font = "bold 32px 'Noto Serif TC'"; ctx.fillText("孫孫暉日 Tarot 解讀", 50, 80);
+            
+            ctx.fillStyle = "#5c4033"; ctx.font = "18px 'Noto Serif TC'";
+            ctx.fillText(`範疇：${currentCat} | 模式：${currentMode === 'single'?'單牌':'三牌陣'}`, 50, 130);
+            
+            // 繪製微型水印
+            ctx.globalAlpha = 0.08;
+            for(let i=0; i<8; i++) ctx.fillText("SUNSUN TAROT PROTECTED", 150, i*150);
+            ctx.globalAlpha = 1;
+
+            alert("圖片生成中... 請在彈出的視窗長按保存。");
+            const win = window.open();
+            win.document.write(`<img src="${canvas.toDataURL()}" style="width:100%"/>`);
         }
     </script>
 </body>
