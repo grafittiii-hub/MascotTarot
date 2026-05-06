@@ -1111,6 +1111,27 @@ if (document.getElementById('retry-btn')) document.getElementById('retry-btn').s
 
             }, 900);
         }
+// 輔助函式維持不變
+function drawQRCodeToCanvas(ctx, x, y, dark, light) {
+    const qrDiv = document.createElement('div');
+    new QRCode(qrDiv, {
+        text: "https://grafittiii-hub.github.io/MascotTarot/",
+        width: 80,
+        height: 80,
+        colorDark: dark,
+        colorLight: light
+    });
+// 定時輪詢檢查圖片是否生成
+        const checkQR = setInterval(() => {
+            const qrImg = qrDiv.querySelector('img');
+            if (qrImg && qrImg.src) {
+                clearInterval(checkQR);
+                ctx.drawImage(qrImg, x, y, 80, 80);
+                resolve();
+            }
+        }, 50);
+    });
+}
 
 async function exportImage() {
     await document.fonts.load("1em 'Noto Serif TC'");
@@ -1253,7 +1274,7 @@ async function exportImage() {
         ctx.globalAlpha = 0.5;
         ctx.font = "26px 'Georgia', 'Noto Serif TC', serif";
         function drawText(txt, x, y, maxWidth, lineHeight) {
-            ctx.font = "'Georgia', 'Noto Serif TC', serif";
+            ctx.font = "20px 'Georgia', 'Noto Serif TC', serif";
             const paragraphs = txt.split('\n');
             let currentY = y;
             for (let p of paragraphs) {
@@ -1323,7 +1344,7 @@ async function exportImage() {
         ctx.font = "14px 'Georgia', 'Noto Serif TC', serif"; ctx.letterSpacing = "2px";
         ctx.fillText("Copyright© 2026 Grafittiii | Mascot Tarot", canvas.width / 2, finalHeight - 50);
         
-        drawQRCodeToCanvas(ctx, canvas.width - 150, finalHeight - 150, goldColor, bgColor);
+        await drawQRCodeToCanvas(ctx, canvas.width - 150, finalHeight - 150, goldColor, bgColor);
 
 	獲取並格式化西曆時間 (YYYYMMDDHHmm)
         const now = new Date();
@@ -1344,21 +1365,7 @@ async function exportImage() {
     }
 }             
 
-// 輔助函式維持不變
-function drawQRCodeToCanvas(ctx, x, y, dark, light) {
-    const qrDiv = document.createElement('div');
-    new QRCode(qrDiv, {
-        text: "https://grafittiii-hub.github.io/MascotTarot/",
-        width: 80,
-        height: 80,
-        colorDark: dark,
-        colorLight: light
-    });
-    setTimeout(() => {
-        const qrImg = qrDiv.querySelector('img');
-        if (qrImg) ctx.drawImage(qrImg, x, y, 80, 80);
-    }, 100);
-}
+
 console.log("%c停！別看我的code了，需要抽牌定制的就來找我吧！", "color: blue; font-size: 15px; font-weight: bold;");
     </script>
 </body>
