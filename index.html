@@ -255,25 +255,26 @@
 
         .card-wrap {
             position: absolute; width: 80px; height: 120px;
-            cursor: pointer; z-index: 10;
+            cursor: pointer; z-index: 10;border-radius: 12px;
         }
         @media (min-width: 768px) { .card-wrap { width: 120px; height: 180px; } }
 
-        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s ease; }
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.8s ease;
+    }
         .card-face {
             position: absolute; inset: 0; backface-visibility: hidden; width: 100%;
             height: 100%;
             object-fit: cover; 
-            border-radius: 8px; background-position: center;
+            border-radius: 12px; background-position: center;
             border: var(--border-thin); box-shadow: 0 5px 15px var(--card-shadow);
         }
         .card-back { background-color: var(--gold-light); background-image: linear-gradient(135deg, var(--gold-primary) 25%, transparent 25%); }
-        .card-front { transform: rotateY(180deg); background-color: #fff; }
+        .card-front { transform: rotateY(180deg); background-color: #c7a243; }
 
         .card-wrap.popped { z-index: 100 !important; }
         .card-wrap.popped .card-inner {
             transform: translate(var(--pop-x, 0), var(--pop-y, -50px)) scale(1.15);
-            box-shadow: 0 15px 30px var(--card-shadow-hover);
+            box-shadow: 0 15px 30px var(--card-shadow-hover);overflow: hidden;-webkit-mask-image: -webkit-radial-gradient(white, black);
         }
         
         .card-wrap.confirmed { pointer-events: none; z-index: 50; }
@@ -392,7 +393,7 @@
         <button id="confirm-btn-float" class="btn-solid" style="width: auto;" onclick="confirmCard(event)">Confirm Selection</button>
     </div>
 
-    <button id="retry-btn" class="btn-outline" onclick="generateReport()">顯示解牌結果 (Retry)</button>
+    <button id="retry-btn" class="btn-outline" onclick="generateReport()">再次生成解牌結果 (Retry)</button>
 
     <div id="result-panel">
         <div style="font-size:0.8rem; opacity:0.5; margin-bottom: 20px;" id="report-question"></div>
@@ -736,7 +737,7 @@
             const container = document.getElementById('cards-container');
             container.innerHTML = '';
             
-            // 防呆防報錯，確保 tarotData 存在且有資料，請補上你原本的卡牌陣列！
+
             if (tarotData.length === 0) return;
 
             shuffledDeck = [...tarotData].sort(() => Math.random() - 0.5);
@@ -751,7 +752,7 @@
                 wrapper.className = 'card-wrap shuffling';
                 wrapper.dataset.index = index;
 
-                const imgTag = `<img src="${cardData.img}" style="width:100%; height:100%; object-fit:cover; border-radius:3px;" onerror="this.style.opacity='0';" draggable="false">`;
+                const imgTag = `<img src="${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
 
                 wrapper.innerHTML = `
                     <div class="card-inner">
