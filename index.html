@@ -12,9 +12,9 @@
            1. LVMH 高階視覺美學與色彩系統
            ========================================== */
         :root {
-            --bg-color: #faf7ed;
-            --text-color: #2C2A28;
-            --gold-primary: #e0c53f;
+            --bg-color: #fffdf2;
+            --text-color: #302814;
+            --gold-primary: #f0cc1d;
             --gold-light: #faf6cf;
             --panel-bg: rgba(248, 247, 244, 0.95);
             --border-thin: 1px solid rgba(182, 154, 104, 0.3);
@@ -27,8 +27,8 @@
         [data-theme="night"] {
             --bg-color: #121212;
             --text-color: #EAE6DF;
-            --gold-primary: #e0c53f;
-            --gold-light: #a89939;
+            --gold-primary: #f0cc1d;
+            --gold-light: #ad9417;
             --panel-bg: rgba(22, 22, 22, 0.95);
             --border-thin: 1px solid rgba(212, 175, 55, 0.3);
             --glass-shadow: 0 -10px 40px rgba(0,0,0,0.5);
@@ -1128,7 +1128,7 @@ async function exportImage() {
         const cardW = 120;  // 稍微加大卡牌尺寸更有氣勢
         const cardH = 192;  
         const cardGap = 40;
-        const headerSpace = 150; 
+        const headerSpace = 200; 
 
         // 4. 動態高度計算引擎
         const tempCanvas = document.createElement('canvas');
