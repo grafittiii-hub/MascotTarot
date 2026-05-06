@@ -1121,15 +1121,20 @@ async function exportImage() {
             return { pos, title, kws, text};
  });
 
-        // 3. 計算動態畫布尺寸
+        // 3. 計算畫布尺寸
         const finalWidth = 1080;
         const contentWidth = 920; 
        const marginX = (finalWidth - contentWidth) / 2; // 置中邊界 80
         
-        const cardW = 160;  // 放大卡牌，解決過窄問題
-        const cardH = 256;  // 維持 1:1.6 的絕佳比例
-        const cardGap = 40;
-        const headerSpace = 150; 
+        const cardW = 100;  // 放大卡牌，解決過窄問題
+        const cardH = 160;  // 維持 1:1.6 的絕佳比例
+        const cardGap = 50;
+        const headerSpace = 190; 
+
+// 2. 重新計算水平居中的起始點 (startX)
+// 因為間距變大，總寬度會增加，必須重新計算以保持置中
+const totalCardsWidth = (drawnCards.length * cardW) + ((drawnCards.length - 1) * cardGap);
+const startX = (canvas.width - totalCardsWidth) / 2;
 
     // 4. 動態計算總高度 (使用虛擬 Canvas 測量文字排版高度)
         const dCtx = document.createElement('canvas').getContext('2d');
@@ -1219,8 +1224,12 @@ ctx.textBaseline = "top"; // 統一從文字頂端算起，排版更精確
                 const imgEl = card.elementDOM.querySelector('.card-front img');
                 if (imgEl) {
                     ctx.save();
-                    // 移至卡牌中心點
-                    ctx.translate(startX + i * (cardW + cardGap) + cardW/2, headerSpace + cardH/2 - 20);
+	// 計算當前卡牌的 X 座標位置
+        const currentX = startX + i * (cardW + cardGap);
+        
+        // 移至卡牌中心點進行繪製 (注意這裡的 headerSpace 已經下移)
+        ctx.translate(currentX + cardW / 2, headerSpace + cardH / 2);
+
                     if (card.isReversed) {
                         ctx.rotate(Math.PI); // 逆位旋轉 180 度
                     }
