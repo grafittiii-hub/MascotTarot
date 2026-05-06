@@ -271,6 +271,16 @@
         .card-back { background-color: var(--gold-light); background-image: linear-gradient(135deg, var(--gold-primary) 25%, transparent 25%); }
         .card-front { transform: rotateY(180deg); background-color: #c7a243;overflow: hidden;-webkit-mask-image: -webkit-radial-gradient(white, black); }
 
+/* 專門針對正面圖片的放大處理 */
+.card-front img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* 核心修改：透過 scale 放大圖片約 10%，這會直接裁切掉原本素材周圍的空白 */
+    transform: scale(1.1); 
+    transition: transform 0.3s ease;
+}
+
         .card-wrap.popped { z-index: 100 !important; }
         .card-wrap.popped .card-inner {
             transform: translate(var(--pop-x, 0), var(--pop-y, -50px)) scale(1.15);
