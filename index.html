@@ -1243,8 +1243,8 @@ if (imgAspect > targetAspect) {
             }
 
         // 根據 object-position: 52% 50% 稍微偏移取樣位置
-        const sx = (imgEl.naturalWidth - sW) * 0.52; 
-        const sy = (imgEl.naturalHeight - sH) * 0.50;
+            sx = (imgW - sW) * 0.52; 
+            sy = (imgH - sH) * 0.50;
 
                     ctx.drawImage(imgEl, sx, sy, sW, sH,-cardW/2, -cardH/2, cardW, cardH);
                     ctx.restore();
