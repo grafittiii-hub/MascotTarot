@@ -1103,13 +1103,12 @@ async function exportImage() {
     saveBtn.innerText = "SAVING...";
     
     try {
-        // 1. 取得 CSS 變數顏色 (若抓不到則給予預設值防呆)
-        const style = getComputedStyle(document.documentElement);
-        const bgColor = style.getPropertyValue('--bg-color').trim() || '#faf7ed';
-        const goldColor = style.getPropertyValue('--gold-primary').trim() || '#e0c53f';
-        const textColor = style.getPropertyValue('--text-color').trim() || '#2C2A28';
+        // 1. 取得 CSS 變數顏色
+        const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
+        const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--gold-primary').trim();
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
 
-        // 2. 擷取資料：從 DOM 取得文字內容 (完全拋棄 html2canvas)
+ // 2. 擷取資料：從 DOM 取得文字內容 (完全拋棄 html2canvas)
         const qText = document.getElementById('report-question').innerText;
         // 這會自動抓取 1張單牌、3張陣牌，甚至包含已經生成的「追加建議」
         const blocks = document.querySelectorAll('#result-panel .result-block');
@@ -1119,23 +1118,23 @@ async function exportImage() {
             const kws = allPosEls.length > 1 ? allPosEls[1].innerText : '';
             const title = block.querySelector('.res-title') ? block.querySelector('.res-title').innerText : '';
             const text = block.querySelector('.res-text') ? block.querySelector('.res-text').innerText : '';
-            return { pos, title, kws, text };
-        });
+            return { pos, title, kws, text};
+ });
 
-        // 3. 設定畫布基礎與卡牌尺寸 (放大比例解決被壓扁問題)
+        // 3. 計算動態畫布尺寸
         const finalWidth = 1080;
-        const contentWidth = 920;
-        const marginX = (finalWidth - contentWidth) / 2; // 置中邊界 80
+        const contentWidth = 920; 
+       const marginX = (finalWidth - contentWidth) / 2; // 置中邊界 80
         
         const cardW = 160;  // 放大卡牌，解決過窄問題
         const cardH = 256;  // 維持 1:1.6 的絕佳比例
         const cardGap = 40;
         const headerSpace = 150; 
 
-        // 4. 動態計算總高度 (使用虛擬 Canvas 測量文字排版高度)
+    // 4. 動態計算總高度 (使用虛擬 Canvas 測量文字排版高度)
         const dCtx = document.createElement('canvas').getContext('2d');
         dCtx.textBaseline = "top";
-        
+
         // 核心文字自動換行與測量引擎
         function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, doDraw = true) {
             if (!text) return 0;
@@ -1165,8 +1164,10 @@ async function exportImage() {
         }
 
         let currentY = headerSpace;
+        
         if (drawnCards && drawnCards.length > 0) {
-            currentY += cardH + 60; // 預留卡牌區塊高度
+
+          currentY += cardH + 60; // 預留卡牌區塊高度
         }
 
         // 模擬測量文字區高度
@@ -1194,39 +1195,36 @@ async function exportImage() {
         canvas.width = finalWidth;
         canvas.height = finalHeight;
         const ctx = canvas.getContext('2d');
-        ctx.textBaseline = "top"; // 統一從文字頂端算起，排版更精確
+ctx.textBaseline = "top"; // 統一從文字頂端算起，排版更精確
 
+        
         // 繪製背景
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 繪製 Header Title
+        // 繪製 Header
         ctx.fillStyle = goldColor;
-        ctx.font = "300 36px 'Georgia', 'Noto Serif TC', serif"; // 標題微調放大
+        ctx.font = "300 28px 'Georgia', 'Noto Serif TC', serif";
         ctx.textAlign = "center";
-        ctx.letterSpacing = "6px";
-        ctx.fillText("孫孫暉日塔羅 Mascot Tarot", canvas.width / 2, 60);
+        ctx.letterSpacing = "5px";
+        ctx.fillText("孫孫暉日塔羅 Mascot Tarot", canvas.width / 2, 80);
 
-        // 繪製抽出的卡牌 (已修復比例)
+        // 繪製抽出的卡牌
         if (drawnCards && drawnCards.length > 0) {
+            const gap = 20;  // 卡牌間距
             const total = drawnCards.length;
-            const startX = (canvas.width - (total * cardW + (total - 1) * cardGap)) / 2;
+            const startX = (canvas.width - (total * cardW + (total - 1) * cardGap)) / 2; // 置中計算
             
             drawnCards.forEach((card, i) => {
                 const imgEl = card.elementDOM.querySelector('.card-front img');
                 if (imgEl) {
                     ctx.save();
+                    // 移至卡牌中心點
                     ctx.translate(startX + i * (cardW + cardGap) + cardW/2, headerSpace + cardH/2 - 20);
                     if (card.isReversed) {
-                        ctx.rotate(Math.PI); 
+                        ctx.rotate(Math.PI); // 逆位旋轉 180 度
                     }
                     ctx.drawImage(imgEl, -cardW/2, -cardH/2, cardW, cardH);
-                    
-                    // (Bonus) 替圖片加上低調的金色邊框，增添 LVMH 高端感
-                    ctx.strokeStyle = goldColor;
-                    ctx.lineWidth = 2;
-                    ctx.globalAlpha = 0.4;
-                    ctx.strokeRect(-cardW/2, -cardH/2, cardW, cardH);
                     ctx.restore();
                 }
             });
@@ -1284,34 +1282,54 @@ async function exportImage() {
             drawY += 50; // 每個解析區塊的距離
         });
 
-        // 7. 繪製 Footer 與 QR Code
+
+// 7. 繪製 Footer 水印
         ctx.fillStyle = textColor;
         ctx.globalAlpha = 0.6;
-        ctx.font = "16px 'Georgia', 'Noto Serif TC', serif";
+        // 修改：移除 italic，並將字體大小改為 12px
+        ctx.font = "12px 'Georgia', 'Noto Serif TC', serif"; 
         ctx.textAlign = "center";
-        ctx.fillText("Copyright© 2026 Grafittiii | Mascot prototypes by GMM", canvas.width / 2, finalHeight - 40);
+        // 修改：使用你指定的正確浮水印文字
+        ctx.fillText("Copyright© 2026 Grafittiii | Mascot prototypes by GMM", canvas.width / 2, finalHeight - 10);
         ctx.globalAlpha = 1.0;
 
+        // 6. 獲取並格式化西曆時間 (YYYYMMDDHHmm)
         const now = new Date();
-        const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+       const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
 
-        drawQRCodeToCanvas(ctx, canvas.width - 160, finalHeight - 150, goldColor, bgColor);
+        // 繪製 QR Code (右下角)，Y 座標同步跟隨動態高度改變
+        drawQRCodeToCanvas(ctx, canvas.width - 160, finalHeight - 140, goldColor, bgColor);
 
-        // 延遲稍微加長到 800ms，確保 QR Code 生成完畢
         setTimeout(() => {
             const link = document.createElement('a');
+            // 確保 currentCategory 有被定義，否則給予預設值
             const categoryName = typeof currentCategory !== 'undefined' ? currentCategory : 'Tarot';
             link.download = `MascotTarot_${categoryName}_${timeStr}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             saveBtn.innerText = originalText;
-        }, 800);
+        }, 600);
 
     } catch (err) {
         console.error("Save failed:", err);
         saveBtn.innerText = "ERROR";
-        setTimeout(() => saveBtn.innerText = originalText, 2000);
     }
+}                
+
+// 輔助函式維持不變
+function drawQRCodeToCanvas(ctx, x, y, dark, light) {
+    const qrDiv = document.createElement('div');
+    new QRCode(qrDiv, {
+        text: "https://grafittiii-hub.github.io/MascotTarot/",
+        width: 80,
+        height: 80,
+        colorDark: dark,
+        colorLight: light
+    });
+    setTimeout(() => {
+        const qrImg = qrDiv.querySelector('img');
+        if (qrImg) ctx.drawImage(qrImg, x, y, 80, 80);
+    }, 100);
 }
 console.log("%c停！別看我的原始碼，去抽牌吧！", "color: blue; font-size: 15px; font-weight: bold;");
     </script>
