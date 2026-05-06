@@ -277,14 +277,14 @@
     height: 100%;
     object-fit: cover;
     /* 核心修改：透過 scale 放大圖片約 10%，這會直接裁切掉原本素材周圍的空白 */
-    transform: scale(1.1); 
+    transform: scale(1.05); 
     transition: transform 0.3s ease;
 }
 
         .card-wrap.popped { z-index: 100 !important; }
         .card-wrap.popped .card-inner {
             transform: translate(var(--pop-x, 0), var(--pop-y, -50px)) scale(1.15);
-            box-shadow: 0 15px 30px var(--card-shadow-hover);
+            box-shadow: 0 15px 30px var(--card-shadow-hover);border-radius: 12px; 
         }
         
         .card-wrap.confirmed { pointer-events: none; z-index: 50; }
