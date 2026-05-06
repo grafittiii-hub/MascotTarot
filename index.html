@@ -1103,14 +1103,13 @@ async function exportImage() {
     saveBtn.innerText = "SAVING...";
     
     try {
-        // 1. 取得 CSS 變數顏色
+        // 1. 取得顏色系統
         const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
         const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--gold-primary').trim();
         const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
 
- // 2. 擷取資料：從 DOM 取得文字內容 (完全拋棄 html2canvas)
+        // 2. 擷取文字內容
         const qText = document.getElementById('report-question').innerText;
-        // 這會自動抓取 1張單牌、3張陣牌，甚至包含已經生成的「追加建議」
         const blocks = document.querySelectorAll('#result-panel .result-block');
         const parsedBlocks = Array.from(blocks).map(block => {
             const allPosEls = block.querySelectorAll('.res-position');
@@ -1118,255 +1117,210 @@ async function exportImage() {
             const kws = allPosEls.length > 1 ? allPosEls[1].innerText : '';
             const title = block.querySelector('.res-title') ? block.querySelector('.res-title').innerText : '';
             const text = block.querySelector('.res-text') ? block.querySelector('.res-text').innerText : '';
-            return { pos, title, kws, text};
- });
+            return { pos, title, kws, text };
+        });
 
-        // 3. 計算畫布尺寸
+        // 3. 畫布參數設定
         const finalWidth = 1080;
         const contentWidth = 920; 
-       const marginX = (finalWidth - contentWidth) / 2; // 置中邊界 80
+        const marginX = (finalWidth - contentWidth) / 2;
+        const cardW = 120;  // 稍微加大卡牌尺寸更有氣勢
+        const cardH = 192;  
+        const cardGap = 40;
+        const headerSpace = 200; 
+
+        // 4. 動態高度計算引擎
+        const tempCanvas = document.createElement('canvas');
+        const dCtx = tempCanvas.getContext('2d');
         
-        const cardW = 100;  // 放大卡牌，解決過窄問題
-        const cardH = 160;  // 維持 1:1.6 的絕佳比例
-        const cardGap = 60;
-        const headerSpace = 230; 
-
-
-
-    // 4. 動態計算總高度 (使用虛擬 Canvas 測量文字排版高度)
-        const dCtx = document.createElement('canvas').getContext('2d');
-        dCtx.textBaseline = "top";
-
-        // 核心文字自動換行與測量引擎
-        function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, doDraw = true) {
+        function measureWrappedText(ctx, text, maxWidth, lineHeight) {
             if (!text) return 0;
             const paragraphs = text.split('\n');
-            let startY = y;
+            let totalHeight = 0;
             for (let p of paragraphs) {
                 let currentLine = '';
-                for (let i = 0; i < p.length; i++) {
-                    const char = p[i];
+                for (let char of p) {
                     const testLine = currentLine + char;
-                    const metrics = ctx.measureText(testLine);
-                    // 遇到邊界就換行
-                    if (metrics.width > maxWidth && currentLine !== '') {
-                        if (doDraw) ctx.fillText(currentLine, x, y);
-                        y += lineHeight;
+                    if (ctx.measureText(testLine).width > maxWidth && currentLine !== '') {
+                        totalHeight += lineHeight;
                         currentLine = char;
                     } else {
                         currentLine = testLine;
                     }
                 }
-                if (currentLine !== '') {
-                    if (doDraw) ctx.fillText(currentLine, x, y);
-                    y += lineHeight;
-                }
+                totalHeight += lineHeight;
             }
-            return y - startY; // 回傳這段文字佔用的總高度
+            return totalHeight;
         }
 
-        let currentY = headerSpace;
-        
-        if (drawnCards && drawnCards.length > 0) {
-
-          currentY += cardH + 80; // 預留卡牌區塊高度
-        }
-
-        // 模擬測量文字區高度
-        dCtx.font = "26px 'Georgia', 'Noto Serif TC', serif";
-        currentY += drawWrappedText(dCtx, qText, 0, 0, contentWidth, 40, false) + 40;
+        let totalContentHeight = headerSpace + (drawnCards.length > 0 ? cardH + 100 : 0);
+        dCtx.font = "26px serif";
+        totalContentHeight += measureWrappedText(dCtx, qText, contentWidth, 40) + 60;
 
         parsedBlocks.forEach(b => {
-            currentY += 20; // 區塊頂部留白
-            if (b.pos) { dCtx.font = "22px 'Georgia', 'Noto Serif TC', serif"; currentY += 35; }
-            if (b.title) { dCtx.font = "600 34px 'Georgia', 'Noto Serif TC', serif"; currentY += 50; }
-            if (b.kws) { dCtx.font = "22px 'Georgia', 'Noto Serif TC', serif"; currentY += 35; }
+            totalContentHeight += 40; // padding
+            if (b.pos) totalContentHeight += 35;
+            if (b.title) totalContentHeight += 60;
+            if (b.kws) totalContentHeight += 35;
             if (b.text) {
-                dCtx.font = "28px 'Georgia', 'Noto Serif TC', serif";
-                // 內縮 30px 給左側金線留空間
-                currentY += drawWrappedText(dCtx, b.text, 0, 0, contentWidth - 30, 48, false);
+                dCtx.font = "28px serif";
+                totalContentHeight += measureWrappedText(dCtx, b.text, contentWidth - 40, 48);
             }
-            currentY += 50; // 區塊底部留白
+            totalContentHeight += 60; 
         });
 
-        const footerSpace = 180;
-        const finalHeight = currentY + footerSpace; // 獲得最完美的精確動態高度
+        const finalHeight = totalContentHeight + 200;
 
-        // 5. 建立最終畫布並進行原生渲染
+        // 5. 正式開始繪製
         const canvas = document.createElement('canvas');
         canvas.width = finalWidth;
         canvas.height = finalHeight;
         const ctx = canvas.getContext('2d');
-ctx.textBaseline = "top"; // 統一從文字頂端算起，排版更精確
-
+        ctx.textBaseline = "top";
         
-        // 繪製背景
+        // 背景
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 繪製 Header
+        // 標題
         ctx.fillStyle = goldColor;
-        ctx.font = "300 28px 'Georgia', 'Noto Serif TC', serif";
+        ctx.font = "300 32px 'Georgia', 'Noto Serif TC', serif";
         ctx.textAlign = "center";
-        ctx.letterSpacing = "5px";
         ctx.fillText("孫孫暉日塔羅 Mascot Tarot", canvas.width / 2, 80);
 
-        // 繪製抽出的卡牌
+        // 繪製卡牌 (包含正逆位邏輯)
         if (drawnCards && drawnCards.length > 0) {
-            const total = drawnCards.length;
+            const totalCardsWidth = (drawnCards.length * cardW) + ((drawnCards.length - 1) * cardGap);
+            const startX = (canvas.width - totalCardsWidth) / 2;
 
-const totalCardsWidth = (drawnCards.length * cardW) + ((drawnCards.length - 1) * cardGap);const startX = (canvas.width - totalCardsWidth) / 2;
-
-            
             drawnCards.forEach((card, i) => {
                 const imgEl = card.elementDOM.querySelector('.card-front img');
                 if (imgEl) {
                     ctx.save();
-	// 計算當前卡牌的 X 座標位置
-        const currentX = startX + i * (cardW + cardGap);
-        
-        // 移至卡牌中心點進行繪製 (注意這裡的 headerSpace 已經下移)
-        ctx.translate(currentX + cardW / 2, headerSpace + cardH / 2);
+                    const centerX = startX + i * (cardW + cardGap) + cardW / 2;
+                    const centerY = headerSpace + cardH / 2;
+                    ctx.translate(centerX, centerY);
 
-                    if (card.isReversed) {
-                        ctx.rotate(Math.PI); // 逆位旋轉 180 度
+                    if (card.isReversed) ctx.rotate(Math.PI);
+
+                    // 模擬 Object-fit: cover 與 Scale(1.05)
+                    const sScale = 1.05;
+                    const imgW = imgEl.naturalWidth;
+                    const imgH = imgEl.naturalHeight;
+                    const targetAspect = cardW / cardH;
+                    let sW, sH, sx, sy;
+
+                    if ((imgW / imgH) > targetAspect) {
+                        sH = imgH / sScale;
+                        sW = sH * targetAspect;
+                    } else {
+                        sW = imgW / sScale;
+                        sH = sW / targetAspect;
                     }
+                    sx = (imgW - sW) * 0.52; // 依照你 CSS 的 52% 偏移
+                    sy = (imgH - sH) * 0.50;
 
-// --- 這裡放入之前建議的「防止變形」drawImage 裁切邏輯 ---
-            drawMascotOptimized(ctx, imgEl, cardW, cardH); 
-            
-            ctx.restore();
-
-// 2. 模擬 CSS 的 scale(1.05) 與 object-fit: cover
-        // 我們從原始圖片中取出中間的一塊區域，而不是繪製整張圖
-        const sScale = 1.05; // 對應你的 CSS scale
-        const imgW = imgEl.naturalWidth;
-        const imgH = imgEl.naturalHeight;
-const targetAspect = cardW / cardH;
-            const imgAspect = imgW / imgH;
-        let sW, sH, sx, sy;
-if (imgAspect > targetAspect) {
-                // 圖片太寬，以高度為準裁切兩側
-                sH = imgH / sScale;
-                sW = sH * targetAspect;
-            } else {
-                // 圖片太長，以寬度為準裁切上下 (你的 Mascot 素材通常屬於這種)
-                sW = imgW / sScale;
-                sH = sW / targetAspect;
-            }
-
-        // 根據 object-position: 52% 50% 稍微偏移取樣位置
-            sx = (imgW - sW) * 0.52; 
-            sy = (imgH - sH) * 0.50;
-
-                    ctx.drawImage(imgEl, sx, sy, sW, sH,-cardW/2, -cardH/2, cardW, cardH);
+                    ctx.drawImage(imgEl, sx, sy, sW, sH, -cardW/2, -cardH/2, cardW, cardH);
                     ctx.restore();
                 }
             });
         }
 
-        // 6. 繪製文字報告 (強制垂直排列，清晰度 100%)
-        let drawY = headerSpace + (drawnCards && drawnCards.length > 0 ? cardH + 40 : 0);
-        
+        // 6. 繪製報告文字
+        let drawY = headerSpace + (drawnCards.length > 0 ? cardH + 80 : 0);
         ctx.textAlign = "left";
+        
+        // 問題內容
         ctx.fillStyle = textColor;
         ctx.globalAlpha = 0.5;
-        ctx.font = "26px 'Georgia', 'Noto Serif TC', serif";
-        drawY += drawWrappedText(ctx, qText, marginX, drawY, contentWidth, 40) + 40;
+        ctx.font = "26px serif";
+        function drawText(txt, x, y, maxWidth, lineHeight) {
+            const paragraphs = txt.split('\n');
+            let currentY = y;
+            for (let p of paragraphs) {
+                let line = '';
+                for (let char of p) {
+                    const test = line + char;
+                    if (ctx.measureText(test).width > maxWidth) {
+                        ctx.fillText(line, x, currentY);
+                        currentY += lineHeight;
+                        line = char;
+                    } else {
+                        line = test;
+                    }
+                }
+                ctx.fillText(line, x, currentY);
+                currentY += lineHeight;
+            }
+            return currentY - y;
+        }
+
+        drawY += drawText(qText, marginX, drawY, contentWidth, 40) + 40;
         ctx.globalAlpha = 1.0;
 
+        // 解牌區塊
         parsedBlocks.forEach(b => {
-            const blockStartY = drawY + 5; // 記錄線條起始點
+            const blockStartY = drawY;
             drawY += 20;
-            const textIndentX = marginX + 30; // 文字整體往右縮進
+            const textX = marginX + 30;
 
             if (b.pos) {
                 ctx.fillStyle = goldColor;
-                ctx.font = "22px 'Georgia', 'Noto Serif TC', serif";
-                ctx.letterSpacing = "2px";
-                ctx.fillText(b.pos, textIndentX, drawY);
+                ctx.font = "22px serif";
+                ctx.fillText(b.pos, textX, drawY);
                 drawY += 35;
-                ctx.letterSpacing = "0px";
             }
             if (b.title) {
                 ctx.fillStyle = textColor;
-                ctx.font = "600 34px 'Georgia', 'Noto Serif TC', serif";
-                ctx.fillText(b.title, textIndentX, drawY);
-                drawY += 50;
+                ctx.font = "bold 36px serif";
+                ctx.fillText(b.title, textX, drawY);
+                drawY += 60;
             }
             if (b.kws) {
                 ctx.fillStyle = textColor;
                 ctx.globalAlpha = 0.6;
-                ctx.font = "22px 'Georgia', 'Noto Serif TC', serif";
-                ctx.fillText(b.kws, textIndentX, drawY);
+                ctx.font = "22px serif";
+                ctx.fillText(b.kws, textX, drawY);
+                drawY += 40;
                 ctx.globalAlpha = 1.0;
-                drawY += 35;
             }
             if (b.text) {
                 ctx.fillStyle = textColor;
-                ctx.globalAlpha = 0.85;
-                ctx.font = "28px 'Georgia', 'Noto Serif TC', serif";
-                // 執行字元換行繪製
-                drawY += drawWrappedText(ctx, b.text, textIndentX, drawY, contentWidth - 30, 48);
+                ctx.font = "28px serif";
+                drawY += drawText(b.text, textX, drawY, contentWidth - 40, 48);
             }
-            
-            // 繪製高級感專屬的左側金色裝飾線
-            ctx.fillStyle = goldColor;
-            ctx.fillRect(marginX, blockStartY, 4, drawY - blockStartY);
 
-            drawY += 50; // 每個解析區塊的距離
+            // 金色左裝飾線
+            ctx.fillStyle = goldColor;
+            ctx.fillRect(marginX, blockStartY + 20, 4, drawY - blockStartY - 10);
+            drawY += 50;
         });
 
-
-// 7. 繪製 Footer 水印
-        ctx.fillStyle = textColor;
-        ctx.globalAlpha = 0.6;
-        // 修改：移除 italic，並將字體大小改為 12px
-        ctx.font = "12px 'Georgia', 'Noto Serif TC', serif"; 
+        // 7. Footer 與 QR Code
         ctx.textAlign = "center";
-        // 修改：使用你指定的正確浮水印文字
-        ctx.fillText("Copyright© 2026 Grafittiii | Mascot prototypes by GMM", canvas.width / 2, finalHeight - 30);
-        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = textColor;
+        ctx.globalAlpha = 0.5;
+        ctx.font = "14px serif";
+        ctx.fillText("Copyright© 2026 Grafittiii | Mascot Tarot", canvas.width / 2, finalHeight - 50);
+        
+        drawQRCodeToCanvas(ctx, canvas.width - 150, finalHeight - 150, goldColor, bgColor);
 
-        // 6. 獲取並格式化西曆時間 (YYYYMMDDHHmm)
-        const now = new Date();
-       const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
-
-        // 繪製 QR Code (右下角)，Y 座標同步跟隨動態高度改變
-        drawQRCodeToCanvas(ctx, canvas.width - 160, finalHeight - 140, goldColor, bgColor);
-
+        // 下載圖片
         setTimeout(() => {
             const link = document.createElement('a');
-            // 確保 currentCategory 有被定義，否則給予預設值
-            const categoryName = typeof currentCategory !== 'undefined' ? currentCategory : 'Tarot';
-            link.download = `MascotTarot_${categoryName}_${timeStr}.png`;
+            const timeStr = new Date().getTime();
+            link.download = `MascotTarot_${timeStr}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             saveBtn.innerText = originalText;
-        }, 600);
+        }, 800);
 
     } catch (err) {
-        console.error("Save failed:", err);
+        console.error(err);
         saveBtn.innerText = "ERROR";
     }
-}                
-
-// 輔助函式維持不變
-function drawQRCodeToCanvas(ctx, x, y, dark, light) {
-    const qrDiv = document.createElement('div');
-    new QRCode(qrDiv, {
-        text: "https://grafittiii-hub.github.io/MascotTarot/",
-        width: 80,
-        height: 80,
-        colorDark: dark,
-        colorLight: light
-    });
-    setTimeout(() => {
-        const qrImg = qrDiv.querySelector('img');
-        if (qrImg) ctx.drawImage(qrImg, x, y, 80, 80);
-    }, 100);
 }
-console.log("%c停！別看我的原始碼，去抽牌吧！", "color: blue; font-size: 15px; font-weight: bold;");
+console.log("%c停！別看我的code了，需要抽牌定制的就來找我吧！", "color: blue; font-size: 15px; font-weight: bold;");
     </script>
 </body>
 </html>
