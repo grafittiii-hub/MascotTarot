@@ -1096,6 +1096,7 @@ const gap = isMobile ? 25 : 30;
         }
 
 async function exportImage() {
+    await document.fonts.load("1em 'Noto Serif TC'");
     const saveBtn = document.getElementById('save-btn');
     if (!saveBtn) return; 
     
@@ -1154,7 +1155,7 @@ async function exportImage() {
         }
 
         let totalContentHeight = headerSpace + (drawnCards.length > 0 ? cardH + 100 : 0);
-        dCtx.font = "26px serif";
+        dCtx.font = "26px 'Georgia', 'Noto Serif TC', serif";
         totalContentHeight += measureWrappedText(dCtx, qText, contentWidth, 40) + 60;
 
         parsedBlocks.forEach(b => {
@@ -1228,13 +1229,14 @@ async function exportImage() {
 
         // 6. 繪製報告文字
         let drawY = headerSpace + (drawnCards.length > 0 ? cardH + 80 : 0);
-        ctx.textAlign = "left";
+        ctx.textAlign = "left"; 
         
         // 問題內容
         ctx.fillStyle = textColor;
         ctx.globalAlpha = 0.5;
         ctx.font = "26px 'Georgia', 'Noto Serif TC', serif";
         function drawText(txt, x, y, maxWidth, lineHeight) {
+            ctx.font = "'Georgia', 'Noto Serif TC', serif";
             const paragraphs = txt.split('\n');
             let currentY = y;
             for (let p of paragraphs) {
@@ -1279,14 +1281,15 @@ async function exportImage() {
             if (b.kws) {
                 ctx.fillStyle = textColor;
                 ctx.globalAlpha = 0.6;
-                ctx.font = "22px 'Georgia', 'Noto Serif TC', serif";ctx.letterSpacing = "3px";
+                ctx.font = "22px 'Georgia', 'Noto Serif TC', serif";
+                ctx.letterSpacing = "3px";
                 ctx.fillText(b.kws, textX, drawY);
                 drawY += 40;
                 ctx.globalAlpha = 1.0;
             }
             if (b.text) {
                 ctx.fillStyle = textColor;
-                ctx.font = "28px 'Georgia', 'Noto Serif TC', serif";ctx.letterSpacing = "3px";
+                ctx.font = "28px serif";ctx.letterSpacing = "2px";
                 drawY += drawText(b.text, textX, drawY, contentWidth - 40, 48);
             }
 
