@@ -1103,151 +1103,215 @@ async function exportImage() {
     saveBtn.innerText = "SAVING...";
     
     try {
-        // 1. 取得 CSS 變數顏色
-        const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
-        const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--gold-primary').trim();
-        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+        // 1. 取得 CSS 變數顏色 (若抓不到則給予預設值防呆)
+        const style = getComputedStyle(document.documentElement);
+        const bgColor = style.getPropertyValue('--bg-color').trim() || '#faf7ed';
+        const goldColor = style.getPropertyValue('--gold-primary').trim() || '#e0c53f';
+        const textColor = style.getPropertyValue('--text-color').trim() || '#2C2A28';
 
-        // 2. 準備文字報告區域 (html2canvas)
-        const reportArea = document.getElementById('result-panel');
-        const actionsArea = document.getElementById('result-actions');
-        const adviceBtnArea = document.getElementById('advice-section');
-        
-        // 截圖前先隱藏不需要入鏡的按鈕 (若 adviceBtnArea 內含已生成的建議文字，請確保不要隱藏文字本身)
-        actionsArea.style.visibility = 'hidden'; 
-        const advOriginalDisplay = adviceBtnArea.style.display;
-        adviceBtnArea.style.display = 'none';    
-
-        // 先執行截圖，這樣我們才能知道內容到底有多長 (動態高度的關鍵)
-        const contentCanvas = await html2canvas(reportArea, {
-            backgroundColor: bgColor,
-            scale: 2, 
-            useCORS: true,
-            y: 0,
-            // 移除 height 限制，讓它完整捕捉包含 advice 的 scrollHeight
-            windowWidth: reportArea.scrollWidth 
+        // 2. 擷取資料：從 DOM 取得文字內容 (完全拋棄 html2canvas)
+        const qText = document.getElementById('report-question').innerText;
+        // 這會自動抓取 1張單牌、3張陣牌，甚至包含已經生成的「追加建議」
+        const blocks = document.querySelectorAll('#result-panel .result-block');
+        const parsedBlocks = Array.from(blocks).map(block => {
+            const allPosEls = block.querySelectorAll('.res-position');
+            const pos = allPosEls[0] ? allPosEls[0].innerText : '';
+            const kws = allPosEls.length > 1 ? allPosEls[1].innerText : '';
+            const title = block.querySelector('.res-title') ? block.querySelector('.res-title').innerText : '';
+            const text = block.querySelector('.res-text') ? block.querySelector('.res-text').innerText : '';
+            return { pos, title, kws, text };
         });
-        
-        // 截圖完成後，恢復原本的顯示狀態
-        actionsArea.style.visibility = 'visible';
-        adviceBtnArea.style.display = advOriginalDisplay;
 
-        // 3. 計算動態畫布尺寸
+        // 3. 設定畫布基礎與卡牌尺寸 (放大比例解決被壓扁問題)
         const finalWidth = 1080;
-        const contentWidth = 920; 
-        // 根據截圖比例，計算文字區塊在最終畫布上的實際高度
-        const contentHeight = (contentCanvas.height * contentWidth) / contentCanvas.width;
-
-        // 卡牌尺寸與排版變數 (修正為 80x120)
-        const cardW = 80; 
-        const cardH = 120;
-        const headerSpace = 130; 
-        let cardsSpace = 0;
+        const contentWidth = 920;
+        const marginX = (finalWidth - contentWidth) / 2; // 置中邊界 80
         
-        if (drawnCards && drawnCards.length > 0) {
-            cardsSpace = cardH + 40; // 卡牌高度 + 下方留白
+        const cardW = 160;  // 放大卡牌，解決過窄問題
+        const cardH = 256;  // 維持 1:1.6 的絕佳比例
+        const cardGap = 40;
+        const headerSpace = 150; 
+
+        // 4. 動態計算總高度 (使用虛擬 Canvas 測量文字排版高度)
+        const dCtx = document.createElement('canvas').getContext('2d');
+        dCtx.textBaseline = "top";
+        
+        // 核心文字自動換行與測量引擎
+        function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, doDraw = true) {
+            if (!text) return 0;
+            const paragraphs = text.split('\n');
+            let startY = y;
+            for (let p of paragraphs) {
+                let currentLine = '';
+                for (let i = 0; i < p.length; i++) {
+                    const char = p[i];
+                    const testLine = currentLine + char;
+                    const metrics = ctx.measureText(testLine);
+                    // 遇到邊界就換行
+                    if (metrics.width > maxWidth && currentLine !== '') {
+                        if (doDraw) ctx.fillText(currentLine, x, y);
+                        y += lineHeight;
+                        currentLine = char;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                if (currentLine !== '') {
+                    if (doDraw) ctx.fillText(currentLine, x, y);
+                    y += lineHeight;
+                }
+            }
+            return y - startY; // 回傳這段文字佔用的總高度
         }
 
-        const contentStartY = headerSpace + cardsSpace; // 文字區塊起始的 Y 座標
-        const footerSpace = 180; // 底部留給浮水印與 QR Code 的空間
-        
-        // 【核心修復】動態計算總高度：頂部 + 卡牌區 + 文字內容高度 + 底部留白
-        const finalHeight = contentStartY + contentHeight + footerSpace;
+        let currentY = headerSpace;
+        if (drawnCards && drawnCards.length > 0) {
+            currentY += cardH + 60; // 預留卡牌區塊高度
+        }
 
-        // 4. 建立最終畫布
+        // 模擬測量文字區高度
+        dCtx.font = "26px 'Georgia', 'Noto Serif TC', serif";
+        currentY += drawWrappedText(dCtx, qText, 0, 0, contentWidth, 40, false) + 40;
+
+        parsedBlocks.forEach(b => {
+            currentY += 20; // 區塊頂部留白
+            if (b.pos) { dCtx.font = "22px 'Georgia', 'Noto Serif TC', serif"; currentY += 35; }
+            if (b.title) { dCtx.font = "600 34px 'Georgia', 'Noto Serif TC', serif"; currentY += 50; }
+            if (b.kws) { dCtx.font = "22px 'Georgia', 'Noto Serif TC', serif"; currentY += 35; }
+            if (b.text) {
+                dCtx.font = "28px 'Georgia', 'Noto Serif TC', serif";
+                // 內縮 30px 給左側金線留空間
+                currentY += drawWrappedText(dCtx, b.text, 0, 0, contentWidth - 30, 48, false);
+            }
+            currentY += 50; // 區塊底部留白
+        });
+
+        const footerSpace = 180;
+        const finalHeight = currentY + footerSpace; // 獲得最完美的精確動態高度
+
+        // 5. 建立最終畫布並進行原生渲染
         const canvas = document.createElement('canvas');
         canvas.width = finalWidth;
         canvas.height = finalHeight;
         const ctx = canvas.getContext('2d');
-        
+        ctx.textBaseline = "top"; // 統一從文字頂端算起，排版更精確
+
         // 繪製背景
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 繪製 Header
+        // 繪製 Header Title
         ctx.fillStyle = goldColor;
-        ctx.font = "300 28px 'Georgia', serif";
+        ctx.font = "300 36px 'Georgia', 'Noto Serif TC', serif"; // 標題微調放大
         ctx.textAlign = "center";
-        ctx.letterSpacing = "5px";
-        ctx.fillText("孫孫暉日塔羅 Mascot Tarot", canvas.width / 2, 80);
+        ctx.letterSpacing = "6px";
+        ctx.fillText("孫孫暉日塔羅 Mascot Tarot", canvas.width / 2, 60);
 
-        // 繪製抽出的卡牌
+        // 繪製抽出的卡牌 (已修復比例)
         if (drawnCards && drawnCards.length > 0) {
-            const gap = 20;  // 卡牌間距
             const total = drawnCards.length;
-            const startX = (canvas.width - (total * cardW + (total - 1) * gap)) / 2; // 置中計算
+            const startX = (canvas.width - (total * cardW + (total - 1) * cardGap)) / 2;
             
             drawnCards.forEach((card, i) => {
                 const imgEl = card.elementDOM.querySelector('.card-front img');
                 if (imgEl) {
                     ctx.save();
-                    // 移至卡牌中心點
-                    ctx.translate(startX + i * (cardW + gap) + cardW/2, headerSpace + cardH/2);
+                    ctx.translate(startX + i * (cardW + cardGap) + cardW/2, headerSpace + cardH/2 - 20);
                     if (card.isReversed) {
-                        ctx.rotate(Math.PI); // 逆位旋轉 180 度
+                        ctx.rotate(Math.PI); 
                     }
                     ctx.drawImage(imgEl, -cardW/2, -cardH/2, cardW, cardH);
+                    
+                    // (Bonus) 替圖片加上低調的金色邊框，增添 LVMH 高端感
+                    ctx.strokeStyle = goldColor;
+                    ctx.lineWidth = 2;
+                    ctx.globalAlpha = 0.4;
+                    ctx.strokeRect(-cardW/2, -cardH/2, cardW, cardH);
                     ctx.restore();
                 }
             });
         }
 
-        // 將 html2canvas 捕捉下來的動態高度內容繪製上去
-        // 內容置中： (1080 - 920) / 2 = 80
-        ctx.drawImage(contentCanvas, 80, contentStartY, contentWidth, contentHeight);
-
-// 5. 繪製 Footer 水印
+        // 6. 繪製文字報告 (強制垂直排列，清晰度 100%)
+        let drawY = headerSpace + (drawnCards && drawnCards.length > 0 ? cardH + 40 : 0);
+        
+        ctx.textAlign = "left";
         ctx.fillStyle = textColor;
-        ctx.globalAlpha = 0.6;
-        // 修改：移除 italic，並將字體大小改為 12px
-        ctx.font = "12px 'Georgia', serif"; 
-        ctx.textAlign = "center";
-        // 修改：使用你指定的正確浮水印文字
-        ctx.fillText("Copyright© 2026 Grafittiii | Mascot prototypes by GMM", canvas.width / 2, finalHeight - 50);
+        ctx.globalAlpha = 0.5;
+        ctx.font = "26px 'Georgia', 'Noto Serif TC', serif";
+        drawY += drawWrappedText(ctx, qText, marginX, drawY, contentWidth, 40) + 40;
         ctx.globalAlpha = 1.0;
 
-        // 6. 獲取並格式化西曆時間 (YYYYMMDDHHmm)
+        parsedBlocks.forEach(b => {
+            const blockStartY = drawY + 5; // 記錄線條起始點
+            drawY += 20;
+            const textIndentX = marginX + 30; // 文字整體往右縮進
+
+            if (b.pos) {
+                ctx.fillStyle = goldColor;
+                ctx.font = "22px 'Georgia', 'Noto Serif TC', serif";
+                ctx.letterSpacing = "2px";
+                ctx.fillText(b.pos, textIndentX, drawY);
+                drawY += 35;
+                ctx.letterSpacing = "0px";
+            }
+            if (b.title) {
+                ctx.fillStyle = textColor;
+                ctx.font = "600 34px 'Georgia', 'Noto Serif TC', serif";
+                ctx.fillText(b.title, textIndentX, drawY);
+                drawY += 50;
+            }
+            if (b.kws) {
+                ctx.fillStyle = textColor;
+                ctx.globalAlpha = 0.6;
+                ctx.font = "22px 'Georgia', 'Noto Serif TC', serif";
+                ctx.fillText(b.kws, textIndentX, drawY);
+                ctx.globalAlpha = 1.0;
+                drawY += 35;
+            }
+            if (b.text) {
+                ctx.fillStyle = textColor;
+                ctx.globalAlpha = 0.85;
+                ctx.font = "28px 'Georgia', 'Noto Serif TC', serif";
+                // 執行字元換行繪製
+                drawY += drawWrappedText(ctx, b.text, textIndentX, drawY, contentWidth - 30, 48);
+            }
+            
+            // 繪製高級感專屬的左側金色裝飾線
+            ctx.fillStyle = goldColor;
+            ctx.fillRect(marginX, blockStartY, 4, drawY - blockStartY);
+
+            drawY += 50; // 每個解析區塊的距離
+        });
+
+        // 7. 繪製 Footer 與 QR Code
+        ctx.fillStyle = textColor;
+        ctx.globalAlpha = 0.6;
+        ctx.font = "16px 'Georgia', 'Noto Serif TC', serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Copyright© 2026 Grafittiii | Mascot prototypes by GMM", canvas.width / 2, finalHeight - 40);
+        ctx.globalAlpha = 1.0;
+
         const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hour = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        const timeStr = `${year}${month}${day}${hour}${min}`;
+        const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
 
-        // 繪製 QR Code (右下角)，Y 座標同步跟隨動態高度改變
-        drawQRCodeToCanvas(ctx, canvas.width - 160, finalHeight - 140, goldColor, bgColor);
+        drawQRCodeToCanvas(ctx, canvas.width - 160, finalHeight - 150, goldColor, bgColor);
 
+        // 延遲稍微加長到 800ms，確保 QR Code 生成完畢
         setTimeout(() => {
             const link = document.createElement('a');
-            // 確保 currentCategory 有被定義，否則給予預設值
             const categoryName = typeof currentCategory !== 'undefined' ? currentCategory : 'Tarot';
             link.download = `MascotTarot_${categoryName}_${timeStr}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             saveBtn.innerText = originalText;
-        }, 600);
+        }, 800);
 
     } catch (err) {
         console.error("Save failed:", err);
         saveBtn.innerText = "ERROR";
+        setTimeout(() => saveBtn.innerText = originalText, 2000);
     }
-}                
-
-// 輔助函式維持不變
-function drawQRCodeToCanvas(ctx, x, y, dark, light) {
-    const qrDiv = document.createElement('div');
-    new QRCode(qrDiv, {
-        text: "https://grafittiii-hub.github.io/MascotTarot/",
-        width: 80,
-        height: 80,
-        colorDark: dark,
-        colorLight: light
-    });
-    setTimeout(() => {
-        const qrImg = qrDiv.querySelector('img');
-        if (qrImg) ctx.drawImage(qrImg, x, y, 80, 80);
-    }, 100);
 }
 console.log("%c停！別看我的原始碼，去抽牌吧！", "color: blue; font-size: 15px; font-weight: bold;");
     </script>
