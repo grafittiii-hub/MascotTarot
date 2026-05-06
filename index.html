@@ -1111,17 +1111,16 @@ if (document.getElementById('retry-btn')) document.getElementById('retry-btn').s
 
             }, 900);
         }
-// 輔助函式維持不變
 function drawQRCodeToCanvas(ctx, x, y, dark, light) {
-    const qrDiv = document.createElement('div');
-    new QRCode(qrDiv, {
-        text: "https://grafittiii-hub.github.io/MascotTarot/",
-        width: 80,
-        height: 80,
-        colorDark: dark,
-        colorLight: light
-    });
-// 定時輪詢檢查圖片是否生成
+    return new Promise((resolve) => {
+        const qrDiv = document.createElement('div');
+        new QRCode(qrDiv, {
+            text: "https://grafittiii-hub.github.io/MascotTarot/",
+            width: 80, height: 80,
+            colorDark: dark, colorLight: light
+        });
+
+        // 定時輪詢檢查圖片是否生成
         const checkQR = setInterval(() => {
             const qrImg = qrDiv.querySelector('img');
             if (qrImg && qrImg.src) {
@@ -1347,7 +1346,7 @@ async function exportImage() {
         await drawQRCodeToCanvas(ctx, canvas.width - 150, finalHeight - 150, goldColor, bgColor);
 
 	獲取並格式化西曆時間 (YYYYMMDDHHmm)
-        const now = new Date();
+       const now = new Date();
        const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
 
         // 下載圖片
