@@ -275,8 +275,8 @@
 .card-front img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    /* 核心修改：透過 scale 放大圖片約 10%，這會直接裁切掉原本素材周圍的空白 */
+    object-fit: cover;object-position: 47% 50%;
+    /* 核心修改：透過 scale 放大圖片約 5%，這會直接裁切掉原本素材周圍的空白 */
     transform: scale(1.05); 
     transition: transform 0.3s ease;
 }
@@ -1071,33 +1071,76 @@ async function exportImage() {
     saveBtn.innerText = "生成中...";
     
     try {
-        // 1. 建立離屏畫布 1080x1350
-        const canvas = document.createElement('canvas');
-        canvas.width = 1080;
-        canvas.height = 1350;
-        const ctx = canvas.getContext('2d');
-        
-        // 取得 CSS 變數顏色
+        // 1. 取得 CSS 變數顏色
         const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
         const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--gold-primary').trim();
         const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
 
+        // 2. 準備文字報告區域 (html2canvas)
+        const reportArea = document.getElementById('result-panel');
+        const actionsArea = document.getElementById('result-actions');
+        const adviceBtnArea = document.getElementById('advice-section');
+        
+        // 截圖前先隱藏不需要入鏡的按鈕 (若 adviceBtnArea 內含已生成的建議文字，請確保不要隱藏文字本身)
+        actionsArea.style.visibility = 'hidden'; 
+        const advOriginalDisplay = adviceBtnArea.style.display;
+        adviceBtnArea.style.display = 'none';    
+
+        // 先執行截圖，這樣我們才能知道內容到底有多長 (動態高度的關鍵)
+        const contentCanvas = await html2canvas(reportArea, {
+            backgroundColor: bgColor,
+            scale: 2, 
+            useCORS: true,
+            y: 0,
+            // 移除 height 限制，讓它完整捕捉包含 advice 的 scrollHeight
+            windowWidth: reportArea.scrollWidth 
+        });
+        
+        // 截圖完成後，恢復原本的顯示狀態
+        actionsArea.style.visibility = 'visible';
+        adviceBtnArea.style.display = advOriginalDisplay;
+
+        // 3. 計算動態畫布尺寸
+        const finalWidth = 1080;
+        const contentWidth = 920; 
+        // 根據截圖比例，計算文字區塊在最終畫布上的實際高度
+        const contentHeight = (contentCanvas.height * contentWidth) / contentCanvas.width;
+
+        // 卡牌尺寸與排版變數 (修正為 80x120)
+        const cardW = 80; 
+        const cardH = 120;
+        const headerSpace = 130; 
+        let cardsSpace = 0;
+        
+        if (drawnCards && drawnCards.length > 0) {
+            cardsSpace = cardH + 40; // 卡牌高度 + 下方留白
+        }
+
+        const contentStartY = headerSpace + cardsSpace; // 文字區塊起始的 Y 座標
+        const footerSpace = 180; // 底部留給浮水印與 QR Code 的空間
+        
+        // 【核心修復】動態計算總高度：頂部 + 卡牌區 + 文字內容高度 + 底部留白
+        const finalHeight = contentStartY + contentHeight + footerSpace;
+
+        // 4. 建立最終畫布
+        const canvas = document.createElement('canvas');
+        canvas.width = finalWidth;
+        canvas.height = finalHeight;
+        const ctx = canvas.getContext('2d');
+        
         // 繪製背景
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 2. 繪製 Header
+        // 繪製 Header
         ctx.fillStyle = goldColor;
         ctx.font = "300 28px 'Georgia', serif";
         ctx.textAlign = "center";
         ctx.letterSpacing = "5px";
         ctx.fillText("孫孫暉日塔羅 Mascot Tarot", canvas.width / 2, 80);
 
-        // ======== 新增：3. 繪製抽出的卡牌 (縮小尺寸) ========
-        let contentStartY = 130; // 內容起始 Y 座標
+        // 繪製抽出的卡牌
         if (drawnCards && drawnCards.length > 0) {
-            const cardW = 120; // 將卡牌尺寸縮小
-            const cardH = 180;
             const gap = 20;  // 卡牌間距
             const total = drawnCards.length;
             const startX = (canvas.width - (total * cardW + (total - 1) * gap)) / 2; // 置中計算
@@ -1106,8 +1149,8 @@ async function exportImage() {
                 const imgEl = card.elementDOM.querySelector('.card-front img');
                 if (imgEl) {
                     ctx.save();
-                    // 移至卡牌中心點，準備繪製與處理逆位旋轉
-                    ctx.translate(startX + i * (cardW + gap) + cardW/2, contentStartY + cardH/2);
+                    // 移至卡牌中心點
+                    ctx.translate(startX + i * (cardW + gap) + cardW/2, headerSpace + cardH/2);
                     if (card.isReversed) {
                         ctx.rotate(Math.PI); // 逆位旋轉 180 度
                     }
@@ -1115,52 +1158,39 @@ async function exportImage() {
                     ctx.restore();
                 }
             });
-            contentStartY += cardH + 40; // 將後續文字報告的 Y 座標往卡牌下方推
         }
-        // ===================================================
 
-        // 4. 捕捉報告內容 (html2canvas)
-        const reportArea = document.getElementById('result-panel');
-        const actionsArea = document.getElementById('result-actions');
-        const adviceBtnArea = document.getElementById('advice-section');
-        
-        // ======== 修改：截圖前先隱藏不需要入鏡的區塊 ========
-        actionsArea.style.visibility = 'hidden'; // 隱藏底部 Save/Return 按鈕
-        const advOriginalDisplay = adviceBtnArea.style.display;
-        adviceBtnArea.style.display = 'none';    // 隱藏「需要追問/建議嗎」區塊
-        // ===================================================
-
-        const contentCanvas = await html2canvas(reportArea, {
-            backgroundColor: bgColor,
-            scale: 2, 
-            useCORS: true,
-            y: 0,
-            height: reportArea.scrollHeight
-        });
-        
-        // 截圖完成後，恢復原本的顯示狀態
-        actionsArea.style.visibility = 'visible';
-        adviceBtnArea.style.display = advOriginalDisplay;
-
-        // 將文字報告繪製到主畫布上 (接在剛剛畫好的卡牌下方)
-        const contentWidth = 920; 
-        const contentHeight = (contentCanvas.height * contentWidth) / contentCanvas.width;
+        // 將 html2canvas 捕捉下來的動態高度內容繪製上去
+        // 內容置中： (1080 - 920) / 2 = 80
         ctx.drawImage(contentCanvas, 80, contentStartY, contentWidth, contentHeight);
 
-        // 5. 繪製 Footer 水印
+// 5. 繪製 Footer 水印
         ctx.fillStyle = textColor;
         ctx.globalAlpha = 0.6;
-        ctx.font = "italic 16px 'Georgia', serif";
+        // 修改：移除 italic，並將字體大小改為 12px
+        ctx.font = "12px 'Georgia', serif"; 
         ctx.textAlign = "center";
-        ctx.fillText("Copyright© 2026 Grafittiii | Mascot prototypes by GMM", canvas.width / 2, 1310);
+        // 修改：使用你指定的正確浮水印文字
+        ctx.fillText("Copyright© 2026 Grafittiii | Mascot prototypes by GMM", canvas.width / 2, finalHeight - 50);
         ctx.globalAlpha = 1.0;
 
-        // 繪製 QR Code (右下角)
-        drawQRCodeToCanvas(ctx, canvas.width - 160, 1200, goldColor, bgColor);
+        // 6. 獲取並格式化西曆時間 (YYYYMMDDHHmm)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const timeStr = `${year}${month}${day}${hour}${min}`;
+
+        // 繪製 QR Code (右下角)，Y 座標同步跟隨動態高度改變
+        drawQRCodeToCanvas(ctx, canvas.width - 160, finalHeight - 140, goldColor, bgColor);
 
         setTimeout(() => {
             const link = document.createElement('a');
-            link.download = `MascotTarot_${currentCategory}_${Date.now()}.png`;
+            // 確保 currentCategory 有被定義，否則給予預設值
+            const categoryName = typeof currentCategory !== 'undefined' ? currentCategory : 'Tarot';
+            link.download = `MascotTarot_${categoryName}_${timeStr}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             saveBtn.innerText = originalText;
@@ -1171,21 +1201,22 @@ async function exportImage() {
         saveBtn.innerText = "ERROR";
     }
 }                
-        // 輔助函式：生成 QR Code 並繪製到 Canvas
-        function drawQRCodeToCanvas(ctx, x, y, dark, light) {
-            const qrDiv = document.createElement('div');
-            new QRCode(qrDiv, {
-                text: "https://grafittiii-hub.github.io/MascotTarot/",
-                width: 80,
-                height: 80,
-                colorDark: dark,
-                colorLight: light
-            });
-            setTimeout(() => {
-                const qrImg = qrDiv.querySelector('img');
-                if (qrImg) ctx.drawImage(qrImg, x, y, 80, 80);
-            }, 100);
-        }
+
+// 輔助函式維持不變
+function drawQRCodeToCanvas(ctx, x, y, dark, light) {
+    const qrDiv = document.createElement('div');
+    new QRCode(qrDiv, {
+        text: "https://grafittiii-hub.github.io/MascotTarot/",
+        width: 80,
+        height: 80,
+        colorDark: dark,
+        colorLight: light
+    });
+    setTimeout(() => {
+        const qrImg = qrDiv.querySelector('img');
+        if (qrImg) ctx.drawImage(qrImg, x, y, 80, 80);
+    }, 100);
+}
     </script>
 </body>
 </html>
