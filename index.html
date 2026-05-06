@@ -921,66 +921,82 @@
 
             const requiredLimit = spreadMode === 'single' ? 1 : 3;
             if (drawnCards.length >= requiredLimit) {
-                setTimeout(finalizeSelection, 600); 
+                setTimeout(finalizeSelection, 300); 
             }
         }
 
         function finalizeSelection() {
-            const counter = document.getElementById('draw-counter');
-            if (counter) counter.style.display = 'none';
+    // 1. 優先獲取核心數值，確保後續 transform 計算準確
+    const totalCards = drawnCards.length;
+    const isMobile = window.innerWidth < 768;
+    
+    const counter = document.getElementById('draw-counter');
+    if (counter) counter.style.display = 'none';
 
-            document.querySelectorAll('.card-wrap:not(.confirmed)').forEach(el => {
-                el.style.transition = 'opacity 0.8s ease';
-                el.style.opacity = '0';
-                el.style.pointerEvents = 'none';
-            });
-
-            const totalCards = drawnCards.length;
-            const isMobile = window.innerWidth < 768;
-
-            drawnCards.forEach((drawn, i) => {
-                const el = drawn.elementDOM;
-                el.classList.remove('confirmed');
-                el.style.opacity = '1';
-                el.style.transition = 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
-                
-                const centerOffsetX = (totalCards === 1) ? 0 : (i - (totalCards - 1) / 2) * (isMobile ? 110 : 160); 
-                
-                el.style.transformOrigin = "center center";
-                el.style.left = `calc(50% + ${centerOffsetX}px)`;
-                el.style.top = `50%`;
-                el.style.bottom = 'auto';
-                el.style.transform = `translate(-50%, -50%) rotate(0deg) scale(${totalCards === 1 ? 1.1 : 1})`; 
-            });
-
-            setTimeout(() => {
-                drawnCards.forEach((drawn) => {
-                    const inner = drawn.elementDOM.querySelector('.card-inner');
-                    inner.style.transition = 'transform 0.8s ease';
-                    const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
-                    inner.style.transform = rotation;
-                });
-            }, 1000);
-
-            setTimeout(() => {
-                drawnCards.forEach((drawn, i) => {
-                    const el = drawn.elementDOM;
-                    let leftPos = '50%'; 
-                    if (totalCards === 3) {
-const gap = isMobile ? 25 : 30;
-                        leftPos = `${50 + (i - 1) * gap}%`;
-                    }
-                    el.style.left = leftPos;
-                    el.style.top = isMobile ? '5%' : '8%';
-                    el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${isMobile && totalCards === 3 ? 0.85 : 1})`;
-                });
-            }, 2200);
-
-            setTimeout(() => {
-                document.getElementById('retry-btn').style.display = 'block';
-                generateReport();
-            }, 2000);
+    // 2. 處理「未選中」卡牌的退場 (Fade Out)
+    // 這裡我們只動 opacity，保留它們原本在扇形陣位時的 transform，避免閃爍
+    document.querySelectorAll('.card-wrap:not(.confirmed)').forEach(el => {
+        el.style.transition = 'opacity 0.5s ease-out, bottom 0.4s ease-in, left 0.4s ease-in'; 
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+if (isMobile) {
+            // 手機：往左方退場 (將 left 設為負值，使其移出畫面)
+            el.style.left = '-50%'; 
+        } else {
+            // 電腦：往下方退場 
+            el.style.bottom = '-50%'; 
         }
+    });
+
+    setTimeout(() => {
+    // 3. 處理「已選中」卡牌的位移 (同時進行)
+    drawnCards.forEach((drawn, i) => {
+        const el = drawn.elementDOM;
+        el.classList.remove('confirmed');
+        el.style.opacity = '1';
+        
+        // 這裡使用 all 確保 transform 和 opacity 同時平滑過渡
+        el.style.transition = 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+        
+        const centerOffsetX = (totalCards === 1) ? 0 : (i - (totalCards - 1) / 2) * (isMobile ? 110 : 160); 
+        
+        el.style.transformOrigin = "center center";
+        el.style.left = `calc(50% + ${centerOffsetX}px)`;
+        el.style.top = `50%`;
+        el.style.bottom = 'auto';
+        el.style.transform = `translate(-50%, -50%) rotate(0deg) scale(${totalCards === 1 ? 1.1 : 1})`; 
+    });
+}, 100);
+
+    // --- 後續翻牌與定位邏輯保持不變 ---
+
+    setTimeout(() => {
+        drawnCards.forEach((drawn) => {
+            const inner = drawn.elementDOM.querySelector('.card-inner');
+            inner.style.transition = 'transform 0.8s ease';
+            const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
+            inner.style.transform = rotation;
+        });
+    }, 1000);
+
+    setTimeout(() => {
+        drawnCards.forEach((drawn, i) => {
+            const el = drawn.elementDOM;
+            let leftPos = '50%'; 
+            if (totalCards === 3) {
+                const gap = isMobile ? 25 : 30;
+                leftPos = `${50 + (i - 1) * gap}%`;
+            }
+            el.style.left = leftPos;
+            el.style.top = isMobile ? '5%' : '8%';
+            el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${isMobile && totalCards === 3 ? 0.85 : 1})`;
+        });
+    }, 2200);
+
+    setTimeout(() => {
+        generateReport();
+    }, 2200);
+}
 
         function generateReport() {
             try {
@@ -1002,7 +1018,7 @@ const gap = isMobile ? 25 : 30;
                     if (!stateData) stateData = card.upright; 
                     
                     let posLabel = '核心指引';
-                    let meaningText = stateData.general_meaning || '牌義正在靈性連結中...';
+                    let meaningText = stateData.general_meaning || '牌義正在連結中...';
 
                     if (isTriple) {
                         posLabel = tripleLabels[i].label;
@@ -1036,6 +1052,7 @@ const gap = isMobile ? 25 : 30;
 
             } catch (error) {
                 console.error("生成報告時發生錯誤：", error);
+if (document.getElementById('retry-btn')) document.getElementById('retry-btn').style.display = 'block';
             }
         }
 
@@ -1289,7 +1306,7 @@ async function exportImage() {
             }
             if (b.text) {
                 ctx.fillStyle = textColor;
-                ctx.font = "28px serif";ctx.letterSpacing = "2px";
+                ctx.font = "28px 'Georgia', 'Noto Serif TC', serif";ctx.letterSpacing = "2px";
                 drawY += drawText(b.text, textX, drawY, contentWidth - 40, 48);
             }
 
@@ -1308,15 +1325,18 @@ async function exportImage() {
         
         drawQRCodeToCanvas(ctx, canvas.width - 150, finalHeight - 150, goldColor, bgColor);
 
+	獲取並格式化西曆時間 (YYYYMMDDHHmm)
+        const now = new Date();
+       const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+
         // 下載圖片
         setTimeout(() => {
             const link = document.createElement('a');
-            const timeStr = new Date().getTime();
-            link.download = `MascotTarot_${timeStr}.png`;
+            link.download = `MascotTarot_${categoryName}_${timeStr}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             saveBtn.innerText = originalText;
-        }, 800);
+        }, 600);
 
     } catch (err) {
         console.error(err);
