@@ -1227,15 +1227,26 @@ ctx.textBaseline = "top"; // 統一從文字頂端算起，排版更精確
 // 2. 模擬 CSS 的 scale(1.05) 與 object-fit: cover
         // 我們從原始圖片中取出中間的一塊區域，而不是繪製整張圖
         const sScale = 1.05; // 對應你的 CSS scale
-        const sW = imgEl.naturalWidth / sScale;
-        const sH = imgEl.naturalHeight / sScale;
-        
+        const imgW = imgEl.naturalWidth;
+        const imgH = imgEl.naturalHeight;
+const targetAspect = cardW / cardH;
+            const imgAspect = imgW / imgH;
+        let sW, sH, sx, sy;
+if (imgAspect > targetAspect) {
+                // 圖片太寬，以高度為準裁切兩側
+                sH = imgH / sScale;
+                sW = sH * targetAspect;
+            } else {
+                // 圖片太長，以寬度為準裁切上下 (你的 Mascot 素材通常屬於這種)
+                sW = imgW / sScale;
+                sH = sW / targetAspect;
+            }
+
         // 根據 object-position: 52% 50% 稍微偏移取樣位置
         const sx = (imgEl.naturalWidth - sW) * 0.52; 
         const sy = (imgEl.naturalHeight - sH) * 0.50;
 
-                    ctx.drawImage(imgEl, sx, sy, sW, sH, 
--cardW/2, -cardH/2, cardW, cardH);
+                    ctx.drawImage(imgEl, sx, sy, sW, sH,-cardW/2, -cardH/2, cardW, cardH);
                     ctx.restore();
                 }
             });
