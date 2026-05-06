@@ -1224,7 +1224,18 @@ ctx.textBaseline = "top"; // 統一從文字頂端算起，排版更精確
                     if (card.isReversed) {
                         ctx.rotate(Math.PI); // 逆位旋轉 180 度
                     }
-                    ctx.drawImage(imgEl, -cardW/2, -cardH/2, cardW, cardH);
+// 2. 模擬 CSS 的 scale(1.05) 與 object-fit: cover
+        // 我們從原始圖片中取出中間的一塊區域，而不是繪製整張圖
+        const sScale = 1.05; // 對應你的 CSS scale
+        const sW = imgEl.naturalWidth / sScale;
+        const sH = imgEl.naturalHeight / sScale;
+        
+        // 根據 object-position: 52% 50% 稍微偏移取樣位置
+        const sx = (imgEl.naturalWidth - sW) * 0.52; 
+        const sy = (imgEl.naturalHeight - sH) * 0.50;
+
+                    ctx.drawImage(imgEl, sx, sy, sW, sH, 
+-cardW/2, -cardH/2, cardW, cardH);
                     ctx.restore();
                 }
             });
@@ -1290,7 +1301,7 @@ ctx.textBaseline = "top"; // 統一從文字頂端算起，排版更精確
         ctx.font = "12px 'Georgia', 'Noto Serif TC', serif"; 
         ctx.textAlign = "center";
         // 修改：使用你指定的正確浮水印文字
-        ctx.fillText("Copyright© 2026 Grafittiii | Mascot prototypes by GMM", canvas.width / 2, finalHeight - 10);
+        ctx.fillText("Copyright© 2026 Grafittiii | Mascot prototypes by GMM", canvas.width / 2, finalHeight - 30);
         ctx.globalAlpha = 1.0;
 
         // 6. 獲取並格式化西曆時間 (YYYYMMDDHHmm)
