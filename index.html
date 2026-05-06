@@ -240,22 +240,54 @@
             display: none; width: 100vw; height: 100vh; position: relative;
             opacity: 0; transition: opacity 1s ease;
         }
-        #cards-container { position: absolute; inset: 0; }
+/* 容器需要透視點才有 3D 效果 */
+#cards-container { 
+    position: absolute; 
+    inset: 0; 
+    perspective: 1000px; /* 增加空間感 */
+}
 
-        @keyframes shuffleAnim {
-            0% { transform: translate(-50%, -50%) rotate(0deg); z-index: 10; }
-            25% { transform: translate(-60%, -55%) rotate(-8deg); z-index: 20; }
-            50% { transform: translate(-40%, -45%) rotate(8deg); z-index: 10; }
-            75% { transform: translate(-55%, -50%) rotate(-4deg); z-index: 20; }
-            100% { transform: translate(-50%, -50%) rotate(0deg); z-index: 10; }
-        }
-        .shuffling {
-            animation: shuffleAnim 0.6s infinite alternate ease-in-out;
-        }
+@keyframes luxuryShuffle {
+    0% { 
+        transform: translate(-50%, -50%) translateZ(0) rotate(0deg) rotateY(0deg); 
+        z-index: 10; 
+    }
+    20% { 
+        /* 向左外拋，帶點傾斜 */
+        transform: translate(-65%, -52%) translateZ(30px) rotate(-12deg) rotateY(15deg); 
+        z-index: 20; 
+    }
+    40% { 
+        /* 回收至中心下方 */
+        transform: translate(-45%, -48%) translateZ(-20px) rotate(5deg) rotateY(-10deg); 
+        z-index: 5; 
+    }
+    60% { 
+        /* 向右外拋，產生層次落差 */
+        transform: translate(-35%, -55%) translateZ(50px) rotate(10deg) rotateY(20deg); 
+        z-index: 25; 
+    }
+    80% { 
+        /* 輕微晃動歸位 */
+        transform: translate(-55%, -45%) translateZ(10px) rotate(-3deg) rotateY(-5deg); 
+        z-index: 15; 
+    }
+    100% { 
+        transform: translate(-50%, -50%) translateZ(0) rotate(0deg) rotateY(0deg); 
+        z-index: 10; 
+    }
+}
+
+.shuffling {
+    /* 使用 cubic-bezier 讓動作有「先快後慢」的物理慣性高級感 */
+    animation: luxuryShuffle 1.2s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
+    /* 增加動態模糊感 (可選) */
+    filter: contrast(1.1) brightness(1.05);
+}
 
         .card-wrap {
-            position: absolute; width: 80px; height: 120px;
-            cursor: pointer; z-index: 10;border-radius: 12px;
+            position: absolute; width: 75px; height: 120px;
+            cursor: pointer; z-index: 10;border-radius: 8px;
         }
         @media (min-width: 768px) { .card-wrap { width: 120px; height: 180px; } }
 
@@ -265,7 +297,7 @@
             position: absolute; inset: 0; backface-visibility: hidden; width: 100%;
             height: 100%;
             object-fit: cover; 
-            border-radius: 12px; background-position: center;
+            border-radius: 8px; background-position: center;
             border: var(--border-thin); box-shadow: 0 5px 15px var(--card-shadow);
         }
         .card-back { background-color: var(--gold-light); background-image: linear-gradient(135deg, var(--gold-primary) 25%, transparent 25%); }
@@ -275,7 +307,7 @@
 .card-front img {
     width: 100%;
     height: 100%;
-    object-fit: cover;object-position: 47% 50%;
+    object-fit: cover;object-position: 52% 50%;
     /* 核心修改：透過 scale 放大圖片約 5%，這會直接裁切掉原本素材周圍的空白 */
     transform: scale(1.05); 
     transition: transform 0.3s ease;
@@ -284,7 +316,7 @@
         .card-wrap.popped { z-index: 100 !important; }
         .card-wrap.popped .card-inner {
             transform: translate(var(--pop-x, 0), var(--pop-y, -50px)) scale(1.15);
-            box-shadow: 0 15px 30px var(--card-shadow-hover);border-radius: 12px; 
+            box-shadow: 0 15px 30px var(--card-shadow-hover);border-radius: 8px; 
         }
         
         .card-wrap.confirmed { pointer-events: none; z-index: 50; }
@@ -338,7 +370,7 @@
         }
 
         .result-block { margin-bottom: 40px; border-left: 2px solid var(--gold-primary); padding-left: 20px; }
-        .res-position { font-size: 0.65rem; color: var(--gold-primary); letter-spacing: 3px; margin-bottom: 8px; }
+        .res-position { font-size: 0.65rem; color: var(--gold-primary); letter-spacing: 2px; margin-bottom: 8px; }
         .res-title { font-size: 1.2rem; margin-bottom: 12px; font-weight: 500; }
         .res-text { font-size: 0.95rem; line-height: 1.8; opacity: 0.85; }
 
@@ -1068,7 +1100,7 @@ async function exportImage() {
     if (!saveBtn) return; 
     
     const originalText = saveBtn.innerText;
-    saveBtn.innerText = "生成中...";
+    saveBtn.innerText = "SAVING...";
     
     try {
         // 1. 取得 CSS 變數顏色
@@ -1217,6 +1249,7 @@ function drawQRCodeToCanvas(ctx, x, y, dark, light) {
         if (qrImg) ctx.drawImage(qrImg, x, y, 80, 80);
     }, 100);
 }
+console.log("%c停！別看我的原始碼，去抽牌吧！", "color: blue; font-size: 15px; font-weight: bold;");
     </script>
 </body>
 </html>
