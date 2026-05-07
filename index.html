@@ -1111,16 +1111,17 @@ if (document.getElementById('retry-btn')) document.getElementById('retry-btn').s
 
             }, 900);
         }
+// 輔助函式維持不變
 function drawQRCodeToCanvas(ctx, x, y, dark, light) {
-    return new Promise((resolve) => {
-        const qrDiv = document.createElement('div');
-        new QRCode(qrDiv, {
-            text: "https://grafittiii-hub.github.io/MascotTarot/",
-            width: 80, height: 80,
-            colorDark: dark, colorLight: light
-        });
-
-        // 定時輪詢檢查圖片是否生成
+    const qrDiv = document.createElement('div');
+    new QRCode(qrDiv, {
+        text: "https://grafittiii-hub.github.io/MascotTarot/",
+        width: 80,
+        height: 80,
+        colorDark: dark,
+        colorLight: light
+    });
+// 定時輪詢檢查圖片是否生成
         const checkQR = setInterval(() => {
             const qrImg = qrDiv.querySelector('img');
             if (qrImg && qrImg.src) {
@@ -1129,7 +1130,6 @@ function drawQRCodeToCanvas(ctx, x, y, dark, light) {
                 resolve();
             }
         }, 50);
-    });
 }
 
 async function exportImage() {
@@ -1336,22 +1336,26 @@ async function exportImage() {
             drawY += 50;
         });
 
-        // 7. Footer 與 QR Code
+// 7. Footer 與 QR Code
         ctx.textAlign = "center";
         ctx.fillStyle = textColor;
         ctx.globalAlpha = 0.5;
-        ctx.font = "14px 'Georgia', 'Noto Serif TC', serif"; ctx.letterSpacing = "2px";
+        ctx.font = "14px 'Georgia', 'Noto Serif TC', serif"; 
+        ctx.letterSpacing = "2px";
         ctx.fillText("Copyright© 2026 Grafittiii | Mascot Tarot", canvas.width / 2, finalHeight - 50);
         
+        // 呼叫 QR Code 繪製並等待完成
         await drawQRCodeToCanvas(ctx, canvas.width - 150, finalHeight - 150, goldColor, bgColor);
 
-	獲取並格式化西曆時間 (YYYYMMDDHHmm)
-       const now = new Date();
-       const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+        // === 修正部分：確保這行是註釋 ===
+        // 獲取並格式化西曆時間 (YYYYMMDDHHmm)
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
 
         // 下載圖片
         setTimeout(() => {
             const link = document.createElement('a');
+            const categoryName = typeof currentCategory !== 'undefined' ? currentCategory : 'Tarot';
             link.download = `MascotTarot_${categoryName}_${timeStr}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
@@ -1359,10 +1363,10 @@ async function exportImage() {
         }, 600);
 
     } catch (err) {
-        console.error(err);
+        console.error("下載失敗:", err);
         saveBtn.innerText = "ERROR";
     }
-}             
+}       
 
 
 console.log("%c停！別看我的code了，需要抽牌定制的就來找我吧！", "color: blue; font-size: 15px; font-weight: bold;");
