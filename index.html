@@ -1222,7 +1222,7 @@ async function exportImage() {
 
         // 標題
         ctx.fillStyle = goldColor;
-        ctx.font = "300 40px 'Georgia', 'Noto Serif TC', serif";
+        ctx.font = "bold 40px 'Georgia', 'Noto Serif TC', serif";
         ctx.textAlign = "center"; ctx.letterSpacing = "3px";
         ctx.fillText("孫孫暉日塔羅 Mascot Tarot", canvas.width / 2, 80);
 
@@ -1311,7 +1311,7 @@ async function exportImage() {
             }
             if (b.title) {
                 ctx.fillStyle = textColor;
-                ctx.font = "bold 36px 'Georgia', 'Noto Serif TC', serif";ctx.letterSpacing = "3px";
+                ctx.font = "36px 'Georgia', 'Noto Serif TC', serif";ctx.letterSpacing = "3px";
                 ctx.fillText(b.title, textX, drawY);
                 drawY += 60;
             }
