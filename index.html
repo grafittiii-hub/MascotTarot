@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         /* ==========================================
-           1. LVMH 高階視覺美學與色彩系統
+           1. 高階視覺美學與色彩系統
            ========================================== */
         :root {
             --bg-color: #fffef7;
@@ -88,7 +88,7 @@
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%); white-space: nowrap;pointer-events: none;
-            font-size: 0.85rem; 
+            font-size: clamp(0.5rem, 4vh, 0.85rem); 
             letter-spacing: 3px;
             font-weight: 300;
             color: var(--gold-primary);
@@ -141,22 +141,22 @@
             transition: opacity 1s ease;
         }
         .loading-title {
-            font-size: 1.2rem; letter-spacing: 5px; font-weight: 300;
-            color: var(--gold-primary); margin-bottom: 40px;
+            font-size: 1rem; letter-spacing: 3px; font-weight: 300;
+            color: var(--gold-primary); margin-bottom: 40px; padding: 0 10px;
             animation: auraBreathing 3s infinite ease-in-out;
         }
         @keyframes auraBreathing {
             0%, 100% { text-shadow: 0 0 10px rgba(182, 154, 104, 0); transform: scale(1); }
             50% { text-shadow: 0 0 25px rgba(182, 154, 104, 0.4); transform: scale(1.02); }
         }
-        .progress-track { width: 200px; height: 1px; background: var(--gold-light); position: relative; }
+        .progress-track { width: 150px; height: 1px; background: var(--gold-light); position: relative; }
         #progress-bar { width: 0%; height: 100%; background: var(--gold-primary); transition: width 0.3s ease; }
 
         /* ==========================================
            4. 主頁 UI 佈局
            ========================================== */
         #main-page {
-            width: 100%; min-height: 100dvh; padding: 70px 10% 10vh;
+            width: 100%; min-height: 100dvh; padding: 15dvh 10% 5dvh;
             display: flex; flex-direction: column; justify-content: center;
             opacity: 0; visibility: hidden; transition: opacity 1.2s ease;
             max-width: 600px; margin: 0 auto;
@@ -193,7 +193,7 @@
 
         /* 統一按鈕基礎設定 */
         .btn-solid {
-            width: 100%; padding: 18px; background: var(--gold-primary);
+            width: 100%; padding: 18px; margin-bottom: auto; background: var(--gold-primary);
             color: var(--bg-color); border: none; font-size: 0.9rem;
             letter-spacing: 5px; text-transform: uppercase; cursor: pointer;
             transition: 0.4s; position: relative; overflow: hidden;
@@ -1113,23 +1113,34 @@ if (document.getElementById('retry-btn')) document.getElementById('retry-btn').s
         }
 // 輔助函式維持不變
 function drawQRCodeToCanvas(ctx, x, y, dark, light) {
-    const qrDiv = document.createElement('div');
-    new QRCode(qrDiv, {
-        text: "https://grafittiii-hub.github.io/MascotTarot/",
-        width: 80,
-        height: 80,
-        colorDark: dark,
-        colorLight: light
-    });
-// 定時輪詢檢查圖片是否生成
+    // 必須 return 一個 Promise
+    return new Promise((resolve, reject) => { 
+        const qrDiv = document.createElement('div');
+        new QRCode(qrDiv, {
+            text: "https://grafittiii-hub.github.io/MascotTarot/",
+            width: 80,
+            height: 80,
+            colorDark: dark,
+            colorLight: light
+        });
+
         const checkQR = setInterval(() => {
             const qrImg = qrDiv.querySelector('img');
             if (qrImg && qrImg.src) {
                 clearInterval(checkQR);
                 ctx.drawImage(qrImg, x, y, 80, 80);
-                resolve();
+                
+                // 現在 resolve 已經在 Promise 參數中定義了
+                resolve(); 
             }
         }, 50);
+
+        // 可選：加上超時保護，避免死循環
+        setTimeout(() => {
+            clearInterval(checkQR);
+            resolve(); // 即使失敗也 resolve，避免 exportImage 卡死
+        }, 3000);
+    });
 }
 
 async function exportImage() {
