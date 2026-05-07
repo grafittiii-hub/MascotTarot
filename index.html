@@ -442,7 +442,7 @@
         <div style="font-size:0.8rem; opacity:0.5; margin-bottom: 20px;" id="report-question"></div>
         <div id="report-content"></div>
         
-        <div id="advice-section" style="display:none; margin-top:30px; border-top: var(--border-thin); padding-top: 30px;">
+        <div id="advice-section" style="display:none; border-top: var(--border-thin); padding-top: 30px;">
             <div class="label" style="margin-bottom:15px;">Guidance</div>
             <button class="btn-outline" style="width:100%; border-color:var(--gold-primary); color:var(--gold-primary);" onclick="drawAdvice()">需要追問/建議嗎？</button>
         </div>
@@ -794,6 +794,7 @@
                 const wrapper = document.createElement('div');
                 wrapper.className = 'card-wrap shuffling';
                 wrapper.dataset.index = index;
+		wrapper.style.animationDelay = `${Math.random() * 0.3}s`;
 
                 const imgTag = `<img src="${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
 
@@ -814,12 +815,16 @@
 
             setTimeout(() => {
                 const cards = document.querySelectorAll('.card-wrap');
-                cards.forEach((wrapper) => { wrapper.classList.remove('shuffling'); });
+                cards.forEach((wrapper) => 				{ wrapper.classList.remove('shuffling'); });
+
+
                 void container.offsetWidth; 
 
                 cards.forEach((wrapper, index) => {
-                    wrapper.style.transition = 'transform 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), left 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), top 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), bottom 0.8s cubic-bezier(0.2, 1.2, 0.3, 1)';
-                    
+                    const duration = isMobile ? '1.2s' : '0.8s'; // 手機版慢一點
+                    wrapper.style.transition = 'transform ${duration} 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), left 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), top 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), bottom 0.8s cubic-bezier(0.2, 1.2, 0.3, 1)';
+                    wrapper.style.transitionDelay = `${index * 0.02}s`;
+
                     if (isMobile) {
                         const angle = -45 + (index * (90 / total)); 
                         wrapper.style.transformOrigin = "left center";
@@ -839,7 +844,7 @@
                         wrapper.style.setProperty('--pop-y', '-50px');
                     }
                 });
-            }, 2000);
+            }, 2200);
         }
 
         function handleCardClick(e, wrapper) {
