@@ -88,32 +88,30 @@
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%); white-space: nowrap;pointer-events: none;
-            font-size: clamp(0.5rem, 4vh, 0.85rem); 
+            font-size: clamp(0.5rem, 5vh, 1rem); 
             letter-spacing: 3px;
             font-weight: 300;
             color: var(--gold-primary);
             text-transform: uppercase;
             opacity: 0; 
             visibility: hidden;
-            transition: opacity 1.2s ease;
+            transition: opacity 1.2s ease, visibility 1.2s ease;
             animation: pureGlow 7s infinite ease-in-out;
         }
 @keyframes pureGlow {
     0%, 100% { 
-        opacity: 0.8;
         text-shadow: 0 0 5px rgba(224, 197, 63, 0.2);
         letter-spacing: 3px;
     }
     50% { 
-        opacity: 1;
         text-shadow: 0 0 20px rgba(224, 197, 63, 0.6), 0 0 30px rgba(224, 197, 63, 0.2);
         letter-spacing: 3.5px; /* 輕微的字距擴張也很有高級感 */
     }
 }
         #main-page[style*="opacity: 1"] ~ .nav-header .home-title,
         .show-home-title .home-title { 
-            opacity: 1;
-            visibility: visible;
+            opacity: 1 ;
+            visibility: visible; 
         }
 
         .theme-toggle {
@@ -709,7 +707,7 @@
                 const main = document.getElementById('main-page');
                 main.style.visibility = 'visible';
                 main.style.opacity = '1';
-                document.body.classList.add('show-home-title');
+                document.body.classList.add('show-home-title');main.style.opacity = '1';
             }, 1000);
         }
 
@@ -767,7 +765,6 @@
             main.style.opacity = '0';
             setTimeout(() => {
                 main.style.display = 'none';
-                document.body.classList.remove('show-home-title');
                 initSpreadView();
             }, 800);
         }
@@ -815,7 +812,7 @@
 
             setTimeout(() => {
                 const cards = document.querySelectorAll('.card-wrap');
-                cards.forEach((wrapper) => 				{ wrapper.classList.remove('shuffling'); });
+                cards.forEach((wrapper) => 				{ wrapper.classList.remove('shuffling'); });            	document.body.classList.remove('show-home-title');
 
 
                 void container.offsetWidth; 
@@ -1112,9 +1109,14 @@ if (document.getElementById('retry-btn')) document.getElementById('retry-btn').s
                 
                 const main = document.getElementById('main-page');
                 main.style.display = 'flex';
+                main.style.opacity = '0';
+requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                // 這裡加入類別，才會真正觸發 CSS 的 1.5s transition
                 document.body.classList.add('show-home-title');
-                setTimeout(() => main.style.opacity = '1', 100);
-
+                main.style.opacity = '1';
+            });
+        });
             }, 900);
         }
 // 輔助函式維持不變
