@@ -60,9 +60,13 @@
             transition: background-color 0.8s ease, color 0.8s ease;
         }
 
-        img, .card-face { pointer-events: none; -webkit-user-drag: none; }
+        img, .card-face { pointer-events: none; -webkit-user-drag: none; user-select: none; filter: blur(0.4px) contrast(105%); -webkit-touch-callout: none;}
         ::-webkit-scrollbar { display: none; }
 
+#qr-code img, .no-protect {
+    filter: none !important;
+    pointer-events: auto !important;
+}
         .nav-header {
             position: fixed;
             top: 0;
@@ -460,7 +464,7 @@
     
     /* 26%~30%: 光束一頭撞進角落，整條邊框瞬間點亮！ */
     24% { opacity: 0.5; filter: drop-shadow(0 0 2px white); }
-    28% { opacity: 1; filter: brightness(1.8) drop-shadow(0 0 8px white); }
+    30% { opacity: 1; filter: brightness(1.8) drop-shadow(0 0 8px white); }
     
     /* 45%~65%: 緩慢的全線發光 ease out */
     45% { opacity: 0.7; filter: brightness(1.3) drop-shadow(0 0 4px rgba(255,255,255,0.6)); }
@@ -1076,17 +1080,6 @@ window.addEventListener('DOMContentLoaded', startPreloading);
             if (poppedCardEl) { poppedCardEl.classList.remove('popped'); }
 
             wrapper.classList.add('popped');
-const svg = wrapper.querySelector('.liquid-cocoon-svg');
-    if (svg) {
-        // 先拔除 class 停止當前狀態
-        svg.classList.remove('run-cocoon');
-        
-        // 這是強迫瀏覽器重新計算 DOM 的黑魔法，能確保動畫重新播放
-        void svg.offsetWidth; 
-        
-        // 再次加上 class，光束會瞬間再次從對角噴發
-        svg.classList.add('run-cocoon');
-    }
 
             poppedCardEl = wrapper;
 
@@ -1161,101 +1154,99 @@ const svg = wrapper.querySelector('.liquid-cocoon-svg');
             }
         }
 
-        function finalizeSelection() {
-    // 1. 優先獲取核心數值，確保後續 transform 計算準確
-    const totalCards = drawnCards.length;
-    const isMobile = window.innerWidth < 768;
-    
-    const counter = document.getElementById('draw-counter');
-    if (counter) counter.style.display = 'none';
+function finalizeSelection() {
+            // 1. 優先獲取核心數值，確保後續 transform 計算準確
+            const totalCards = drawnCards.length;
+            const isMobile = window.innerWidth < 768;
+            
+            const counter = document.getElementById('draw-counter');
+            if (counter) counter.style.display = 'none';
 
-    // 2. 處理「未選中」卡牌的退場 (Fade Out)
-    // 這裡我們只動 opacity，保留它們原本在扇形陣位時的 transform，避免閃爍
-    document.querySelectorAll('.card-wrap:not(.confirmed)').forEach(el => {
-        el.style.transition = 'opacity 0.5s ease-out, bottom 0.4s ease-in, left 0.4s ease-in'; 
-        el.style.opacity = '0';
-        el.style.pointerEvents = 'none';
-if (isMobile) {
-            // 手機：往左方退場 (將 left 設為負值，使其移出畫面)
-            el.style.left = '-50%'; 
-        } else {
-            // 電腦：往下方退場 
-            el.style.bottom = '-50%'; 
-        }
-    });
+            // 2. 處理「未選中」卡牌的退場 (Fade Out)
+            document.querySelectorAll('.card-wrap:not(.confirmed)').forEach(el => {
+                el.style.transition = 'opacity 0.5s ease-out, bottom 0.4s ease-in, left 0.4s ease-in'; 
+                el.style.opacity = '0';
+                el.style.pointerEvents = 'none';
+                if (isMobile) {
+                    el.style.left = '-50%'; 
+                } else {
+                    el.style.bottom = '-50%'; 
+                }
+            });
 
-    setTimeout(() => {
-    // 3. 處理「已選中」卡牌的位移 (同時進行)
-    drawnCards.forEach((drawn, i) => {
-        const el = drawn.elementDOM;
-        el.classList.remove('confirmed');
-        el.style.opacity = '1';
-        
-        // 這裡使用 all 確保 transform 和 opacity 同時平滑過渡
-        el.style.transition = 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
-        
-        const centerOffsetX = (totalCards === 1) ? 0 : (i - (totalCards - 1) / 2) * (isMobile ? 110 : 160); 
-        
-        el.style.transformOrigin = "center center";
-        el.style.left = `calc(50% + ${centerOffsetX}px)`;
-        el.style.top = `50%`;
-        el.style.bottom = 'auto';
-        el.style.transform = `translate(-50%, -50%) rotate(0deg) scale(${totalCards === 1 ? 1.1 : 1})`; 
-    });
-}, 100);
-
-    // --- 後續翻牌與定位邏輯保持不變 ---
-
-setTimeout(() => {
-        drawnCards.forEach((drawn) => {
-            const el = drawn.elementDOM;
-            // 注意：我們將 SVG 注入到 inner，這樣才不會被圖片的圓角裁切掉外擴的 margin
-            const inner = el.querySelector('.card-inner'); 
-
-            // 1. 注入流金光繭 SVG
-            if (!inner.querySelector('.liquid-cocoon-svg')) {
-                inner.insertAdjacentHTML('beforeend', liquidCocoonSVG);
-            }
-
-            // 2. 執行翻牌旋轉
-            const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';inner.style.transition = 'transform 0.8s ease';
-            inner.style.transform = rotation;
-
-            // 3. 翻牌後引爆對角線流動光束
+            // 3. 【優化時間軸】 100ms：移至中央並提前注入 SVG
             setTimeout(() => {
-                const svg = inner.querySelector('.liquid-cocoon-svg');
-                svg.classList.add('run-cocoon');
-            }, 1000); 
-        });
-    }, 1000);
+                drawnCards.forEach((drawn, i) => {
+                    const el = drawn.elementDOM;
+                    
+                    // 【關鍵優化】：在卡牌準備集中前，就先悄悄把 SVG 塞進去。
+                    // 此時沒有 .run-cocoon class，SVG 處於隱藏/靜止狀態，不會消耗效能
+                    const inner = el.querySelector('.card-inner'); 
+                    if (!inner.querySelector('.liquid-cocoon-svg')) {
+                        inner.insertAdjacentHTML('beforeend', liquidCocoonSVG);
+                    }
 
-setTimeout(() => {
-drawnCards.forEach((drawn, i) => { 
-        const el = drawn.elementDOM;   // 這裡必須重新定義 el
-// 1. 強制讓 SVG 跑一次動畫（之後會因為 CSS 進入循環呼吸）
-        const svg = el.querySelector('.liquid-cocoon-svg');
-        if (svg) {
-            svg.classList.add('run-cocoon');
+                    el.classList.remove('confirmed');
+                    el.style.opacity = '1';
+                    
+                    // 【關鍵優化】：絕對不要用 transition: all！指定屬性可以避免手機渲染引擎卡頓
+                    el.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), left 0.6s cubic-bezier(0.25, 1, 0.5, 1), top 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+                    
+                    const centerOffsetX = (totalCards === 1) ? 0 : (i - (totalCards - 1) / 2) * (isMobile ? 110 : 160); 
+                    
+                    el.style.transformOrigin = "center center";
+                    el.style.left = `calc(50% + ${centerOffsetX}px)`;
+                    el.style.top = `50%`;
+                    el.style.bottom = 'auto';
+                    el.style.transform = `translate(-50%, -50%) rotate(0deg) scale(${totalCards === 1 ? 1.1 : 1})`; 
+                });
+            }, 100);
+
+            // 4. 【優化時間軸】 800ms：執行翻牌 (此時 DOM 已經穩定，翻轉會很順)
+            setTimeout(() => {
+                drawnCards.forEach((drawn) => {
+                    const inner = drawn.elementDOM.querySelector('.card-inner'); 
+                    const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
+                    
+                    inner.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+                    inner.style.transform = rotation;
+                });
+            }, 800);
+
+            // 5. 【優化時間軸】 1600ms：翻牌結束後，引爆 SVG 光束動畫
+            setTimeout(() => {
+                drawnCards.forEach((drawn) => {
+                    const el = drawn.elementDOM;
+                    const svg = el.querySelector('.liquid-cocoon-svg');
+                    // 加上 class，開始播放光束
+                    if (svg) svg.classList.add('run-cocoon');
+                });
+            }, 1600);
+
+            // 6. 【優化時間軸】 2000ms：向上平移到最終展示位置
+            setTimeout(() => {
+                drawnCards.forEach((drawn, i) => { 
+                    const el = drawn.elementDOM;
+                    // 給予平滑的位移過渡
+                    el.style.transition = 'transform 0.8s ease, left 0.8s ease, top 0.8s ease';
+                    
+                    let leftPos = '50%'; 
+                    if (totalCards === 3) {
+                        const gap = isMobile ? 25 : 30;
+                        leftPos = `${50 + (i - 1) * gap}%`;
+                    }
+                    
+                    el.style.left = leftPos;
+                    el.style.top = isMobile ? '8%' : '12%';
+                    el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${isMobile && totalCards === 3 ? 0.85 : 1})`;
+                });
+            }, 2000);
+
+            // 7. 2800ms：生成報告面板
+            setTimeout(() => {
+                generateReport();
+            }, 2800);
         }
-
-
-
-        const totalCards = drawnCards.length;
-            let leftPos = '50%'; 
-            if (totalCards === 3) {
-                const gap = isMobile ? 25 : 30;
-                leftPos = `${50 + (i - 1) * gap}%`;
-            }
-            el.style.left = leftPos;
-            el.style.top = isMobile ? '8%' : '12%';
-            el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${isMobile && totalCards === 3 ? 0.85 : 1})`;
-    });
-    }, 2800);
-
-    setTimeout(() => {
-        generateReport();
-    }, 2800);
-}
 
         function generateReport() {
             try {
