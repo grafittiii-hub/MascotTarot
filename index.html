@@ -301,7 +301,7 @@
         }
         @media (min-width: 768px) { .card-wrap { width: 120px; height: 180px; } }
 
-        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; will-change: transform;
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; pointer-events: none; will-change: transform;
     transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
         .card-face {
@@ -330,7 +330,7 @@
             box-shadow: 0 15px 30px var(--card-shadow-hover);border-radius: 8px; 
         }
         
-        .card-wrap.confirmed { pointer-events: none; z-index: 50; }
+        .card-wrap.confirmed { pointer-events: auto !important; cursor: pointer; z-index: 2100 !important; }
 
         #confirm-btn-float {
             position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -354,6 +354,129 @@
             animation: fadeIn 0.5s ease;
         }
 
+/* =========================================
+   方案四 進階修正：虹光弧影 (Rainbow Radial Fade)
+   ========================================= */
+
+.liquid-cocoon-svg {
+    position: absolute;
+    /* 完全貼合卡牌邊緣 */
+    inset: 0; 
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    /* 配合 3D 翻轉，微幅浮起避免與卡面重合產生的閃爍 */
+    transform: rotateY(180deg) translateZ(1px);
+    backface-visibility: hidden;
+    overflow: visible;
+}
+
+/* =========================================
+   修正版：對角線長征與括號滲透呼吸
+   ========================================= */
+
+/* 基礎設定 */
+.glass-flow, .glass-stasis {
+    fill: none;
+    stroke: url(#rainbowGrad);
+    stroke-linecap: round; /* 確保頭尾都是圓潤的 */
+}
+
+/* --- 動態光束：分層漸變拖尾 --- */
+.glass-flow.tail { stroke-width: 2px; stroke-dasharray: 35 100; opacity: 0.25; }
+.glass-flow.mid  { stroke-width: 2px;   stroke-dasharray: 15 100; opacity: 0.6; }
+.glass-flow.head { stroke-width: 2.5px;   stroke-dasharray: 2 100;  opacity: 1; filter: drop-shadow(0 0 4px white); }
+
+.run-cocoon .glass-flow.tail { animation: runTail 4s cubic-bezier(0.3, 0.1, 0.3, 1) infinite; }
+.run-cocoon .glass-flow.mid  { animation: runMid 4s cubic-bezier(0.3, 0.1, 0.3, 1) infinite; }
+.run-cocoon .glass-flow.head { animation: runHead 4s cubic-bezier(0.3, 0.1, 0.3, 1) infinite; }
+
+/* 魔法計算：為了讓三層的「頭部」完美重合，
+   各自的 offset 必須根據自身長度做精準偏移。
+   當 Head 抵達 100 時，Offset 為 -98 (2-100)。
+*/
+@keyframes runTail {
+    0%  { stroke-dashoffset: 35; stroke-dasharray: 35 100; opacity: 0; }
+    2%  { stroke-dashoffset: 20; stroke-dasharray: 20 100; opacity: 1; }
+    25% { 
+        stroke-dashoffset: -80; 
+        stroke-dasharray: 15 100; /* 25%時，長度 35 */
+        opacity: 0.8; 
+    }
+    /* 核心修改：在鑽入期間，將 35 快速縮短為 0 */
+    27% {
+        stroke-dasharray: 5 100; 
+        stroke-dashoffset: -100;
+        opacity: 0.4;
+    }
+    29% {
+        stroke-dasharray: 0 100; 
+        stroke-dashoffset: -105;
+        opacity: 0.2;
+    }
+    30%, 100% { stroke-dashoffset: -105; opacity: 0; }
+}
+
+@keyframes runMid {
+    0%  { stroke-dashoffset: 15; stroke-dasharray: 15 100; opacity: 0; }
+    2%  { stroke-dashoffset: 5;  stroke-dasharray: 15 100; opacity: 1; }
+    25% { 
+        stroke-dashoffset: -95; 
+        stroke-dasharray: 10 100; /* 頭部抵達時，維持長度 15 */
+        opacity: 0.9; 
+    }
+    /* 在鑽入期間，將 15 快速縮短為 0 */
+    26% {
+        stroke-dasharray: 0 100; 
+        stroke-dashoffset: -110;
+        opacity: 0.6;
+    }
+    29% {
+        stroke-dasharray: 0 100; 
+        stroke-dashoffset: -120;
+        opacity: 0.2;
+    }
+
+    30%, 100% { stroke-dashoffset: -125; opacity: 0; }
+}
+
+/* Head 層較短 (2px)，通常不需要縮短，維持原樣即可 */
+@keyframes runHead {
+    0%  { stroke-dashoffset: 2; opacity: 0; }
+    2%  { stroke-dashoffset: -8; opacity: 1; }
+    25% { stroke-dashoffset: -98; opacity: 1; }
+    30%, 100% { stroke-dashoffset: -138; opacity: 0; }
+}
+
+/* --- 定格光：括號 ( ) 滲透呼吸 --- */
+.glass-stasis {
+    stroke-width: 2.5px;
+    mask: url(#glassEdgeMask);
+    -webkit-mask: url(#glassEdgeMask);
+    opacity: 0;
+}
+
+.run-cocoon .glass-stasis {
+    /* 與衝刺同步：當光束抵達對角的瞬間 (25%~30%) 點燃括號光 */
+    animation: bracketBreathe 4s ease-in-out infinite;
+}
+
+@keyframes bracketBreathe {
+    /* 光束還在趕路，括號保持暗的 */
+    0%, 23% { opacity: 0; filter: brightness(1); }
+    
+    /* 26%~30%: 光束一頭撞進角落，括號瞬間點亮！ */
+    24% { opacity: 0.5; filter: drop-shadow(0 0 2px white); }
+    28% { opacity: 1; filter: brightness(1.8) drop-shadow(0 0 8px white); }
+    
+    /* 45%~65%: 緩慢的滲透呼吸感 (彎角中間亮，兩側被遮罩自然漸暗) */
+    45% { opacity: 0.7; filter: brightness(1.3) drop-shadow(0 0 4px rgba(255,255,255,0.6)); }
+    65% { opacity: 0.95; filter: brightness(1.6) drop-shadow(0 0 6px white); }
+    
+    /* 85%~100%: 能量消散，準備下一次循環 */
+    85%, 100% { opacity: 0; filter: brightness(1); }
+}
         /* ==========================================
            6. 隱藏式下拉解說面板與報告佈局
            ========================================== */
@@ -424,7 +547,7 @@
             </div>
 
             <div id="relation-container">
-                <span>是查問你與他/她的關係嗎？（使用關係解牌方向）</span>
+                <span>是查問你與他/她的關係嗎？（使用關係解牌）</span>
                 <input type="checkbox" id="is-relation">
             </div>
 
@@ -473,7 +596,48 @@
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('copy', e => e.preventDefault());
 
-        // （為節省版面，卡牌 tarotData 陣列與你原本的一樣，未作刪減更動，請保留原本的內容）
+const liquidCocoonSVG = `
+<svg class="liquid-cocoon-svg" viewBox="0 0 100 150" preserveAspectRatio="none">
+    <defs>
+        <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fc4949" /><stop offset="20%" stop-color="#fcb749" />
+            <stop offset="40%" stop-color="#55fc49" /><stop offset="60%" stop-color="#49fcfc" />
+            <stop offset="80%" stop-color="#7649fc" /><stop offset="100%" stop-color="#f049fc" />
+        </linearGradient>
+
+        <mask id="glassEdgeMask">
+            <rect width="100" height="150" fill="black" />
+            <radialGradient id="glowTR" cx="100" cy="0" r="35" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="white" />
+                <stop offset="20%" stop-color="white" />
+                <stop offset="100%" stop-color="black" />
+            </radialGradient>
+            <radialGradient id="glowBL" cx="0" cy="150" r="35" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="white" />
+                <stop offset="20%" stop-color="white" />
+                <stop offset="100%" stop-color="black" />
+            </radialGradient>
+            <circle cx="100" cy="0" r="35" fill="url(#glowTR)" />
+            <circle cx="0" cy="150" r="35" fill="url(#glowBL)" />
+        </mask>
+    </defs>
+
+    <path class="glass-stasis" d="M 75,0 H 92 A 8,8 0 0 1 100,8 V 35"></path>
+    <path class="glass-stasis" d="M 25,150 H 8 A 8,8 0 0 1 0,142 V 115"></path>
+
+    <g class="flow-group">
+        <path class="glass-flow tail" d="M 0,142 V 8 A 8,8 0 0 1 8,0 H 92 A 8,8 0 0 1 100,8" pathLength="100"></path>
+        <path class="glass-flow mid" d="M 0,142 V 8 A 8,8 0 0 1 8,0 H 92 A 8,8 0 0 1 100,8" pathLength="100"></path>
+        <path class="glass-flow head" d="M 0,142 V 8 A 8,8 0 0 1 8,0 H 92 A 8,8 0 0 1 100,8" pathLength="100"></path>
+    </g>
+
+    <g class="flow-group">
+        <path class="glass-flow tail" d="M 100,8 V 142 A 8,8 0 0 1 92,150 H 8 A 8,8 0 0 1 0,142" pathLength="100"></path>
+        <path class="glass-flow mid" d="M 100,8 V 142 A 8,8 0 0 1 92,150 H 8 A 8,8 0 0 1 0,142" pathLength="100"></path>
+        <path class="glass-flow head" d="M 100,8 V 142 A 8,8 0 0 1 92,150 H 8 A 8,8 0 0 1 0,142" pathLength="100"></path>
+    </g>
+</svg>
+`;
         const tarotData = [
 
             { id: "0", name: "愚者", img: "card0.png", element: "Air", type: "solo", gaze: "right",
@@ -867,6 +1031,18 @@
             if (poppedCardEl) { poppedCardEl.classList.remove('popped'); }
 
             wrapper.classList.add('popped');
+const svg = wrapper.querySelector('.liquid-cocoon-svg');
+    if (svg) {
+        // 先拔除 class 停止當前狀態
+        svg.classList.remove('run-cocoon');
+        
+        // 這是強迫瀏覽器重新計算 DOM 的黑魔法，能確保動畫重新播放
+        void svg.offsetWidth; 
+        
+        // 再次加上 class，光束會瞬間再次從對角噴發
+        svg.classList.add('run-cocoon');
+    }
+
             poppedCardEl = wrapper;
 
             btn.style.display = 'block';
@@ -985,18 +1161,41 @@ if (isMobile) {
 
     // --- 後續翻牌與定位邏輯保持不變 ---
 
-    setTimeout(() => {
+setTimeout(() => {
         drawnCards.forEach((drawn) => {
-            const inner = drawn.elementDOM.querySelector('.card-inner');
-            inner.style.transition = 'transform 0.8s ease';
-            const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
+            const el = drawn.elementDOM;
+            // 注意：我們將 SVG 注入到 inner，這樣才不會被圖片的圓角裁切掉外擴的 margin
+            const inner = el.querySelector('.card-inner'); 
+
+            // 1. 注入流金光繭 SVG
+            if (!inner.querySelector('.liquid-cocoon-svg')) {
+                inner.insertAdjacentHTML('beforeend', liquidCocoonSVG);
+            }
+
+            // 2. 執行翻牌旋轉
+            const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';inner.style.transition = 'transform 0.8s ease';
             inner.style.transform = rotation;
+
+            // 3. 翻牌到一半時 (400ms) 瞬間引爆對角線流動光束
+            setTimeout(() => {
+                const svg = inner.querySelector('.liquid-cocoon-svg');
+                svg.classList.add('run-cocoon');
+            }, 400); 
         });
     }, 1000);
 
-    setTimeout(() => {
-        drawnCards.forEach((drawn, i) => {
-            const el = drawn.elementDOM;
+setTimeout(() => {
+drawnCards.forEach((drawn, i) => { 
+        const el = drawn.elementDOM;   // 這裡必須重新定義 el
+// 1. 強制讓 SVG 跑一次動畫（之後會因為 CSS 進入循環呼吸）
+        const svg = el.querySelector('.liquid-cocoon-svg');
+        if (svg) {
+            svg.classList.add('run-cocoon');
+        }
+
+
+
+        const totalCards = drawnCards.length;
             let leftPos = '50%'; 
             if (totalCards === 3) {
                 const gap = isMobile ? 25 : 30;
@@ -1005,7 +1204,7 @@ if (isMobile) {
             el.style.left = leftPos;
             el.style.top = isMobile ? '8%' : '12%';
             el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${isMobile && totalCards === 3 ? 0.85 : 1})`;
-        });
+    });
     }, 2200);
 
     setTimeout(() => {
