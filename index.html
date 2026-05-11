@@ -840,11 +840,9 @@ const liquidCocoonSVG = `
         ];
 
 // === 1. 提取所有需要載入的圖片路徑 ===
-// 從你的 tarotData 中自動提取所有 img 檔名
 const imageUrls = tarotData.map(card => card.img);
-
-// 別忘了加入「牌背」圖片 (你的 CSS 中提到的背景色或圖)
-// 如果你有特定的牌背圖檔，請手動加入，例如：imageUrls.push("card_back.png");
+// 如果有牌背圖片，可以取消這行註解並填入正確路徑
+imageUrls.push("photo-output.png");
 
 // === 2. 預載入控制核心 ===
 let loadedCount = 0;
@@ -854,18 +852,29 @@ const progressBar = document.getElementById('progress-bar');
 const loadingScreen = document.getElementById('loading-screen');
 const mainPage = document.getElementById('main-page');
 
+// 全局變數保持不變
+let currentCategory = '';
+let spreadMode = 'single';
+let isRelationship = false;
+let shuffledDeck = [];
+let drawnCards = [];
+let poppedCardEl = null;
+
 function startPreloading() {
-    if (totalImages === 0) {
-        entryMainPage();
-        return;
-    }
+    // 確保字體載入後再開始，避免字體閃爍 (保留你原本 document.fonts.ready 的優點)
+    document.fonts.ready.then(() => {
+        if (totalImages === 0) {
+            enterMainPage();
+            return;
+        }
 
-    imageUrls.forEach(url => {
-        const img = new Image();
-        img.src = url; // 瀏覽器會在此時開始下載
+        imageUrls.forEach(url => {
+            const img = new Image();
+            img.src = url; 
 
-        img.onload = () => updateProgress();
-        img.onerror = () => updateProgress(); // 即使失敗也算完成，避免程式卡死
+            img.onload = () => updateProgress();
+            img.onerror = () => updateProgress(); // 失敗也算進度，避免卡死
+        });
     });
 }
 
@@ -878,64 +887,36 @@ function updateProgress() {
         progressBar.style.width = `${progressPercent}%`;
     }
 
-    // 關鍵邏輯：達到 80% 就讓使用者進入
+    // 達到 80% 門檻就進入主頁面
     if (loadedCount >= totalImages * threshold) {
-        // 給進度條一點點緩衝感，讓使用者看到接近完成
-        setTimeout(entryMainPage, 500); 
+        // 防止多次觸發
+        if (loadingScreen.dataset.loadingComplete) return;
+        loadingScreen.dataset.loadingComplete = "true";
+        
+        setTimeout(enterMainPage, 500); 
     }
 }
 
-function entryMainPage() {
+// 統整後的進入主頁邏輯
+function enterMainPage() {
     // 防止重複觸發
     if (loadingScreen.style.opacity === '0') return;
 
-    // 執行淡出動畫
     loadingScreen.style.opacity = '0';
     
     setTimeout(() => {
         loadingScreen.style.display = 'none';
-        // 顯示主頁面 (對應你 CSS 中的透明度轉場)
+        
         mainPage.style.visibility = 'visible';
         mainPage.style.opacity = '1';
+        
+        // 加上你第二段程式碼中的這行，確保標題動畫正常顯示
+        document.body.classList.add('show-home-title');
     }, 1000); // 1秒淡出時間
 }
 
 // 啟動預載入
 window.addEventListener('DOMContentLoaded', startPreloading);
-
-        let currentCategory = '';
-        let spreadMode = 'single';
-        let isRelationship = false;
-        let shuffledDeck = [];
-        let drawnCards = [];
-        let poppedCardEl = null;
-
-        window.onload = () => {
-            document.fonts.ready.then(() => {
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 15;
-                    document.getElementById('progress-bar').style.width = `${progress}%`;
-                    if (progress >= 100) {
-                        clearInterval(interval);
-                        setTimeout(enterMainPage, 600);
-                    }
-                }, 100);
-            });
-        };
-
-        function enterMainPage() {
-            const loader = document.getElementById('loading-screen');
-            loader.style.opacity = '0';
-            setTimeout(() => {
-                loader.style.display = 'none';
-                const main = document.getElementById('main-page');
-                main.style.visibility = 'visible';
-                main.style.opacity = '1';
-                document.body.classList.add('show-home-title');main.style.opacity = '1';
-            }, 1000);
-        }
-
         function toggleTheme() {
             const html = document.documentElement;
             const btn = document.getElementById('themeBtn');
