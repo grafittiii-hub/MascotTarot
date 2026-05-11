@@ -1221,11 +1221,11 @@ setTimeout(() => {
             const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';inner.style.transition = 'transform 0.8s ease';
             inner.style.transform = rotation;
 
-            // 3. 翻牌到一半時 (400ms) 瞬間引爆對角線流動光束
+            // 3. 翻牌後引爆對角線流動光束
             setTimeout(() => {
                 const svg = inner.querySelector('.liquid-cocoon-svg');
                 svg.classList.add('run-cocoon');
-            }, 400); 
+            }, 1000); 
         });
     }, 1000);
 
@@ -1250,11 +1250,11 @@ drawnCards.forEach((drawn, i) => {
             el.style.top = isMobile ? '8%' : '12%';
             el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${isMobile && totalCards === 3 ? 0.85 : 1})`;
     });
-    }, 2200);
+    }, 2800);
 
     setTimeout(() => {
         generateReport();
-    }, 2200);
+    }, 2800);
 }
 
         function generateReport() {
