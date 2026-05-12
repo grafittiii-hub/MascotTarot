@@ -307,16 +307,19 @@ html, body {
 
 .shuffling {
     /* 使用 cubic-bezier 讓動作有「先快後慢」的物理慣性高級感 */
-    animation: luxuryShuffle 1.2s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95); filter: contrast(1.1);transform: translateZ(0);
+    animation: luxuryShuffle 1.2s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
+    /* 增加動態模糊感 (可選) */
+    filter: contrast(1.1) brightness(1.05);
 }
 
         .card-wrap {
             position: absolute; width: 75px; height: 120px;
-            cursor: pointer; z-index: 10;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease;
+            cursor: pointer; z-index: 10;will-change: transform, opacity;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease;
         }
         @media (min-width: 768px) { .card-wrap { width: 120px; height: 180px; } }
 
-        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; pointer-events: none;     transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; pointer-events: none; will-change: transform;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
         .card-face {
             position: absolute; inset: 0; backface-visibility: hidden; width: 100%;
@@ -325,9 +328,7 @@ html, body {
             border-radius: 8px; background-position: center;
             border: var(--border-thin); box-shadow: 0 5px 15px var(--card-shadow); background-clip: padding-box;
         }
-        .card-back { background-color: var(--gold-light); background-image: url('https://raw.githubusercontent.com/grafittiii-hub/MascotTarot/main/photo-output.png'), background-color:linear-gradient(135deg, var(--gold-primary) 25.5%, transparent 26%);background-position: center;
-    background-size: cover;overflow: hidden; }
-
+        .card-back { background-color: var(--gold-light); background-image: linear-gradient(135deg, var(--gold-primary) 25.5%, transparent 26%); background-repeat: no-of-repeat;overflow: hidden; }
         .card-front { transform: rotateY(180deg); background-color: #c7a243;overflow: hidden;-webkit-mask-image: -webkit-radial-gradient(white, black); }
 
 /* 專門針對正面圖片的放大處理 */
@@ -609,12 +610,6 @@ html, body {
 	img.style.webkitUserSelect = 'none';
 });
 
-// 防止雙指縮放 (攔截多於兩根手指的觸控)
-document.addEventListener('touchstart', function(event) {
-    if (event.touches.length > 1) {
-        event.preventDefault();
-    }
-}, { passive: false });
 
 // 防止雙指滑動縮放
 document.addEventListener('touchmove', function(event) {
@@ -879,8 +874,7 @@ const liquidCocoonSVG = `
 
 // === 1. 提取所有需要載入的圖片路徑 ===
 const imageUrls = tarotData.map(card => card.img);
-// 定義牌背圖片路徑
-const CARD_BACK_URL = "photo-output.png";
+// 如果有牌背圖片，可以取消這行註解並填入正確路徑
 imageUrls.push("photo-output.png");
 
 // === 2. 預載入控制核心 ===
@@ -1013,68 +1007,82 @@ window.addEventListener('DOMContentLoaded', startPreloading);
                 initSpreadView();
             }, 800);
         }
-function initSpreadView() {
-    const container = document.getElementById('cards-container');
-    container.innerHTML = '';
-    const cards = [];
-    const isMobile = window.innerWidth < 768;
 
-    // 1. 先生成所有卡牌，但先不要給它們 shuffling class，opacity 設為 0
-    for (let i = 0; i < 24; i++) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'card-wrap'; // 先不加 shuffling
-        wrapper.dataset.index = i;
-        wrapper.style.opacity = '0'; // 先隱藏，避免閃爍
-        
-        wrapper.innerHTML = `
-            <div class="card-inner">
-                <div class="card-face card-back"><img src="https://raw.githubusercontent.com/grafittiii-hub/MascotTarot/main/photo-output.png" 
-                 style="width:100%; height:100%; object-fit:cover;"></div>
-                <div class="card-face card-front">
-                    <img src="compressed_images/card${i}.png" alt="card">
-                </div>
-            </div>
-        `;
-        
-        wrapper.onclick = (e) => handleCardClick(e, wrapper);
-        container.appendChild(wrapper);
-        cards.push(wrapper);
-    }
+        function initSpreadView() {
+            const spreadView = document.getElementById('spread-view');
+            spreadView.style.display = 'block';
+            setTimeout(() => spreadView.style.opacity = '1', 700);
 
-    // 2. 使用 requestAnimationFrame 確保 DOM 已經掛載完成
-    requestAnimationFrame(() => {
-        // 給予一個極短的延遲 (50ms)，讓手機瀏覽器完成圖片貼圖的初步加載
-        setTimeout(() => {
-            cards.forEach((wrapper, index) => {
-                // 統一加上洗牌動畫
-                wrapper.classList.add('shuffling');
-                wrapper.style.opacity = '1';
-                
-                // 設定扇形展開的 transition (修正你之前的引號問題)
-                const duration = isMobile ? '1.2s' : '0.8s';
-                wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), opacity 0.5s ease`;
-                wrapper.style.transitionDelay = `${index * 0.01}s`;
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            
+
+            if (tarotData.length === 0) return;
+
+            shuffledDeck = [...tarotData].sort(() => Math.random() - 0.5);
+            drawnCards = [];
+            updateCounterUI();
+
+            const isMobile = window.innerWidth < 768;
+            const total = shuffledDeck.length;
+
+            shuffledDeck.forEach((cardData, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'card-wrap shuffling';
+                wrapper.dataset.index = index;
+		wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
+
+                const imgTag = `<img src="${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
+
+                wrapper.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-face card-back"></div>
+                        <div class="card-face card-front">${imgTag}</div>
+                    </div>
+                `;
+
+                wrapper.style.left = "50%";
+                wrapper.style.top = "50%";
+                wrapper.style.transform = `translate(-50%, -50%)`;
+
+                wrapper.onclick = (e) => handleCardClick(e, wrapper);
+                container.appendChild(wrapper);
             });
 
-            // 3. 觸發扇形展開邏輯
-            // 這裡確保洗牌動畫跑一小段時間後再展開
             setTimeout(() => {
-                const total = cards.length;
-                cards.forEach((wrapper, i) => {
-                    const angle = -30 + (i / (total - 1)) * 60;
-                    const rad = (angle - 90) * (Math.PI / 180);
-                    const r = isMobile ? window.innerWidth * 0.8 : 400;
-                    const x = Math.cos(rad) * r;
-                    const y = Math.sin(rad) * r + (isMobile ? 150 : 200);
+                const cards = document.querySelectorAll('.card-wrap');
+                cards.forEach((wrapper) => 				{ wrapper.classList.remove('shuffling'); });            	document.body.classList.remove('show-home-title');
 
-                    wrapper.style.left = `calc(50% + ${x}px)`;
-                    wrapper.style.bottom = `${-y}px`;
-                    wrapper.style.transform = `translate(-50%, 50%) rotate(${angle}deg)`;
+
+                void container.offsetWidth; 
+
+                cards.forEach((wrapper, index) => {
+                    const duration = isMobile ? '1.2s' : '0.8s'; // 手機版慢一點
+                    wrapper.style.transition = 'transform ${duration} 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), left 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), top 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), bottom 0.8s cubic-bezier(0.2, 1.2, 0.3, 1)';
+                    wrapper.style.transitionDelay = `${index * 0.02}s`;
+
+                    if (isMobile) {
+                        const angle = -45 + (index * (90 / total)); 
+                        wrapper.style.transformOrigin = "left center";
+                        wrapper.style.left = "0vw"; 
+                        wrapper.style.top = "50%";
+                        wrapper.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(38vw)`;
+                        wrapper.style.setProperty('--pop-x', '30px');
+                        wrapper.style.setProperty('--pop-y', '0px');
+                    } else {
+                        const angle = -60 + (index * (120 / total));
+                        wrapper.style.transformOrigin = "center bottom";
+                        wrapper.style.left = "50%";
+                        wrapper.style.top = "auto";
+                        wrapper.style.bottom = "0vh"; 
+                        wrapper.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-18vh)`;
+                        wrapper.style.setProperty('--pop-x', '0px');
+                        wrapper.style.setProperty('--pop-y', '-50px');
+                    }
                 });
-            }, 100); 
-        }, 50);
-    });
-}
+            }, 2200);
+        }
+
         function handleCardClick(e, wrapper) {
             e.stopPropagation();
             if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
@@ -1227,7 +1235,7 @@ function finalizeSelection() {
                     // 加上 class，開始播放光束
                     if (svg) svg.classList.add('run-cocoon');
                 });
-            }, 1600);
+            }, 2000);
 
             // 6. 【優化時間軸】 2000ms：向上平移到最終展示位置
             setTimeout(() => {
