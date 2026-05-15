@@ -161,8 +161,7 @@
             width: 100%; max-width: 600px; max-height: calc(100dvh - 70px); position: absolute; top: calc(40px + (100dvh - 50px) / 2 );left: 50%; transform: translate(-50%, -50%); padding: 0 10%;
             display: flex; flex-direction: column; justify-content: center;
             opacity: 0; visibility: hidden; transition: opacity 1.2s ease;
-            margin: 0 auto;overflow-y: auto;box-sizing: border-box; touch-action: pan-y;button, input, textarea, .cat-btn, .mode-btn {
-    touch-action: manipulation;
+            margin: 0 auto;overflow-y: auto;box-sizing: border-box;
         }
 
         .input-group { margin-bottom: 25px; }
@@ -574,7 +573,7 @@
         
         <div id="advice-section" style="display:none; border-top: var(--border-thin); padding-top: 30px;">
             <div class="label" style="margin-bottom:15px;">Guidance</div>
-            <button class="btn-outline" style="width:100%; border-color:#c7a243; color:#c7a243;" onclick="drawAdvice()">需要追問/建議嗎？</button>
+            <button class="btn-outline" style="width:100%; border-color:var(--gold-primary); color:var(--gold-primary);" onclick="drawAdvice()">需要追問/建議嗎？</button>
         </div>
         
         <!-- 補齊缺失的容器，供 JS 動態寫入內容 -->
