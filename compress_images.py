@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Image compression script for MascotTarot
-Resizes card images to 120x120px and optimizes photo-output.png
+Resizes card images to 240x240px and optimizes photo-output.png
 Saves all compressed images to compressed_images/ folder
 """
 
@@ -13,7 +13,7 @@ OUTPUT_DIR = "compressed_images"
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
-# Card image files to resize to 120x120px
+# Card image files to resize to 240x240px
 CARD_FILES = [
     "card0.png", "card1.png", "card2.png", "card3.png", "card4.png",
     "card5.png", "card6.png", "card7.png", "card8.png", "card9.png",
@@ -33,7 +33,7 @@ def get_file_size_mb(filepath):
     return 0
 
 def compress_card(filename):
-    """Compress and resize card image to 120x120px"""
+    """Compress and resize card image to 240x240px"""
     input_path = filename
     output_path = os.path.join(OUTPUT_DIR, filename)
     
@@ -46,7 +46,7 @@ def compress_card(filename):
         
         # Open and resize image
         img = Image.open(input_path)
-        img_resized = img.resize((120, 120), Image.Resampling.LANCZOS)
+        img_resized = img.resize((240, 240), Image.Resampling.LANCZOS)
         
         # Save optimized
         img_resized.save(output_path, "PNG", optimize=True)
@@ -90,7 +90,7 @@ def main():
     print("=" * 50)
     print(f"Output directory: {OUTPUT_DIR}/\n")
     
-    print("📦 Compressing card images (120x120px)...")
+    print("📦 Compressing card images (240x240px)...")
     for card_file in CARD_FILES:
         compress_card(card_file)
     
