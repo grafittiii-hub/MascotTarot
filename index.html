@@ -874,7 +874,8 @@ const liquidCocoonSVG = `
                 reversed: { keywords: ["內心不穩", "家庭摩擦", "儀式感缺失"], general_meaning: "表面平靜下潛藏著不安，或是期待的慶祝被延遲。", spread_meanings: { past: "曾有過根基動搖的經驗。", present: "對目前的安穩感到懷疑。", future: "預期的穩定可能會延後。", my_view: "你感到缺乏安全感。", their_view: "對方覺得關係變得乏味。", current_status: "有些小摩擦需要修復。" }, advice: "從內部尋找安定的力量。" }
 
             },
-			{ id: "sp", name: "寶劍侍從", img: "Page of Swords.png", element: "Air", type: "solo", gaze: "right",
+
+{ id: "sp", name: "寶劍侍從", img: "Page of Swords.png", element: "Air", type: "solo", gaze: "right",
                 upright: { keywords: ["警惕", "好奇心", "精神活躍"], general_meaning: "代表一位充滿好奇心、思維敏捷的年輕人，或是即將傳來需要理智分析的消息。", spread_meanings: { past: "過去的觀察與收集資訊為你打下基礎。", present: "當前需要保持警覺，並用理性審視周遭環境。", future: "未來將會出現需要快速應變與學習的新挑戰。", my_view: "你正帶著試探與觀察的心態看待這段關係。", their_view: "對方覺得你心思細密，但也帶有一點防備心。", current_status: "處於互相打探、溝通頻繁但缺乏深層信任的階段。" }, advice: "保持客觀，多觀察、少衝動發表言論。" },
                 reversed: { keywords: ["八卦", "輕率", "言語攻擊"], general_meaning: "警告可能存在流言蜚語、計畫不周、或口角上的爭執與刺探。", spread_meanings: { past: "過去的口舌之快或小人放話留下了後遺症。", present: "目前充斥著虛假消息或流於表面的無效溝通。", future: "若不注意言行，未來容易引發不必要的口角或對立。", my_view: "你感到猜忌、焦慮，容易把對方的話往壞處想。", their_view: "對方覺得你過於尖酸刻薄、或說話不負責任。", current_status: "關係中充滿口舌是非、互不信任與言語刺探的緊繃感。" }, advice: "管好口舌，不要盲目輕信未經證實的傳言。" }
             },
@@ -898,7 +899,7 @@ const liquidCocoonSVG = `
         ];
 
 // === 1. 提取所有需要載入的圖片路徑 ===
-const imageUrls = tarotData.map(card => card.img);
+const imageUrls = tarotData.map(card => `tarot cards/${card.img}`);
 // 如果有牌背圖片，可以取消這行註解並填入正確路徑
 imageUrls.push("photo-output.png");
 
@@ -931,11 +932,18 @@ function prebuildDeckDOM() {
         // 這裡完全保留你提供的 HTML 結構，包含 img 的樣式
         wrapper.innerHTML = `
             <div class="card-inner">
-                <div class="card-face card-back"></div>
-                <div class="card-face card-front">
-                    <img src="" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">
-                </div>
-            </div>
+    <div class="card-face card-back"></div>
+    <div class="card-face card-front">...</div>
+</div>
+
+<div class="card-inner">
+    <div class="card-face card-back">
+        <img src="tarot cards/photo-output.png" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">
+    </div>
+    <div class="card-face card-front">
+        <img src="" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">
+    </div>
+</div>
         `;
         wrapper.onclick = (e) => handleCardClick(e, wrapper);
         container.appendChild(wrapper);
@@ -1084,14 +1092,23 @@ window.addEventListener('DOMContentLoaded', startPreloading);
                 wrapper.dataset.index = index;
 		wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
 
-                const imgTag = `<img src="${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
+                const imgTag = `<img src="tarot cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
 
                 wrapper.innerHTML = `
-                    <div class="card-inner">
-                        <div class="card-face card-back"></div>
-                        <div class="card-face card-front">${imgTag}</div>
-                    </div>
-                `;
+    <div class="card-inner">
+        <div class="card-face card-back"></div>
+        <div class="card-face card-front">${imgTag}</div>
+    </div>
+`;
+
+		wrapper.innerHTML = `
+    <div class="card-inner">
+        <div class="card-face card-back">
+            <img src="tarot cards/photo-output.png" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">
+        </div>
+        <div class="card-face card-front">${imgTag}</div>
+    </div>
+`;
 
                 wrapper.style.left = "50%";
                 wrapper.style.top = "50%";
