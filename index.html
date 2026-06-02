@@ -8,6 +8,62 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
+/* 1. 隱藏原本笨重的瀏覽器內建鼠標 (僅在電腦版生效) */
+@media (pointer: fine) {
+    body, button, a, .card-wrap, #bubble-orbit-trigger {
+        cursor: none !important;
+    }
+}
+
+/* 2. 虛擬鼠標主體設定 */
+#custom-magic-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 32px;
+    pointer-events: none; /* 關鍵：滑鼠穿透，不干擾點擊 */
+    z-index: 99999;       /* 確保在所有面板之上 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Times New Roman', serif;
+    font-size: 20px;
+    color: var(--gold-primary, #dbba18);
+    text-shadow: 0 0 8px rgba(219, 186, 24, 0.4);
+    transform: translate(-50%, -50%); /* 讓中心點對準鼠標坐標 */
+    
+    /* 讓符號切換、縮放與顏色改變時有絲滑的過渡 */
+    transition: transform 0.2s ease, color 0.3s ease, font-size 0.2s ease;
+    opacity: 0; /* 初始隱形，等滑鼠移動時再出現，避免閃爍 */
+}
+
+/* 預設狀態：四角星芒 */
+#custom-magic-cursor::before {
+    content: "✦";
+    display: block;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 3. 當滑過普通按鈕或連結時，稍微放大 */
+#custom-magic-cursor.hover-link {
+    transform: translate(-50%, -50%) scale(1.3);
+    color: #fff;
+    text-shadow: 0 0 10px var(--gold-primary);
+}
+
+/* 4. 觸碰特定元素卡牌時，平滑變形成對應神祕學幾何圖騰 */
+#custom-magic-cursor.el-air::before { content: "⧋"; transform: scale(1.2); }
+#custom-magic-cursor.el-air { color: rgba(168, 216, 234, 1); text-shadow: 0 0 12px rgba(168, 216, 234, 0.8); }
+
+#custom-magic-cursor.el-water::before { content: "▼"; transform: scale(1.2); }
+#custom-magic-cursor.el-water { color: rgba(75, 123, 236, 1); text-shadow: 0 0 12px rgba(75, 123, 236, 0.8); }
+
+#custom-magic-cursor.el-earth::before { content: "⧊"; transform: scale(1.2); }
+#custom-magic-cursor.el-earth { color: rgba(32, 191, 107, 1); text-shadow: 0 0 12px rgba(32, 191, 107, 0.8); }
+
+#custom-magic-cursor.el-fire::before { content: "▲"; transform: scale(1.2); }
+#custom-magic-cursor.el-fire { color: rgba(235, 59, 90, 1); text-shadow: 0 0 12px rgba(235, 59, 90, 0.8); }
         /* ==========================================
            1. 高階視覺美學與色彩系統
            ========================================== */
@@ -498,6 +554,46 @@ padding-bottom: env(safe-area-inset-bottom);
     transition: box-shadow 0.5s ease, top 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     box-shadow: 0 6px 20px rgba(48, 40, 20, 0.12); 
 }
+/* 漣漪本體基礎設定 */
+.cosmic-ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none; /* 防止漣漪本身干擾後續點擊 */
+    width: 480px;         /* 寬度確保能覆蓋整張卡牌 */
+    height: 480px;
+    opacity: 0.8;
+    animation: cosmic-ripple-animation 2s cubic-bezier(0.1, 0.8, 0.25, 1) forwards;
+}
+
+/* 擴散並淡出的動畫軌跡 */
+@keyframes cosmic-ripple-animation {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+    }
+}
+
+/* 四大元素的漣漪色彩設定 (使用高級的星光放射性漸層) */
+.ripple-air {
+    background: radial-gradient(circle, rgba(168, 216, 234, 0.7) 0%, rgba(168, 216, 234, 0.2) 40%, transparent 70%);
+}
+
+.ripple-water {
+    background: radial-gradient(circle, rgba(75, 123, 236, 0.7) 0%, rgba(75, 123, 236, 0.2) 40%, transparent 70%);
+}
+
+.ripple-earth {
+    background: radial-gradient(circle, rgba(32, 191, 107, 0.7) 0%, rgba(32, 191, 107, 0.2) 40%, transparent 70%);
+}
+
+.ripple-fire {
+    background: radial-gradient(circle, rgba(235, 59, 90, 0.7) 0%, rgba(235, 59, 90, 0.2) 40%, transparent 70%);
+}
 
 /* 2. 定義 Hover (電腦) 與 Active (手機點擊) 的彈起與光暈行為 */
 
@@ -533,7 +629,7 @@ padding-bottom: env(safe-area-inset-bottom);
            ========================================== */
         #result-panel {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 77dvh;
-            background: var(--panel-bg); backdrop-filter: blur(7px); 
+            background: var(--panel-bg);  
             border-top: var(--border-thin); box-shadow: var(--glass-shadow);
             padding: 5dvh 10%; overflow-y: auto; z-index: 8500;
             transform: translateY(100%); transition: transform 0.9s cubic-bezier(0.2, 1, 0.3, 1);
@@ -801,6 +897,7 @@ transition: transform 0.3s ease-out;
 </style>
 </head>
 <body>
+<div id="custom-magic-cursor"></div>
 <div class="nav-header">
 
     <div class="watermark">Grafittiii</div>
@@ -948,6 +1045,110 @@ document.addEventListener('touchend', function(event) {
     lastTouchEnd = now;
 }, { passive: false });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const magicCursor = document.getElementById('custom-magic-cursor');
+    if (!magicCursor) return;
+
+    // 1. 讓虛擬鼠標精準跟隨真實滑鼠坐標 (使用 requestAnimationFrame 確保極致順暢)
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        magicCursor.style.opacity = "1"; // 有移動時才現身
+    });
+
+    function renderCursor() {
+        // 加上一點點延遲緩動效果 (0.2)，讓滑鼠看起來有靈動的漂浮感
+        cursorX += (mouseX - cursorX) * 0.85;
+        cursorY += (mouseY - cursorY) * 0.85;
+        
+        magicCursor.style.left = `${cursorX}px`;
+        magicCursor.style.top = `${cursorY}px`;
+        requestAnimationFrame(renderCursor);
+    }
+    requestAnimationFrame(renderCursor);
+
+    // 2. 監聽全局 Hover 事件，動態注入變形類別
+    document.addEventListener('mouseover', (e) => {
+        const target = e.target;
+        
+        if (!target) return;
+        
+        // 普通按鈕、可點擊元素，以及【選牌階段的卡牌背面】
+        // 增加 :not(.ready-to-glow) 確保開牌後不會干擾到四大古典元素的幾何圖騰切換
+        if (target.closest('button') || 
+            target.closest('a') || 
+            target.closest('#bubble-orbit-trigger') || 
+            target.closest('.theme-toggle') ||
+            target.closest('.card-wrap:not(.ready-to-glow)')) {
+            magicCursor.classList.add('hover-link'); // 觸發變大、變純白、帶金光
+        }
+        
+        // 判斷是否移入解鎖後的四元素卡牌
+        const card = target.closest('.card-wrap.ready-to-glow');
+        if (card) {
+            if (card.classList.contains('element-air')) magicCursor.classList.add('el-air');
+            if (card.classList.contains('element-water')) magicCursor.classList.add('el-water');
+            if (card.classList.contains('element-earth')) magicCursor.classList.add('el-earth');
+            if (card.classList.contains('element-fire')) magicCursor.classList.add('el-fire');
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        const target = e.target;
+        if (!target) return;
+
+        magicCursor.classList.remove('hover-link');
+        
+        // 離開卡牌時重設
+        if (target.closest('.card-wrap.ready-to-glow')) {
+            magicCursor.classList.remove('el-air', 'el-water', 'el-earth', 'el-fire');
+        }
+    });
+});
+
+// ==========================================
+// Idea 3: 星光漣漪點擊生成邏輯 (完美修復版)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 監聽全域點擊（相容手機 Tap 與電腦 Click）
+    document.addEventListener('pointerdown', (e) => {
+        // 【關鍵修復】：改為尋找點擊的外殼 .card-wrap
+        const cardWrap = e.target.closest('.card-wrap.ready-to-glow');
+        if (!cardWrap) return;
+
+        // 雖然外殼阻擋了事件，但我們依然要把漣漪塞入內層的 .card-inner 中，享受 overflow:hidden 的裁切
+        const cardInner = cardWrap.querySelector('.card-inner');
+        if (!cardInner) return;
+
+        // 1. 計算點擊點相對於卡牌內部（.card-inner）的精確本地 X, Y 座標
+        const rect = cardInner.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        // 2. 動態創建漣漪節點
+        const ripple = document.createElement('div');
+        ripple.className = 'cosmic-ripple';
+        ripple.style.left = `${clickX}px`;
+        ripple.style.top = `${clickY}px`;
+
+        // 3. 根據外殼的元素類別，賦予對應的色彩漸層
+        if (cardWrap.classList.contains('element-air')) ripple.classList.add('ripple-air');
+        if (cardWrap.classList.contains('element-water')) ripple.classList.add('ripple-water');
+        if (cardWrap.classList.contains('element-earth')) ripple.classList.add('ripple-earth');
+        if (cardWrap.classList.contains('element-fire')) ripple.classList.add('ripple-fire');
+
+        // 4. 將漣漪塞入卡牌中
+        cardInner.appendChild(ripple);
+
+        // 5. 動態播放完畢後自動銷毀節點，防止塞爆 HTML 記憶體
+        ripple.addEventListener('animationend', () => {
+            ripple.remove();
+        });
+    });
+});
 
 const liquidCocoonSVG = `
 <svg class="liquid-cocoon-svg" viewBox="0 0 100 150" preserveAspectRatio="none">
