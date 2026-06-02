@@ -92,18 +92,21 @@
             --card-shadow: rgba(212, 175, 55, 0.15);
             --card-shadow-hover: rgba(212, 175, 55, 0.35);
         }
+* {
+    box-sizing: border-box !important;
+}
 
 html, body {
     width: 100%;
     height: 100%;
-    overflow: hidden; 
+    overflow-x: hidden !important; 
     position: fixed; /* 關鍵：鎖定整個視窗，解決位移 */
     top: 0;
     left: 0;
     touch-action: none; /* 禁用外層所有的原生觸控行為（包含雙指縮放） */
 }
         body::before {
-            content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.05"/%3E%3C/svg%3E');
             pointer-events: none; z-index: -1;
         }
@@ -146,7 +149,7 @@ padding-bottom: env(safe-area-inset-bottom);
 
 
         .watermark {
-            font-size: 0.5rem; position: absolute;
+            font-size: clamp(0.35rem, 1.3vw, 2.3rem); position: absolute;
     left: 3vw; top: 50%;
     transform: translateY(-50%);
             color: var(--gold-primary); opacity: 0.5; letter-spacing: 1px;
@@ -158,7 +161,7 @@ padding-bottom: env(safe-area-inset-bottom);
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%); white-space: nowrap;pointer-events: none;
-            font-size: clamp(0.5rem, 5vh, 1rem); 
+            font-size: clamp(0.4rem, 5vh, 1rem); 
             letter-spacing: 3px;
             font-weight: 300;
             color: var(--gold-primary);
@@ -224,10 +227,10 @@ padding-bottom: env(safe-area-inset-bottom);
            4. 主頁 UI 佈局
            ========================================== */
         #main-page {
-            width: 100%; max-width: 600px; max-height: calc(100dvh - 70px); position: absolute; top: calc(40px + (100dvh - 50px) / 2 );left: 50%; transform: translate(-50%, -50%); padding: 0 10%;
+            width: 100%; max-width: clamp(600px,90%, 700px); max-height: clamp(600px,95%, 1024px); position: absolute; top: calc(40px + (100dvh - 50px) / 2 );left: 50%; transform: translate(-50%, -50%); padding: 0 10%;
             display: flex; flex-direction: column; justify-content: center; touch-action: pan-y;
             opacity: 0; visibility: hidden; transition: opacity 1.2s ease;
-            margin: 0 auto; overflow-y: auto; box-sizing: border-box;
+            margin: 0 auto; overflow-y: auto; overflow-x: hidden !important; box-sizing: border-box;
         }
 	/* 針對互動元素防止「雙擊放大」 */
 	button, input, textarea, .cat-btn, .mode-btn {
@@ -670,10 +673,10 @@ padding-bottom: env(safe-area-inset-bottom);
            6. 隱藏式下拉解說面板與報告佈局
            ========================================== */
         #result-panel {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 77dvh;
+            position: fixed; bottom: 0; left: 0; width: 100% !important; 
             background: var(--panel-bg);  
             border-top: var(--border-thin); box-shadow: var(--glass-shadow);
-            padding: 5dvh 10%; overflow-y: auto; z-index: 8500;
+            padding: 5dvh 10%; overflow-y: auto; overflow-x: hidden !important; z-index: 8500; box-sizing: border-box;
             transform: translateY(100%); transition: transform 0.9s cubic-bezier(0.2, 1, 0.3, 1);
 scrollbar-width: none; /* 針對 Firefox */
             -ms-overflow-style: none; /* 針對 IE/Edge */
@@ -702,8 +705,8 @@ scrollbar-width: none; /* 針對 Firefox */
 
         .result-block { margin-bottom: 30px; border-left: 2px solid var(--gold-primary); padding-left: 20px; }
         .res-position { font-size: 0.65rem; color: var(--gold-primary); letter-spacing: 2px; margin-bottom: 8px; }
-        .res-title { font-size: 1.2rem; margin-bottom: 12px; font-weight: 500; }
-        .res-text { font-size: 0.95rem; line-height: 1.8; opacity: 0.85; }
+        .res-title { font-size: 1.05rem; margin-bottom: 7px; font-weight: 500; }
+        .res-text { font-size: 0.85rem; line-height: 1.8; opacity: 0.85; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -1001,7 +1004,7 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
 
 .footer-content {
     font-family: 'Georgia', 'Noto Serif TC', serif; bottom: 3dvh; 
-    font-size: 0.6rem; /* 精緻細小的低調字體 */
+    font-size: clamp(0.5rem, 2.3vw, 0.6rem); /* 精緻細小的低調字體 */
     letter-spacing: 2px; /* 高階感必備的字距留白 */
     color: var(--text-color); 
     opacity: 0.55; /* 降低醒目度，呈現高級隨性感 */
@@ -1059,14 +1062,21 @@ transition: transform 0.3s ease-out;
 /* 手機版 RWD 微調 */
 @media (max-width: 480px) {
     .footer-content {
-        font-size: 0.5rem;
         letter-spacing: 1px;
         gap: 4px;
     }
-    .btn-solid {font-size: 0.75rem;}
+    .btn-solid {font-size: 0.65rem;}
 .btn-outline {padding:9px 0;}
 }
-</style>
+
+@media (min-width: 481px) {
+    .btn-solid {
+    padding: 15px;}
+.btn-outline {
+    padding: 8px 0;}
+#main-page {max-width: 500px;}
+
+}</style>
 </head>
 <body>
 <div id="custom-magic-cursor"></div>
@@ -1076,11 +1086,13 @@ transition: transform 0.3s ease-out;
     <div class="home-title">孫孫暉日塔羅 Mascot Tarot</div>
 
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☽</button>
-</div>
+    </div>
+
     <div id="loading-screen">
         <div class="loading-title">孫孫塔羅 Mascot Tarot</div>
-        <div class="progress-track"><div id="progress-bar"></div></div>
+        <div class="progress-track"><div id="progress-bar"></div>           
     </div>
+</div>
 
     <div id="main-page">
         <div>
@@ -1119,8 +1131,6 @@ transition: transform 0.3s ease-out;
                     <button class="btn-outline mode-btn" id="btn-triple" onclick="setMode('triple')">三牌陣</button>
                 </div>
             </div>
-        </div>
-
         <button class="btn-solid" onclick="startDivination()">Start Divination</button>
 <footer class="tarot-footer">
     <div class="footer-content">
@@ -1131,6 +1141,8 @@ transition: transform 0.3s ease-out;
         <a href="#" target="_blank" class="footer-link">請喝奶茶~</a>
     </div>
 </footer>
+        </div>
+
     </div>
 
     <div id="spread-view" onclick="retractCards(event)">
@@ -1154,7 +1166,7 @@ transition: transform 0.3s ease-out;
         <div id="advice-content"></div>
         
         <div id="result-actions" style="margin-top: 5dvh; display: flex; gap: 10px;">
-            <button class="btn-solid btn-return" onclick="restartApp()">Return</button>
+            <button class="btn-solid btn-return" onclick="restartApp()">Back</button>
             <button id="save-btn" class="btn-solid btn-save" onclick="exportImage()">SAVE</button>
 <button id="cart-btn" class="btn-solid btn-cart" onclick="redirectToPaywall()">
         <span class="cart-txt">CART</span><span class="cart-star">✤</span>
@@ -1658,7 +1670,7 @@ function prebuildDeckDOM() {
 <div class="card-inner">
     <div class="card-face card-back">
             <img src="tarot-cards/photo-output.png" 
-                 style="width:100%; height:100%; object-fit:cover; position:absolute; transform:scale(1.05);" 
+                 style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
                  onload="this.parentElement.style.backgroundImage='none';" 
                  onerror="this.style.display='none';" 
                  draggable="false">
@@ -1828,7 +1840,7 @@ window.addEventListener('DOMContentLoaded', startPreloading);
     <div class="card-inner">
         <div class="card-face card-back">
             <img src="tarot-cards/photo-output.png" 
-                 style="width:100%; height:100%; object-fit:cover; position:absolute;transform:scale(1.05);" 
+                 style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
                  onload="this.parentElement.style.backgroundImage='none';" 
                  onerror="this.style.display='none';" 
                  draggable="false">
