@@ -236,7 +236,49 @@ padding-bottom: env(safe-area-inset-bottom);
 
         .input-group { margin-bottom: 22px; }
         .label { font-size: 0.7rem; color: var(--gold-primary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
-        
+/* ==========================================
+   Textarea 一鍵清除按鈕系統 (極簡美學)
+   ========================================== */
+.textarea-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* ⚡️ 關鍵修復：調整右側內距，防止輸入很長時文字與清除按鈕重疊 */
+#main-page textarea {
+    padding-right: 32px !important;
+}
+
+/* 清除按鈕基礎狀態 */
+.clear-btn {
+    position: absolute;
+    right: 0;
+    bottom: 6px; /* 完美對齊底部邊框與文字襯線線條 */
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 0.85rem;
+    opacity: 0;
+    visibility: hidden;
+    padding: 4px;
+    z-index: 10;
+    /* 絲滑的淡入淡出、變色與縮放動畫 */
+    transition: opacity 0.3s ease, visibility 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+
+/* 當輸入框有文字時，由 JS 加上此 Class (淡入呈現半透明，不搶視覺焦點) */
+.clear-btn.is-visible {
+    opacity: 0.8;
+    visibility: visible;
+}
+
+/* 滑鼠懸停效果：亮起神祕學金色微光與輕微放大 */
+.clear-btn.is-visible:hover {
+    opacity: 1;
+    color: var(--gold-primary);
+    transform: scale(1.15);
+    text-shadow: 0 0 8px rgba(219, 186, 24, 0.5);
+}
         textarea {
             width: 100%; padding: 8px 0; border: none; border-bottom: var(--border-thin); font-size: 16px;
             background: var(--input-bg); color: var(--text-color); font-size: 0.85rem;
@@ -666,6 +708,136 @@ scrollbar-width: none; /* 針對 Firefox */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* ==========================================
+   結果面板按鈕 3:4:3 高級變形動畫系統 (透明底·黑字金邊版)
+   ========================================== */
+
+#result-actions {
+    margin-top: 5dvh; 
+    display: flex; 
+    gap: 10px;
+    width: 100%; /* 確保撐滿面板寬度 */
+}
+
+/* 🟢 階段一：開頭保留 5:5 佔比設定 */
+#result-actions .btn-return {
+    flex: 5 1 0%;
+    white-space: nowrap;
+    transition: flex 1.4s cubic-bezier(0.25, 1, 0.3, 1);
+}
+
+#result-actions .btn-save {
+    flex: 5 1 0%;
+    white-space: nowrap;
+    transition: flex 1.4s cubic-bezier(0.25, 1, 0.3, 1);
+}
+
+/* CART 按鈕初始狀態：寬度與佔比完全為 0，完全隱藏 */
+#result-actions .btn-cart {
+    flex: 0 0 0%;
+    min-width: 0;
+    opacity: 0;
+    padding: 12px 0; /* 上下維持，左右歸零防止擠壓 */
+    overflow: hidden;
+    white-space: nowrap;
+    pointer-events: none; /* 未解鎖前無法點擊 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    
+    /* 💡 關鍵修正：強制覆蓋 solid 的金黃底色與白字 */
+    background: transparent !important;
+    color: var(--text-color, #302814) !important; /* 繼承你專案的高級暗色字 */
+    border: 1px solid transparent !important;      /* 初始隱藏邊框，防止閃爍 */
+    
+    /* 建立極致流暢的擴展動畫軌跡 */
+    transition: 
+        flex 1.4s cubic-bezier(0.25, 1, 0.3, 1),
+        opacity 0.6s ease,
+        padding 1.4s cubic-bezier(0.25, 1, 0.3, 1),
+        border-color 0.6s ease,
+        background-color 0.3s cubic-bezier(0.25, 1, 0.3, 1), /* 新增：底色漸變 */
+        box-shadow 0.3s ease;
+}
+
+/* 內層「CART」文字：初始隱形並向右偏移，確保是穩定的黑/暗色字 */
+#result-actions .btn-cart .cart-txt {
+    opacity: 0;
+    transform: translateX(15px);
+    color: var(--gold-primary, #dbba18) !important;
+    /* 延遲 0.8s，等按鈕空間推開後文字才徐徐浮現 */
+    transition: opacity 0.6s ease 0.8s, transform 0.6s cubic-bezier(0.25, 1, 0.3, 1) 0.8s;
+}
+
+/* 內層「✤」符號：獨立強制維持耀眼的金黃色 */
+#result-actions .btn-cart .cart-star {
+    opacity: 0;
+    transform: scale(0.4);
+    display: inline-block;
+    color: var(--gold-primary, #dbba18) !important; /* 確保閃耀金色 */
+    text-shadow: 0 0 4px rgba(219, 186, 24, 0.3); /* 帶有一點點空靈的微光 */
+    /* 延遲 0.2s 快速現身，帶頭往左推開版面 */
+    transition: opacity 0.4s ease 0.2s, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s;
+}
+
+
+/* 🔵 階段二：觸發變形後的最終狀態 (比例轉為 3:4:3) */
+#result-actions.expanded .btn-return {
+    flex: 3 1 0%;
+}
+
+#result-actions.expanded .btn-save {
+    flex: 4 1 0%;
+}
+
+#result-actions.expanded .btn-cart {
+    flex: 3 1 0%;
+    opacity: 1;
+    padding: 12px 15px; 
+    /* 💡 關鍵修正：展開就位後，顯現出與專案風格一致的古典金色邊框 */
+    border: 1px solid var(--gold-primary, #dbba18) !important; 
+    pointer-events: auto; /* 恢復可點擊狀態 */
+}
+
+/* 觸發後文字與符號完美現身 */
+#result-actions.expanded .btn-cart .cart-txt {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+#result-actions.expanded .btn-cart .cart-star {
+    opacity: 1;
+    transform: scale(1);
+}
+/* ==========================================
+   CART 按鈕：日間黑底 / 夜間白底 同步 Hover 系統
+   ========================================== */
+
+/* ☀️ 【日間模式 data-theme="day"】滑鼠懸停：轉換為黑底色 */
+html[data-theme="day"] #result-actions.expanded .btn-cart:hover {
+    background-color: #1a1a1a !important; /* 純黑底色 (也可改用你的 var(--text-color)) */
+    border-color: #1a1a1a !important;     /* 邊框同步轉黑，視覺更紮實 */
+    /* 💡 註：原本的金色字體與金色 ✤ 符號在黑底上對比極佳，故維持原色不變 */
+}
+
+/* 🌙 【夜間模式 data-theme="night"】滑鼠懸停：轉換為白底色 */
+html[data-theme="night"] #result-actions.expanded .btn-cart:hover,
+html[data-theme="dark"] #result-actions.expanded .btn-cart:hover {
+    background-color: #ffffff !important; /* 純白底色 */
+    border-color: #ffffff !important;     /* 邊框同步轉白 */
+}
+
+/* 🔥 【夜間 Hover 核心細節優化】
+   當夜間變成白底時，如果文字和星星還是金色會完全看不見！
+   所以在此狀態下，自動將文字與星星轉為深黑色，達成極致帥氣的反白逆轉效果 */
+html[data-theme="night"] #result-actions.expanded .btn-cart:hover .cart-txt,
+html[data-theme="dark"] #result-actions.expanded .btn-cart:hover .cart-txt,
+html[data-theme="night"] #result-actions.expanded .btn-cart:hover .cart-star,
+html[data-theme="dark"] #result-actions.expanded .btn-cart:hover .cart-star {
+    color: #1a1a1a !important;    /* 轉為深色黑字，確保看得到 */
+    text-shadow: none !important; /* 移除原本金星的微光陰影，保持字體俐落乾淨 */
+}
+/* ==========================================
    神祕交互系統 - 側邊欄與泡泡高階收納美學
    ========================================== */
 
@@ -831,7 +1003,7 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
     font-family: 'Georgia', 'Noto Serif TC', serif; bottom: 3dvh; 
     font-size: 0.6rem; /* 精緻細小的低調字體 */
     letter-spacing: 2px; /* 高階感必備的字距留白 */
-    color: #302814; /* 預設使用你的文字深色 */
+    color: var(--text-color); 
     opacity: 0.55; /* 降低醒目度，呈現高級隨性感 */
     display: flex;
     flex-wrap: wrap;
@@ -851,7 +1023,7 @@ transition: transform 0.3s ease-out;
 
 /* 超連結基本樣式 */
 .footer-link {
-    color: #302814;
+    color: var(--text-color);
     text-text-decoration: none;
     position: relative;
     transition: all 0.3s ease;
@@ -914,7 +1086,10 @@ transition: transform 0.3s ease-out;
         <div>
             <div class="input-group">
                 <div class="label">Your Query</div>
-                <textarea id="q-input" rows="1" placeholder="寫下你的困惑 (選填)..."></textarea>
+                <div class="textarea-wrapper">
+			<textarea id="q-input" rows="1" placeholder="寫下你的困惑 (選填)..." oninput="toggleClearBtn()"></textarea>
+			<button id="clear-btn" class="clear-btn" onclick="clearTextArea()">✕</button>
+    </div>
             </div>
             
             <div class="input-group">
@@ -979,10 +1154,11 @@ transition: transform 0.3s ease-out;
         <div id="advice-content"></div>
         
         <div id="result-actions" style="margin-top: 5dvh; display: flex; gap: 10px;">
-            <!-- 加入 ID 並修改 class -->
-            <button id="save-btn" class="btn-solid btn-save" onclick="exportImage()">SAVE</button>
-            <!-- 修改 class -->
             <button class="btn-solid btn-return" onclick="restartApp()">Return</button>
+            <button id="save-btn" class="btn-solid btn-save" onclick="exportImage()">SAVE</button>
+<button id="cart-btn" class="btn-solid btn-cart" onclick="redirectToPaywall()">
+        <span class="cart-txt">CART</span><span class="cart-star">✤</span>
+    </button>
         </div>
 <footer class="tarot-footer">
     <div class="footer-content">
@@ -1108,6 +1284,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// 🔍 1. 監聽輸入狀態：動態控制「清除按鈕」的亮起與隱藏
+function toggleClearBtn() {
+    const input = document.getElementById('q-input');
+    const btn = document.getElementById('clear-btn');
+    if (input && btn) {
+        if (input.value.trim().length > 0) {
+            btn.classList.add('is-visible');
+        } else {
+            btn.classList.remove('is-visible');
+        }
+    }
+}
+
+// 🧹 2. 執行一鍵消除，並自動重新聚焦（Focus）讓用戶直接打字
+function clearTextArea() {
+    const input = document.getElementById('q-input');
+    const btn = document.getElementById('clear-btn');
+    if (input && btn) {
+        input.value = '';             // 清空內容
+        btn.classList.remove('is-visible'); // 隱藏按鈕
+        input.focus();                // 自動重新聚焦輸入框，省去用戶再點一次的麻煩
+        
+        // 💡 如果你的 textarea 原本有綁定自動動態調整高度(Auto-resize)的 function，
+        // 記得在這裡也呼叫一次，讓它清空時高度順便彈回 1 行的高度：
+        // if (typeof adjustHeight === 'function') { adjustHeight(input); }
+    }
+}
 
 // ==========================================
 // Idea 3: 星光漣漪點擊生成邏輯 (完美修復版)
@@ -1454,7 +1658,7 @@ function prebuildDeckDOM() {
 <div class="card-inner">
     <div class="card-face card-back">
             <img src="tarot-cards/photo-output.png" 
-                 style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+                 style="width:100%; height:100%; object-fit:cover; position:absolute; transform:scale(1.05);" 
                  onload="this.parentElement.style.backgroundImage='none';" 
                  onerror="this.style.display='none';" 
                  draggable="false">
@@ -1624,7 +1828,7 @@ window.addEventListener('DOMContentLoaded', startPreloading);
     <div class="card-inner">
         <div class="card-face card-back">
             <img src="tarot-cards/photo-output.png" 
-                 style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+                 style="width:100%; height:100%; object-fit:cover; position:absolute;transform:scale(1.05);" 
                  onload="this.parentElement.style.backgroundImage='none';" 
                  onerror="this.style.display='none';" 
                  draggable="false">
@@ -2317,6 +2521,47 @@ async function exportImage() {
         saveBtn.innerText = "ERROR";
     }
 }
+
+// ==========================================
+// 自動偵測進入 Result Panel 3秒後擴展按鈕邏輯
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const resultPanel = document.getElementById('result-panel');
+    const resultActions = document.getElementById('result-actions');
+    
+    if (!resultPanel || !resultActions) return;
+
+    let hasTriggeredCartAnimation = false; // 確保「第一次進入」才生效的防線旗標
+
+    // 建立一個高效率的網頁變動觀察器
+    const panelObserver = new MutationObserver((mutations) => {
+        if (hasTriggeredCartAnimation) return; // 如果已經觸發過，直接攔截不重複執行
+
+        // 檢查 #result-panel 是否脫離了隱藏狀態 (例如從 translateY(100%) 變成了 0，或者擁有了某個顯示的 class)
+        // 這裡透過讀取瀏覽器計算後的真實位置來判定面板是否「浮上來現身」
+        const computedStyle = window.getComputedStyle(resultPanel);
+        const transformMatrix = computedStyle.transform;
+
+        // 當 transform 不是 none 且不是完全沉在底下的 100% 時，代表使用者進入了面板
+        // 或者如果你的開啟機制是靠增加 class，也可以直接檢查：resultPanel.classList.contains('你的顯示Class')
+        if (transformMatrix !== 'none' && !transformMatrix.includes('100%') || resultPanel.style.transform === 'translateY(0px)' || resultPanel.style.transform === 'translateY(0)') {
+            
+            hasTriggeredCartAnimation = true; // 鎖定防線，避免後續上下滑動面板重複觸發
+            
+            // ⏳ 精準倒數 3000 毫秒（3 秒）
+            setTimeout(() => {
+                // 為父容器注入 .expanded 類別，全面啟動 CSS 3:4:3 華麗推移
+                resultActions.classList.add('expanded');
+            }, 3000);
+
+            // 功成身退，關閉觀察器節省系統記憶體
+            panelObserver.disconnect();
+        }
+    });
+
+    // 啟動監聽：密切注意面板的 class 與 style 屬性變化
+    panelObserver.observe(resultPanel, { attributes: true, attributeFilter: ['style', 'class'] });
+});
 
 console.log("%c停！別看我的code了，需要抽牌定制的就來找我吧！", "color: blue; font-size: 15px; font-weight: bold;");
     </script>
