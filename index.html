@@ -458,6 +458,20 @@ padding-bottom: env(safe-area-inset-bottom);
         }
         @media (min-width: 768px) { .card-wrap { width: 120px; height: 180px; } }
 
+/* 👑 精致防抖防摔防死循環規則 */
+.card-wrap.is-chosen,
+.card-wrap.revealing,
+.card-wrap.active-draw {
+    pointer-events: none !important; /* 點擊後瞬間與滑鼠絕緣，切斷所有 Hover 偵測 */
+}
+
+.card-wrap.is-chosen .card-inner,
+.card-wrap.revealing .card-inner,
+.card-wrap.active-draw .card-inner {
+    transform: none !important; /* 強制移除任何由滑鼠傾斜產生的額外 3D Transform */
+    animation: none !important; /* 徹底殺死任何閒置時的左右呼吸或搖擺動畫 */
+}
+
         .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; pointer-events: none; will-change: transform;
     transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -1316,7 +1330,7 @@ transition: transform 0.3s ease-out;
         <span class="footer-divider">|</span>
         <a href="https://www.instagram.com/grafittiii_uru/" target="_blank" class="footer-link">Instagram</a>
         <span class="footer-divider">|</span>
-        <a href="#" target="_blank" class="footer-link">請我喝奶茶~</a>
+        <a href="https://payme.hsbc/" target="_blank" class="footer-link">請我喝奶茶~</a>
     </div> 
 </footer>
     </div>
@@ -1995,7 +2009,7 @@ const liquidCocoonSVG = `
 // === 1. 提取所有需要載入的圖片路徑 ===
 const imageUrls = tarotData.map(card => `tarot-cards/${card.img}`);
 // 如果有牌背圖片，可以取消這行註解並填入正確路徑
-imageUrls.push("photo-output.png");
+imageUrls.push("tarot-cards/photo-output.png");
 
 // === 2. 預載入控制核心 ===
 let loadedCount = 0;
@@ -2026,13 +2040,13 @@ function prebuildDeckDOM() {
         // 這裡完全保留你提供的 HTML 結構，包含 img 的樣式
         wrapper.innerHTML = `
             <div class="card-inner">
-    <div class="card-face card-back"></div>
-    <div class="card-face card-front">...</div>
-</div>
+    		<div class="card-face card-back"></div>
+    		<div class="card-face card-front">...</div>
+		</div>
 
-<div class="card-inner">
-    <div class="card-face card-back">
-            <img src="tarot-cards/photo-output.png" 
+	<div class="card-inner">
+    		<div class="card-face card-back">
+           	 <img src="tarot-cards/photo-output.png" 
                  style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
                  onload="this.parentElement.style.backgroundImage='none';" 
                  onerror="this.style.display='none';" 
@@ -2040,6 +2054,7 @@ function prebuildDeckDOM() {
         </div>
     <div class="card-face card-front">
         <img src="" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">
+	${liquidCocoonSVG}
     </div>
 </div>
         `;
@@ -2103,6 +2118,8 @@ function enterMainPage() {
         
         // 加上你第二段程式碼中的這行，確保標題動畫正常顯示
         document.body.classList.add('show-home-title');
+        createCosmicDust(); 
+        initCustomCursor();
     }, 1000); // 1秒淡出時間
 }
 
@@ -2594,7 +2611,7 @@ function toggleBubble(open) {
     }
 }
 
-// 4. 跳轉Google Sheet
+// 4. 跳轉Google
 function redirectToPaywall() {
     const targetUrl = "https://forms.gle/qsQig5t8JX99XRjd8";
     window.open(targetUrl, '_blank');
@@ -2628,38 +2645,66 @@ function redirectToPaywall() {
             }
         }
 
-        function restartApp() {
-            document.getElementById('result-panel').classList.remove('active');
-            document.getElementById('spread-view').style.opacity = '0';
-            document.getElementById('retry-btn').style.display = 'none';
-            
-            // 安全檢查：若有 ID 才操作
-            const saveBtn = document.getElementById('save-btn');
-            if (saveBtn) saveBtn.style.display = 'flex'; // 恢復原本的 flex 屬性
 
-            const confirmBtn = document.getElementById('confirm-btn-float');
-            confirmBtn.style.opacity = '0';
-            confirmBtn.style.display = 'none';
-            confirmBtn.style.pointerEvents = 'none'; 
+function restartApp() {
+    // 👑 【核心修復】安全地重置結果面板
+    const resultPanel = document.getElementById('result-panel');
+    if (resultPanel) {
+        resultPanel.classList.remove('active');
+        resultPanel.classList.remove('show');
+        
+        // 🚀【關鍵行】：不寫死 100%，而是直接「清空」行內樣式！
+        // 這樣它既能退場，下一次占卜翻牌時，CSS 的 .active 才能成功再次把它拉起來！
+        resultPanel.style.transform = ''; 
+    }
+
+    // 移除按鈕的 3 秒擴展排版類別
+    const resultActions = document.querySelector('.result-actions');
+    if (resultActions) {
+        resultActions.classList.remove('expanded');
+    }
+
+    // 安全重置動畫防線旗標（加上 typeof 檢查，絕對不報錯）
+    if (typeof hasTriggeredCartAnimation !== 'undefined') {
+        hasTriggeredCartAnimation = false;
+    }
+
+
+    document.getElementById('spread-view').style.opacity = '0';
+    document.getElementById('retry-btn').style.display = 'none';
+    
+    // 安全檢查：若有 ID 才操作
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) saveBtn.style.display = 'flex'; // 恢復原本的 flex 屬性
+
+    const confirmBtn = document.getElementById('confirm-btn-float');
+    if (confirmBtn) {
+        confirmBtn.style.opacity = '0';
+        confirmBtn.style.display = 'none';
+        confirmBtn.style.pointerEvents = 'none'; 
+    }
+    
+    setTimeout(() => {
+        document.getElementById('spread-view').style.display = 'none';
+        document.getElementById('cards-container').innerHTML = '';
+        if(document.getElementById('advice-content')) document.getElementById('advice-content').innerHTML = '';
+        document.getElementById('advice-section').style.display = 'none';
+        
+        const main = document.getElementById('main-page');
+        if (main) {
+            main.style.display = 'flex';
+            main.style.opacity = '0';
             
-            setTimeout(() => {
-                document.getElementById('spread-view').style.display = 'none';
-                document.getElementById('cards-container').innerHTML = '';
-                if(document.getElementById('advice-content')) document.getElementById('advice-content').innerHTML = '';
-                document.getElementById('advice-section').style.display = 'none';
-                
-                const main = document.getElementById('main-page');
-                main.style.display = 'flex';
-                main.style.opacity = '0';
-requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-                // 這裡加入類別，才會真正觸發 CSS 的 1.5s transition
-                document.body.classList.add('show-home-title');
-                main.style.opacity = '1';
+                requestAnimationFrame(() => {
+                    // 這裡加入類別，才會真正觸發 CSS 的 1.5s transition
+                    document.body.classList.add('show-home-title');
+                    main.style.opacity = '1';
+                });
             });
-        });
-            }, 900);
         }
+    }, 900);
+}
 // 輔助函式維持不變
 function drawQRCodeToCanvas(ctx, x, y, dark, light) {
     // 必須 return 一個 Promise
@@ -2975,7 +3020,8 @@ console.log("%c停！別看我的code了，需要抽牌定制的就來找我吧�
     <div class="modal-content">
         <h2>占卜須知</h2>
         <ul class="notice-list">
-            <li>不強制他人意願，<p>占卜應基於當事人主動參與。</li>
+            <li>一事一占。</li>
+			<li>不強制他人意願，<p>占卜應基於當事人主動參與。</li>
             <li>不涉入第三方感情及事件。</li>
             <li>不預測時間，<p>將結果視為現階段的策略參考。</li>
             <li>占卜僅供參考，<p>最終選擇權在於您本人。</li>
