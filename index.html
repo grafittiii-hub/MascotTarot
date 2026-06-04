@@ -503,6 +503,8 @@ padding-bottom: env(safe-area-inset-bottom);
         
         .card-wrap.confirmed { pointer-events: auto !important; cursor: pointer; z-index: 2100 !important; }
 
+
+
         #confirm-btn-float {
             position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%) translateY(20px);
             display: none; pointer-events: none; 
@@ -528,30 +530,48 @@ padding-bottom: env(safe-area-inset-bottom);
    LVMH 副標題美學：洗牌呼吸文字系統
    ========================================================================== */
 
-.spread-subtitle-msg {
-    position: absolute;
-    bottom: 12dvh;             /* 🌟 固定於底部黃金安全區，絕不干擾中央洗牌動畫 */
-    left: 50%;
-    transform: translateX(-50%) translateY(10px); /* 預設微微下沉 */
-    width: 90%;
-    max-width: 500px;
-    text-align: center;
-    color: var(--gold-primary, #dbba18) !important;
-    font-size: clamp(0.95rem, 4vw, 1.15rem) !important; /* 隨裝置自動縮放 */
-    font-weight: 300 !important;
-    letter-spacing: 5px !important;              /* 高奢感寬字距 */
-    text-shadow: 0 0 12px rgba(219, 186, 24, 0.25);
-    pointer-events: none;                        /* 🌟 核心防禦：絕對不可阻擋卡牌的點擊事件 */
-    z-index: 100;                                /* 浮在卡牌之上，但因為位置錯開，所以不遮擋 */
-    
-    opacity: 0;
-    transition: opacity 0.8s ease-in-out, transform 0.8s cubic-bezier(0.25, 1, 0.3, 1);
+/* 👑 獨立於 JS 之外的奢華呼吸輪播系統 */
+.ritual-text-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 30px;
+    margin-top: 75dvh;
 }
 
-/* 文字現身狀態 */
-.spread-subtitle-msg.visible {
-    opacity: 0.85;
-    transform: translateX(-50%) translateY(0);
+.ritual-text-container .phrase {
+    position: absolute;
+    opacity: 0;
+    transform: translateY(10px);
+    font-family: 'Noto Serif TC', serif;
+    color: var(--gold-primary, #d4af37);
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+    pointer-events: none;
+    
+    /* 核心：三句話總共花 7.5 秒無限輪播 */
+    animation: cssPhraseCycle 7.5s infinite linear;
+}
+
+/* 🌟 精準分配三句話的出场時間軸，各自錯開 2.5 秒 */
+.ritual-text-container .phrase.p1 { animation-delay: 0s; }
+.ritual-text-container .phrase.p2 { animation-delay: 2.5s; }
+.ritual-text-container .phrase.p3 { animation-delay: 5s; }
+
+/* 完美計算的呼吸權重：淡入 ➔ 停頓觀看 ➔ 淡出 */
+@keyframes cssPhraseCycle {
+    0% { opacity: 0; transform: translateY(10px) scale(0.98); filter: blur(3px); }
+    4% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    29% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    33.33% { opacity: 0; transform: translateY(-10px) scale(0.98); filter: blur(2px); }
+    100% { opacity: 0; }
+}
+
+/* 當洗牌結束、發牌階段時，讓整個文字容器優雅退場 */
+.ritual-text-container.fade-out {
+    opacity: 0;
+    transition: opacity 0.6s ease;
 }
 /* =========================================
    方案四 進階修正：虹光弧影 (Rainbow Radial Fade)
@@ -1338,7 +1358,11 @@ transition: transform 0.3s ease-out;
     <div id="spread-view" onclick="retractCards(event)">
         <div id="draw-counter">0/3</div>
         <div id="cards-container"></div>
-	<div id="spread-ritual-text" class="spread-subtitle-msg">✦ 深呼吸……想著問題</div>
+	<div id="spread-ritual-text" class="ritual-text-container">
+    <span class="phrase p1">✦ 深呼吸……想著問題</span>
+    <span class="phrase p2">✦ 正在為你校準能量……</span>
+    <span class="phrase p3">✦ 準備選牌……</span>
+</div>
 </div>
         <button id="confirm-btn-float" class="btn-solid" style="width: auto;" onclick="confirmCard(event)">Confirm</button>
     </div>
@@ -2039,11 +2063,6 @@ function prebuildDeckDOM() {
         
         // 這裡完全保留你提供的 HTML 結構，包含 img 的樣式
         wrapper.innerHTML = `
-            <div class="card-inner">
-    		<div class="card-face card-back"></div>
-    		<div class="card-face card-front">...</div>
-		</div>
-
 	<div class="card-inner">
     		<div class="card-face card-back">
            	 <img src="tarot-cards/photo-output.png" 
@@ -2101,6 +2120,17 @@ function updateProgress() {
         
         setTimeout(enterMainPage, 500); 
     }
+}
+
+// 確保這個函式定義在 enterMainPage 之前
+function initCustomCursor() {
+    const cursor = document.getElementById('custom-magic-cursor');
+    if (!cursor) return; // 如果找不到元素，直接結束，避免報錯
+
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+    });
 }
 
 // 統整後的進入主頁邏輯
@@ -2183,115 +2213,112 @@ window.addEventListener('DOMContentLoaded', startPreloading);
             }, 800);
         }
 
-const spreadPhrases = ["✦ 深呼吸……想著問題", "✦ 正在為你校準能量……", "✦ 準備選牌……"];
-let spreadRitualInterval = null;
 
-        function initSpreadView() {
-            const spreadView = document.getElementById('spread-view');
-            spreadView.style.display = 'block';
-            setTimeout(() => spreadView.style.opacity = '1', 700);
+function initSpreadView() {
+    const spreadView = document.getElementById('spread-view');
+    spreadView.style.display = 'block';
+    setTimeout(() => spreadView.style.opacity = '1', 700);
 
-		const ritualTextEl = document.getElementById('spread-ritual-text');
-    if (ritualTextEl) {
-        clearInterval(spreadRitualInterval); // 防禦性清除防重複
-        let phraseIdx = 0;
-        
-        // 顯示第一句並套用動畫
-        ritualTextEl.innerText = spreadPhrases[phraseIdx];
-        setTimeout(() => ritualTextEl.classList.add('visible'), 300);
-
-        // 每 2.4 秒優雅換字
-        spreadRitualInterval = setInterval(() => {
-            ritualTextEl.classList.remove('visible'); // 優雅淡出、下沉
-            
-            setTimeout(() => {
-                phraseIdx = (phraseIdx + 1) % spreadPhrases.length;
-                ritualTextEl.innerText = spreadPhrases[phraseIdx];
-                ritualTextEl.classList.add('visible'); // 優雅淡入、上升
-            }, 700);
-        }, 2400);
+    const ritualTextContainer = document.getElementById('spread-ritual-text');
+    if (ritualTextContainer) {
+        ritualTextContainer.classList.remove('fade-out');
     }
 
-            const container = document.getElementById('cards-container');
-            container.innerHTML = '';
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '';
+
+    if (tarotData.length === 0) return;
+
+    shuffledDeck = [...tarotData].sort(() => Math.random() - 0.5);
+    drawnCards = [];
+    updateCounterUI();
+
+    const isMobile = window.innerWidth < 768;
+    const total = shuffledDeck.length;
+
+    shuffledDeck.forEach((cardData, index) => {
+        const wrapper = document.createElement('div');
+        
+        // 🌟 優化核心：如果是在手機版，且牌數超過 10 張，則設為隱藏，不參與洗牌動畫
+        const isShuffleTarget = !isMobile || index < 10;
+        
+        wrapper.className = isShuffleTarget ? 'card-wrap shuffling' : 'card-wrap';
+        if (!isShuffleTarget) {
+            wrapper.style.display = 'none'; // 隱藏多餘的牌，大幅減輕 GPU 壓力
+        }
+        
+        wrapper.dataset.index = index;
+        wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
+
+        const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
+
+        wrapper.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-back">
+                    <img src="tarot-cards/photo-output.png" 
+                         style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+                         onload="this.parentElement.style.backgroundImage='none';" 
+                         onerror="this.style.display='none';" 
+                         draggable="false">
+                </div>
+                <div class="card-face card-front">${imgTag}</div>
+            </div>
+        `;
+
+        wrapper.style.left = "50%";
+        wrapper.style.top = "50%";
+        wrapper.style.transform = `translate(-50%, -50%)`;
+
+        wrapper.onclick = (e) => handleCardClick(e, wrapper);
+        container.appendChild(wrapper);
+    });
+
+    setTimeout(() => {
+        const cards = document.querySelectorAll('.card-wrap');
+        
+        // 🌟 喚醒所有隱藏的牌，並移除洗牌動畫
+        cards.forEach((wrapper) => {
+            wrapper.style.display = 'block'; // 讓它們現身
+            wrapper.classList.remove('shuffling'); 
+        });
+        
+        document.body.classList.remove('show-home-title');
+
+        const ritualTextContainer = document.getElementById('spread-ritual-text');
+        if (ritualTextContainer) {
+            ritualTextContainer.classList.add('fade-out');
+        }
+
+        void container.offsetWidth; 
+
+        cards.forEach((wrapper, index) => {
+            const duration = isMobile ? '1.2s' : '0.8s'; 
             
+            // 🌟 已修正原本無法讀取變數的 Bug (使用反引號 ``)
+            wrapper.style.transition = `transform ${duration} 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), left 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), top 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), bottom 0.8s cubic-bezier(0.2, 1.2, 0.3, 1)`;
+            wrapper.style.transitionDelay = `${index * 0.02}s`;
 
-            if (tarotData.length === 0) return;
-
-            shuffledDeck = [...tarotData].sort(() => Math.random() - 0.5);
-            drawnCards = [];
-            updateCounterUI();
-
-            const isMobile = window.innerWidth < 768;
-            const total = shuffledDeck.length;
-
-            shuffledDeck.forEach((cardData, index) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'card-wrap shuffling';
-                wrapper.dataset.index = index;
-		wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
-
-                const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
-
-		wrapper.innerHTML = `
-    <div class="card-inner">
-        <div class="card-face card-back">
-            <img src="tarot-cards/photo-output.png" 
-                 style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
-                 onload="this.parentElement.style.backgroundImage='none';" 
-                 onerror="this.style.display='none';" 
-                 draggable="false">
-        </div>
-        <div class="card-face card-front">${imgTag}</div>
-    </div>
-`;
-
-                wrapper.style.left = "50%";
+            if (isMobile) {
+                const angle = -45 + (index * (90 / total)); 
+                wrapper.style.transformOrigin = "left center";
+                wrapper.style.left = "0vw"; 
                 wrapper.style.top = "50%";
-                wrapper.style.transform = `translate(-50%, -50%)`;
-
-                wrapper.onclick = (e) => handleCardClick(e, wrapper);
-                container.appendChild(wrapper);
-            });
-
-            setTimeout(() => {
-                const cards = document.querySelectorAll('.card-wrap');
-                cards.forEach((wrapper) => 				{ wrapper.classList.remove('shuffling'); });            	document.body.classList.remove('show-home-title');
-
-		clearInterval(spreadRitualInterval);
-        if (ritualTextEl) {
-            ritualTextEl.classList.remove('visible');
-        }
-
-                void container.offsetWidth; 
-
-                cards.forEach((wrapper, index) => {
-                    const duration = isMobile ? '1.2s' : '0.8s'; // 手機版慢一點
-                    wrapper.style.transition = 'transform ${duration} 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), left 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), top 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), bottom 0.8s cubic-bezier(0.2, 1.2, 0.3, 1)';
-                    wrapper.style.transitionDelay = `${index * 0.02}s`;
-
-                    if (isMobile) {
-                        const angle = -45 + (index * (90 / total)); 
-                        wrapper.style.transformOrigin = "left center";
-                        wrapper.style.left = "0vw"; 
-                        wrapper.style.top = "50%";
-                        wrapper.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(38vw)`;
-                        wrapper.style.setProperty('--pop-x', '30px');
-                        wrapper.style.setProperty('--pop-y', '0px');
-                    } else {
-                        const angle = -60 + (index * (120 / total));
-                        wrapper.style.transformOrigin = "center bottom";
-                        wrapper.style.left = "50%";
-                        wrapper.style.top = "auto";
-                        wrapper.style.bottom = "5vh"; 
-                        wrapper.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-18vh)`;
-                        wrapper.style.setProperty('--pop-x', '0px');
-                        wrapper.style.setProperty('--pop-y', '-50px');
-                    }
-                });
-            }, 2200);
-        }
-
+                wrapper.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(38vw)`;
+                wrapper.style.setProperty('--pop-x', '30px');
+                wrapper.style.setProperty('--pop-y', '0px');
+            } else {
+                const angle = -60 + (index * (120 / total));
+                wrapper.style.transformOrigin = "center bottom";
+                wrapper.style.left = "50%";
+                wrapper.style.top = "auto";
+                wrapper.style.bottom = "5vh"; 
+                wrapper.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-18vh)`;
+                wrapper.style.setProperty('--pop-x', '0px');
+                wrapper.style.setProperty('--pop-y', '-50px');
+            }
+        });
+    }, 2200);
+}
         function handleCardClick(e, wrapper) {
             e.stopPropagation();
             if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
@@ -3021,7 +3048,7 @@ console.log("%c停！別看我的code了，需要抽牌定制的就來找我吧�
         <h2>占卜須知</h2>
         <ul class="notice-list">
             <li>一事一占。</li>
-			<li>不強制他人意願，<p>占卜應基於當事人主動參與。</li>
+            <li>不強制他人意願，<p>占卜應基於當事人主動參與。</li>
             <li>不涉入第三方感情及事件。</li>
             <li>不預測時間，<p>將結果視為現階段的策略參考。</li>
             <li>占卜僅供參考，<p>最終選擇權在於您本人。</li>
