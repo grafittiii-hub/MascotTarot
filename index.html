@@ -129,7 +129,7 @@ html, body {
 padding-bottom: env(safe-area-inset-bottom);
         }
 
-        img, .card-face { pointer-events: none; -webkit-user-drag: none; user-select: none; filter: blur(0.4px) contrast(105%); -webkit-touch-callout: none;}
+        img, .card-face { pointer-events: none; -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none;}
         ::-webkit-scrollbar { display: none; }
 
 #qr-code img, .no-protect {
@@ -395,7 +395,7 @@ padding-bottom: env(safe-area-inset-bottom);
 
         /* 統一按鈕基礎設定 */
         .btn-solid {
-            width: 100%; padding: 18px; background: var(--gold-primary);
+            width: 100%; padding: 18px; padding-left: 5px !important; background: var(--gold-primary);
             color: var(--bg-color); border: none; font-size: 0.9rem;
             letter-spacing: 5px; text-transform: uppercase; cursor: pointer;
             transition: 0.4s; position: relative; overflow: hidden;
@@ -956,7 +956,7 @@ body.is-dragging-panel .card-wrap {
 /* 內層「CART」文字：初始隱形並向右偏移，確保是穩定的黑/暗色字 */
 #result-actions .btn-cart .cart-txt {
     opacity: 0;
-    transform: translateX(15px);
+    transform: translateX(15px); margin-right: -5px !important;
     color: var(--gold-primary, #dbba18) !important;
     /* 延遲 0.8s，等按鈕空間推開後文字才徐徐浮現 */
     transition: opacity 0.6s ease 0.8s, transform 0.6s cubic-bezier(0.25, 1, 0.3, 1) 0.8s;
@@ -1276,13 +1276,14 @@ transition: transform 0.3s ease-out;
     justify-content: center !important;
     text-align: center !important;
 
-letter-spacing: 5px; margin-right: -5px !important;}
+letter-spacing: 5px; text-indent: 5px !important;
+}
 
 /* 🎯 如果按鈕裡面有包文字標籤，直接校正文字本身 */
 #result-actions button span,
 .btn-solid span {
     letter-spacing: 5px !important;
-    margin-right: -5px !important;
+text-indent: 5px !important;
     display: inline-block !important;
 }
 
@@ -2334,7 +2335,8 @@ function initSpreadView() {
         // 🌟 喚醒所有隱藏的牌，並移除洗牌動畫
         cards.forEach((wrapper) => {
             wrapper.style.display = 'block'; // 讓它們現身
-            wrapper.classList.remove('shuffling'); 
+            wrapper.classList.remove('shuffling');
+	wrapper.style.transition = 'none'; 
         });
         
         document.body.classList.remove('show-home-title');
@@ -2350,7 +2352,7 @@ function initSpreadView() {
             const duration = isMobile ? '1.2s' : '0.8s'; 
             
             // 🌟 已修正原本無法讀取變數的 Bug (使用反引號 ``)
-            wrapper.style.transition = `transform ${duration} 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), left 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), top 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), bottom 0.8s cubic-bezier(0.2, 1.2, 0.3, 1)`;
+            wrapper.style.transition = `transform ${duration}  cubic-bezier(0.2, 1.2, 0.3, 1), left 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), bottom 0.8s cubic-bezier(0.2, 1.2, 0.3, 1)`;
             wrapper.style.transitionDelay = `${index * 0.02}s`;
 
             if (isMobile) {
