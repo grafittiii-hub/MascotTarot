@@ -226,12 +226,45 @@ padding-bottom: env(safe-area-inset-bottom);
         /* ==========================================
            4. 主頁 UI 佈局
            ========================================== */
-        #main-page {
-            flex:1; width: 100%; max-width: clamp(600px,90%, 700px); max-height: calc(100dvh - 70px); position: absolute; top: calc(40px + (100dvh - 50px) / 2 );left: 50%; transform: translate(-50%, -50%); padding: 0 10%;
-            display: flex; flex-direction: column; justify-content: center; touch-action: pan-y;
-            opacity: 0; visibility: hidden; transition: opacity 1.2s ease;
-            margin: 0 auto; overflow-y: auto; overflow-x: hidden !important; box-sizing: border-box;
-        }
+#main-page {
+    width: 100%; 
+    max-width: clamp(600px, 90%, 700px); 
+    
+    /* 1. 從 Header 下方開始算起，確保絕對不重疊 */
+    position: absolute; 
+    top: 10vh; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    height: 90dvh; /* 扣掉 Header 後剩下的高度 */
+    
+    display: flex; 
+    flex-direction: column; 
+    
+    /* 🚨 2. 拔除 justify-content: center; 改用 flex-start */
+    justify-content: flex-start; 
+    
+    padding: 20px 10%; /* 上下加 20px 安全內距，避免貼死邊緣 */
+    opacity: 0; 
+    visibility: hidden; 
+    transition: opacity 1.2s ease;
+    margin: 0 auto; 
+    overflow-y: auto; 
+    overflow-x: hidden !important; 
+    box-sizing: border-box;
+    touch-action: pan-y;
+}
+
+/* 👑 3. 核心魔法：利用 margin auto 實現「安全置中」 */
+/* 讓內部包裹表單的第一個 div 自動推擠上方空間 */
+#main-page > div:first-child {
+    margin-top: auto; 
+    width: 100%;
+}
+
+/* 讓底部的 footer 自動推擠下方空間 */
+#main-page > .tarot-footer {
+    margin-bottom: auto;
+}
 	/* 針對互動元素防止「雙擊放大」 */
 	button, input, textarea, .cat-btn, .mode-btn {
     touch-action: manipulation; 
@@ -2651,33 +2684,114 @@ function redirectToPaywall() {
     window.open(targetUrl, '_blank');
 }
 
-        function drawAdvice() {
-            document.getElementById('advice-section').style.display = 'none'; 
-            
-            const usedIds = drawnCards.map(c => c.id);
-            const remaining = tarotData.filter(c => !usedIds.includes(c.id));
-            if (remaining.length === 0) return;
+// 👑 通用排版引擎：根據目前 drawnCards 的數量，自動平滑地重新分配位置
+function relayoutCards() {
+    const isMobile = window.innerWidth < 768;
+    const totalCards = drawnCards.length;
+    
+    // 動態計算間距：牌越多，間距稍微縮緊一點以防超出螢幕
+    const gap = isMobile ? (totalCards === 4 ? 24 : 26) : 28; 
+    
+    // 找出第一張牌的起始 X 軸位置 (確保整體牌陣永遠置中)
+    const startX = 50 - ((totalCards - 1) * gap / 2);
 
-            const advCard = remaining[Math.floor(Math.random() * remaining.length)];
-            const isReversed = Math.random() > 0.5;
-            let stateData = isReversed ? advCard.reversed : advCard.upright;
-            if (!stateData) stateData = advCard.upright; 
-
-            const html = `
-                <div class="result-block" style="border-color: var(--text-color); padding-left: 20px;">
-                    <div class="res-position" style="color: var(--text-color);">追加建議</div>
-                    <div class="res-title">${advCard.name} ${isReversed ? '(逆位)' : '(正位)'}</div>
-                    <div class="res-text"><strong>箴言：</strong>${stateData.advice || '跟隨內心的指引。'}</div>
-                </div>
-            `;
-            
-            const target = document.getElementById('advice-content');
-            if(target) {
-                target.innerHTML = html;
-                target.style.opacity = '0';
-                target.style.animation = 'fadeIn 1s ease forwards';
-            }
+    drawnCards.forEach((drawn, i) => {
+        const el = drawn.elementDOM;
+        const leftPos = `${startX + (i * gap)}%`;
+        
+        // 動態縮放：如果手機版且卡牌變多，稍微縮小避免擠爆畫面
+        let scale = 1;
+        if (isMobile) {
+            if (totalCards === 3) scale = 0.85;
+            if (totalCards >= 4) scale = 0.75;
+        } else {
+            if (totalCards >= 4) scale = 0.9;
         }
+        if (totalCards === 1) scale = 1.1;
+
+        // 啟動絲滑的過渡動畫
+        el.style.transition = 'transform 0.8s ease, left 0.8s ease, top 0.8s ease';
+        el.style.left = leftPos;
+        el.style.top = isMobile ? '8%' : '12%';
+        el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${scale})`;
+    });
+}
+
+        function drawAdvice() {
+    document.getElementById('advice-section').style.display = 'none'; 
+    
+    const usedIds = drawnCards.map(c => c.id);
+    const remaining = tarotData.filter(c => !usedIds.includes(c.id));
+    if (remaining.length === 0) return;
+
+    // 抽出追加建議牌
+    const advCard = remaining[Math.floor(Math.random() * remaining.length)];
+    const isReversed = Math.random() > 0.5;
+    let stateData = isReversed ? advCard.reversed : advCard.upright;
+    if (!stateData) stateData = advCard.upright; 
+
+    // ==========================================
+    // 👑 階段 1：建立真實的立體卡牌，準備從右側飛入
+    // ==========================================
+    const container = document.getElementById('cards-container');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'card-wrap ready-to-glow'; // 直接賦予最終高光狀態
+    
+    if (advCard.element) wrapper.classList.add(`element-${advCard.element.toLowerCase()}`);
+    
+    // 初始狀態設於螢幕右側外面，準備優雅滑入
+    wrapper.style.left = '120%';
+    wrapper.style.top = window.innerWidth < 768 ? '8%' : '12%';
+    wrapper.style.transform = 'translate(-50%, 0) scale(0.5)';
+    wrapper.style.opacity = '0';
+    
+    const imgTag = `<img src="tarot-cards/${advCard.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">`;
+    
+    wrapper.innerHTML = `
+        <div class="card-inner" style="transform: ${isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)'}">
+            <div class="card-face card-back"></div>
+            <div class="card-face card-front">
+                ${imgTag}
+                ${typeof liquidCocoonSVG !== 'undefined' ? liquidCocoonSVG : ''}
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(wrapper);
+
+    // 👑 將新卡牌推入全局狀態 (這一步確保了 Save 功能可以完美擷取到它！)
+    drawnCards.push({ ...advCard, isReversed, elementDOM: wrapper });
+
+    // 延遲一點點，讓瀏覽器渲染 DOM，然後啟動飛入動畫與排版
+    setTimeout(() => {
+        // 點燃這張新卡牌的 SVG 虹光弧影
+        const svg = wrapper.querySelector('.liquid-cocoon-svg');
+        if (svg) svg.classList.add('run-cocoon');
+        
+        wrapper.style.opacity = '1';
+        
+        // 呼叫排版引擎：讓原本的牌往左讓位，新牌平滑插入！
+        relayoutCards();
+    }, 50);
+
+    // ==========================================
+    // 👑 階段 2：寫入面板的解說文字
+    // ==========================================
+    const html = `
+        <div class="result-block" style="border-color: var(--text-color); padding-left: 20px;">
+            <div class="res-position" style="color: var(--text-color);">追加建議</div>
+            <div class="res-title">${advCard.name} ${isReversed ? '(逆位)' : '(正位)'}</div>
+            <div class="res-text"><strong>建議：</strong>${stateData.advice || '跟隨內心的指引。'}</div>
+        </div>
+    `;
+    
+    const target = document.getElementById('advice-content');
+    if(target) {
+        target.innerHTML = html;
+        target.style.opacity = '0';
+        target.style.animation = 'fadeIn 1s ease forwards';
+    }
+}
 
 
 function restartApp() {
