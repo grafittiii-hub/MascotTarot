@@ -1484,6 +1484,13 @@ document.addEventListener('touchend', function(event) {
     lastTouchEnd = now;
 }, { passive: false });
 
+document.onkeydown = (e) => {
+    if (e.keyCode === 123 || 
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67))) {
+        return false;
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const magicCursor = document.getElementById('custom-magic-cursor');
     if (!magicCursor) return;
