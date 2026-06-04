@@ -2408,109 +2408,116 @@ poppedCardEl.classList.add(`element-${cardData.element.toLowerCase()}`);
         }
 
 function finalizeSelection() {
-            // 1. 優先獲取核心數值，確保後續 transform 計算準確
-            const totalCards = drawnCards.length;
-            const isMobile = window.innerWidth < 768;
-            
-            const counter = document.getElementById('draw-counter');
-            if (counter) counter.style.display = 'none';
-	const confirmBtn = document.getElementById('confirm-btn-float');
+    const totalCards = drawnCards.length;
+    const isMobile = window.innerWidth < 768;
+    
+    // --- 階段 0：隱藏多餘 UI (T = 0ms) ---
+    const counter = document.getElementById('draw-counter');
+    if (counter) counter.style.display = 'none';
+    const confirmBtn = document.getElementById('confirm-btn-float');
     if (confirmBtn) {
         confirmBtn.style.opacity = '0';
         confirmBtn.style.pointerEvents = 'none'; 
-        // 延遲一點點時間讓他淡出，然後徹底從畫面上拔除
         setTimeout(() => confirmBtn.style.display = 'none', 400); 
     }
 
-            // 2. 處理「未選中」卡牌的退場 (Fade Out)
-            document.querySelectorAll('.card-wrap:not(.confirmed)').forEach(el => {
-                el.style.transition = 'opacity 0.5s ease-out, bottom 0.4s ease-in, left 0.4s ease-in'; 
-                el.style.opacity = '0';
-                el.style.pointerEvents = 'none';
-                if (isMobile) {
-                    el.style.left = '-50%'; 
-                } else {
-                    el.style.bottom = '-50%'; 
-                }
-            });
-
-            // 3. 【優化時間軸】 100ms：移至中央並提前注入 SVG
-            setTimeout(() => {
-                drawnCards.forEach((drawn, i) => {
-                    const el = drawn.elementDOM;
-                    
-                    // 【關鍵優化】：在卡牌準備集中前，就先悄悄把 SVG 塞進去。
-                    // 此時沒有 .run-cocoon class，SVG 處於隱藏/靜止狀態，不會消耗效能
-                    const inner = el.querySelector('.card-inner'); 
-                    if (!inner.querySelector('.liquid-cocoon-svg')) {
-                        inner.insertAdjacentHTML('beforeend', liquidCocoonSVG);
-                    }
-
-                    el.classList.remove('confirmed');
-                    el.style.opacity = '1';
-                    
-                    // 【關鍵優化】：絕對不要用 transition: all！指定屬性可以避免手機渲染引擎卡頓
-                    el.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), left 0.6s cubic-bezier(0.25, 1, 0.5, 1), top 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
-                    
-                    const centerOffsetX = (totalCards === 1) ? 0 : (i - (totalCards - 1) / 2) * (isMobile ? 110 : 160); 
-                    
-                    el.style.transformOrigin = "center center";
-                    el.style.left = `calc(50% + ${centerOffsetX}px)`;
-                    el.style.top = `50%`;
-                    el.style.bottom = 'auto';
-                    el.style.transform = `translate(-50%, -50%) rotate(0deg) scale(${totalCards === 1 ? 1.1 : 1})`; 
-                });
-            }, 100);
-
-            // 4. 【優化時間軸】 800ms：執行翻牌 (此時 DOM 已經穩定，翻轉會很順)
-            setTimeout(() => {
-                drawnCards.forEach((drawn) => {
-                    const inner = drawn.elementDOM.querySelector('.card-inner'); 
-                    const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
-                    
-                    inner.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-                    inner.style.transform = rotation;
-                });
-            }, 800);
-
-            // 5. 【優化時間軸】 1600ms：翻牌結束後，引爆 SVG 光束動畫
-            setTimeout(() => {
-                drawnCards.forEach((drawn) => {
-                    const el = drawn.elementDOM;
-                    const svg = el.querySelector('.liquid-cocoon-svg');
-                    // 加上 class，開始播放光束
-                    if (svg) svg.classList.add('run-cocoon');
-                });
-            }, 2000);
-
-            // 6. 【優化時間軸】 2000ms：向上平移到最終展示位置
-            setTimeout(() => {
-                drawnCards.forEach((drawn, i) => { 
-                    const el = drawn.elementDOM;
-                    el.classList.add('ready-to-glow');
-                    // 給予平滑的位移過渡
-                    el.style.transition = 'transform 0.8s ease, left 0.8s ease, top 0.8s ease';
-                    const inner = el.querySelector('.card-inner');
-        if (inner) inner.style.transition = '';
-
-                    let leftPos = '50%'; 
-                    if (totalCards === 3) {
-                        const gap = isMobile ? 25 : 30;
-                        leftPos = `${50 + (i - 1) * gap}%`;
-                    }
-                    
-                    el.style.left = leftPos;
-                    el.style.top = isMobile ? '8%' : '12%';
-                    el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${isMobile && totalCards === 3 ? 0.85 : 1})`;
-                });
-            }, 2000);
-
-            // 7. 2800ms：生成報告面板
-            setTimeout(() => {
-                generateReport();
-            }, 2800);
+    // --- 階段 1：未選卡牌退場離開 (T = 0ms, 耗時 500ms) ---
+    document.querySelectorAll('.card-wrap:not(.confirmed)').forEach(el => {
+        el.style.transition = 'opacity 0.5s ease-out, left 0.5s ease-in, top 0.5s ease-in'; 
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+        if (isMobile) {
+            el.style.left = '-50%'; 
+        } else {
+            el.style.top = '150%'; 
         }
+    });
 
+    // --- 階段 2：安靜地預載入 SVG (T = 600ms) ---
+    // 👑 效能救星：等退場動畫結束、畫面完全靜止時，才把複雜的 SVG 塞入 DOM。
+    // 這能完美避免翻牌與移動時發生 DOM Reflow 導致的嚴重卡頓！
+    setTimeout(() => {
+        drawnCards.forEach((drawn) => {
+            const inner = drawn.elementDOM.querySelector('.card-inner'); 
+            if (!inner.querySelector('.liquid-cocoon-svg')) {
+                inner.insertAdjacentHTML('beforeend', liquidCocoonSVG);
+            }
+        });
+    }, 600);
+
+    // --- 階段 3：已選卡牌來到中心 (T = 700ms, 耗時 600ms) ---
+    // 給予 100ms 緩衝後，卡牌才開始飛向螢幕正中央
+    setTimeout(() => {
+        drawnCards.forEach((drawn, i) => {
+            const el = drawn.elementDOM;
+            el.classList.remove('confirmed');
+            el.style.opacity = '1';
+            
+            el.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), left 0.6s cubic-bezier(0.25, 1, 0.5, 1), top 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+            
+            const centerOffsetX = (totalCards === 1) ? 0 : (i - (totalCards - 1) / 2) * (isMobile ? 110 : 160); 
+            
+            el.style.transformOrigin = "center center";
+            el.style.left = `calc(50% + ${centerOffsetX}px)`;
+            el.style.top = `50%`;
+            el.style.bottom = 'auto';
+            el.style.transform = `translate(-50%, -50%) rotate(0deg) scale(${totalCards === 1 ? 1.1 : 1})`; 
+        });
+    }, 700);
+
+    // --- 階段 4：來到中心的已選卡牌進行翻牌 (T = 1400ms, 耗時 800ms) ---
+    // 等移動完全結束後 (700+600=1300，我們抓 1400ms)，才開始 3D 翻轉，絕不搶拍。
+    setTimeout(() => {
+        drawnCards.forEach((drawn) => {
+            const inner = drawn.elementDOM.querySelector('.card-inner'); 
+            
+            // 開啟 3D 硬體加速，確保翻牌極度絲滑
+            inner.style.willChange = 'transform'; 
+            
+            const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
+            inner.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            inner.style.transform = rotation;
+        });
+    }, 1400);
+
+    // --- 階段 5：翻牌後往上移動，並啟動特效 (T = 2400ms, 耗時 800ms) ---
+    // 翻轉結束後 (1400+800=2200，抓 2400ms 讓使用者看清楚牌面)，卡牌上移並發光
+    setTimeout(() => {
+        drawnCards.forEach((drawn, i) => { 
+            const el = drawn.elementDOM;
+            el.classList.add('ready-to-glow');
+            
+            // 啟動 SVG 光束動畫
+            const svg = el.querySelector('.liquid-cocoon-svg');
+            if (svg) svg.classList.add('run-cocoon');
+
+            // 往上移動到最終位置
+            el.style.transition = 'transform 0.8s ease, left 0.8s ease, top 0.8s ease';
+            
+            const inner = el.querySelector('.card-inner');
+            if (inner) {
+                inner.style.transition = ''; // 拔除內層 transition 避免後續互動衝突
+                inner.style.willChange = 'auto'; // 釋放 GPU 記憶體
+            }
+
+            let leftPos = '50%'; 
+            if (totalCards === 3) {
+                const gap = isMobile ? 25 : 30;
+                leftPos = `${50 + (i - 1) * gap}%`;
+            }
+            
+            el.style.left = leftPos;
+            el.style.top = isMobile ? '8%' : '12%';
+            el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${isMobile && totalCards === 3 ? 0.85 : 1})`;
+        });
+    }, 2400);
+
+    // --- 階段 6：Result Panel 出現 (T = 3300ms) ---
+    // 卡牌完全定位後 (2400+800=3200)，下方的結果面板才優雅滑出
+    setTimeout(() => {
+        generateReport();
+    }, 3300);
+}
 
         function generateReport() {
             try {
