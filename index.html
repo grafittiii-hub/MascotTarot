@@ -488,6 +488,9 @@ padding-bottom: env(safe-area-inset-bottom);
         .card-wrap {
             position: absolute; width: 75px; height: 120px;
             cursor: pointer; z-index: 10;will-change: transform, opacity;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease;
+will-change: transform, left, top;
+    backface-visibility: hidden; 
+    -webkit-backface-visibility: hidden; /* 專為 iOS Safari 準備 */
         }
         @media (min-width: 768px) { .card-wrap { width: 120px; height: 180px; } }
 
@@ -2296,8 +2299,8 @@ function initSpreadView() {
     shuffledDeck.forEach((cardData, index) => {
         const wrapper = document.createElement('div');
         
-        // 🌟 優化核心：如果是在手機版，且牌數超過 10 張，則設為隱藏，不參與洗牌動畫
-        const isShuffleTarget = !isMobile || index < 10;
+        // 🌟 優化核心：如果是在手機版，且牌數超過 7 張，則設為隱藏，不參與洗牌動畫
+        const isShuffleTarget = !isMobile || index < 7;
         
         wrapper.className = isShuffleTarget ? 'card-wrap shuffling' : 'card-wrap';
         if (!isShuffleTarget) {
@@ -2330,16 +2333,23 @@ function initSpreadView() {
         container.appendChild(wrapper);
     });
 
+    // ⏳ 2.2秒後，洗牌動畫結束，準備展開
     setTimeout(() => {
         const cards = document.querySelectorAll('.card-wrap');
         
-        // 🌟 喚醒所有隱藏的牌，並移除洗牌動畫
+        // 🌟 第一階段：喚醒隱藏卡牌、拔除動畫、強制歸位
         cards.forEach((wrapper) => {
             wrapper.style.display = 'block'; // 讓它們現身
             wrapper.classList.remove('shuffling');
-	wrapper.style.transition = 'none'; 
+            wrapper.style.transition = 'none'; 
+
+            // 🔧 修正：這幾行必須包在 forEach 裡面，不然程式會找不到 wrapper 是誰
+            wrapper.style.left = "50%";
+            wrapper.style.top = "50%";
+            wrapper.style.bottom = "auto";
+            wrapper.style.transform = "translate(-50%, -50%) rotate(0deg)"; 
         });
-        
+
         document.body.classList.remove('show-home-title');
 
         const ritualTextContainer = document.getElementById('spread-ritual-text');
@@ -2347,34 +2357,42 @@ function initSpreadView() {
             ritualTextContainer.classList.add('fade-out');
         }
 
-        void container.offsetWidth; 
+        // 🌟 第二階段：祭出 Double requestAnimationFrame (專治手機版 Safari 各種卡頓)
+        // 第一個 rAF 告訴瀏覽器準備更新畫面
+        requestAnimationFrame(() => {
+            // 第二個 rAF 確保「強制歸位」已經確實畫在螢幕上了，我們才開始做下一步
+            requestAnimationFrame(() => {
+                
+                // 🌟 第三階段：套用過渡動畫與最終展開座標
+                cards.forEach((wrapper, index) => {
+                    const duration = isMobile ? '1.2s' : '0.8s'; 
+                    
+                    wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), left ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), top ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), bottom ${duration} cubic-bezier(0.2, 1.2, 0.3, 1)`;
+                    wrapper.style.transitionDelay = `${index * 0.02}s`;
 
-        cards.forEach((wrapper, index) => {
-            const duration = isMobile ? '1.2s' : '0.8s'; 
-            
-            // 🌟 已修正原本無法讀取變數的 Bug (使用反引號 ``)
-            wrapper.style.transition = `transform ${duration}  cubic-bezier(0.2, 1.2, 0.3, 1), left 0.8s cubic-bezier(0.2, 1.2, 0.3, 1), bottom 0.8s cubic-bezier(0.2, 1.2, 0.3, 1)`;
-            wrapper.style.transitionDelay = `${index * 0.02}s`;
-
-            if (isMobile) {
-                const angle = -45 + (index * (90 / total)); 
-                wrapper.style.transformOrigin = "left center";
-                wrapper.style.left = "0vw"; 
-                wrapper.style.top = "50%";
-                wrapper.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(38vw)`;
-                wrapper.style.setProperty('--pop-x', '30px');
-                wrapper.style.setProperty('--pop-y', '0px');
-            } else {
-                const angle = -60 + (index * (120 / total));
-                wrapper.style.transformOrigin = "center bottom";
-                wrapper.style.left = "50%";
-                wrapper.style.top = "auto";
-                wrapper.style.bottom = "5vh"; 
-                wrapper.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-18vh)`;
-                wrapper.style.setProperty('--pop-x', '0px');
-                wrapper.style.setProperty('--pop-y', '-50px');
-            }
-        });
+                    if (isMobile) {
+                        const angle = -45 + (index * (90 / total)); 
+                        wrapper.style.transformOrigin = "left center";
+                        wrapper.style.left = "0vw"; 
+                        wrapper.style.top = "50%";
+                        wrapper.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(38vw)`;
+                        wrapper.style.setProperty('--pop-x', '30px');
+                        wrapper.style.setProperty('--pop-y', '0px');
+                    } else {
+                        const angle = -60 + (index * (120 / total));
+                        wrapper.style.transformOrigin = "center bottom";
+                        wrapper.style.left = "50%";
+                        wrapper.style.top = "auto";
+                        wrapper.style.bottom = "5vh"; 
+                        wrapper.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-18vh)`;
+                        wrapper.style.setProperty('--pop-x', '0px');
+                        wrapper.style.setProperty('--pop-y', '-50px');
+                    }
+                });
+                
+            }); // 結束第二個 rAF
+        }); // 結束第一個 rAF
+        
     }, 2200);
 }
         function handleCardClick(e, wrapper) {
