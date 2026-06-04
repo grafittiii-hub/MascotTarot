@@ -990,6 +990,7 @@ body.is-dragging-panel .card-wrap {
     /* 💡 關鍵修正：展開就位後，顯現出與專案風格一致的古典金色邊框 */
     border: 1px solid var(--gold-primary, #dbba18) !important; 
     pointer-events: auto; /* 恢復可點擊狀態 */
+	margin-right: 0px !important;
 }
 
 /* 觸發後文字與符號完美現身 */
@@ -1663,8 +1664,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let pullDistance = 0;    // 當前實際下拉的位移像素
 
     // 👑 物理性能參數設定
-    const MAX_PULL_DIST = 70; // 允許下拉的最大視覺感官極限（像素）
-    const MAX_SCALE = 1.25;    // 卡牌放大的最大倍率 (1.25 倍)
+    const MAX_PULL_DIST = 20; // 允許下拉的最大視覺感官極限（像素）
+    const MAX_SCALE = 1.1;    // 卡牌放大的最大倍率 (1.25 倍)
 
     // ==========================================
     // 🪄 核心物理渲染函式（即時計算下拉進度與縮放）
