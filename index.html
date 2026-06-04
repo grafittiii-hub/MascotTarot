@@ -129,7 +129,7 @@ html, body {
 padding-bottom: env(safe-area-inset-bottom);
         }
 
-        img, .card-face { pointer-events: none; -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none;}
+        img, .card-face { pointer-events: none; -webkit-user-drag: none; user-select: none; filter: blur(0.4px) contrast(105%); -webkit-touch-callout: none;}
         ::-webkit-scrollbar { display: none; }
 
 #qr-code img, .no-protect {
@@ -395,9 +395,9 @@ padding-bottom: env(safe-area-inset-bottom);
 
         /* 統一按鈕基礎設定 */
         .btn-solid {
-            width: 100%; padding: 18px; padding-left: 5px !important; background: var(--gold-primary);
+            width: 100%; padding: 18px; background: var(--gold-primary);
             color: var(--bg-color); border: none; font-size: 0.9rem;
-            letter-spacing: 5px; text-transform: uppercase; cursor: pointer;
+            letter-spacing: 5px; text-transform: uppercase; cursor: pointer;margin-right: -5px !important;
             transition: 0.4s; position: relative; overflow: hidden;
         }
         
@@ -415,7 +415,7 @@ padding-bottom: env(safe-area-inset-bottom);
             background: var(--gold-primary);
             border: 1px solid var(--gold-primary);
             color: var(--bg-color);
-            display: flex; align-items: center; justify-content: center; padding: 12px 0;
+            display: flex; align-items: center; justify-content: center; padding: 12px 0;padding-left: 5px !important;
         }
         .btn-save:hover {
             background: var(--text-color); 
@@ -428,7 +428,7 @@ padding-bottom: env(safe-area-inset-bottom);
             background: transparent;
             border: 1px solid var(--text-color);
             color: var(--text-color);
-            display: flex; align-items: center; justify-content: center; padding: 12px 0;
+            display: flex; align-items: center; justify-content: center; padding: 12px 0; padding-left: 5px !important;
         }
         .btn-return:hover {
             background: var(--text-color);
@@ -964,7 +964,7 @@ body.is-dragging-panel .card-wrap {
 
 /* 內層「✤」符號：獨立強制維持耀眼的金黃色 */
 #result-actions .btn-cart .cart-star {
-    opacity: 0;
+    opacity: 0; margin-right: -5px !important;
     transform: scale(0.4);
     display: inline-block;
     color: var(--gold-primary, #dbba18) !important; /* 確保閃耀金色 */
@@ -1256,7 +1256,7 @@ transition: transform 0.3s ease-out;
         gap: 4px;
     }
 
-    .btn-solid {font-size: 0.8rem;}
+    .btn-solid {font-size: 0.7rem;}
 .btn-outline {padding:9px 0;}
 }
 
