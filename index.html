@@ -2299,12 +2299,12 @@ function initSpreadView() {
     shuffledDeck.forEach((cardData, index) => {
         const wrapper = document.createElement('div');
         
-        // 🌟 優化核心：如果是在手機版，且牌數超過 7 張，則設為隱藏，不參與洗牌動畫
+        // 🌟 依照你的需求，洗牌減少為 7 張
         const isShuffleTarget = !isMobile || index < 7;
         
         wrapper.className = isShuffleTarget ? 'card-wrap shuffling' : 'card-wrap';
         if (!isShuffleTarget) {
-            wrapper.style.display = 'none'; // 隱藏多餘的牌，大幅減輕 GPU 壓力
+            wrapper.style.display = 'none'; 
         }
         
         wrapper.dataset.index = index;
@@ -2333,68 +2333,87 @@ function initSpreadView() {
         container.appendChild(wrapper);
     });
 
-    // ⏳ 2.2秒後，洗牌動畫結束，準備展開
+    // ⏳ 階段一：等待 2.2 秒洗牌動畫結束
     setTimeout(() => {
         const cards = document.querySelectorAll('.card-wrap');
         
-        // 🌟 第一階段：喚醒隱藏卡牌、拔除動畫、強制歸位
+        // 🌟 階段二：瞬間集結 (2.2s)
+        // 喚醒所有牌，拔除洗牌動畫，並強制讓它們在正中央疊成「完美的 1 張牌」
         cards.forEach((wrapper) => {
-            wrapper.style.display = 'block'; // 讓它們現身
+            wrapper.style.display = 'block'; 
             wrapper.classList.remove('shuffling');
-            wrapper.style.transition = 'none'; 
-
-            // 🔧 修正：這幾行必須包在 forEach 裡面，不然程式會找不到 wrapper 是誰
+            wrapper.style.transition = 'none'; // 絕對不要有過渡動畫
             wrapper.style.left = "50%";
             wrapper.style.top = "50%";
             wrapper.style.bottom = "auto";
             wrapper.style.transform = "translate(-50%, -50%) rotate(0deg)"; 
+            
+            // 預先設定好旋轉基準點，避免後續移動時亂飄
+            if (isMobile) {
+                wrapper.style.transformOrigin = "left center";
+            } else {
+                wrapper.style.transformOrigin = "center bottom";
+            }
         });
 
         document.body.classList.remove('show-home-title');
-
-        const ritualTextContainer = document.getElementById('spread-ritual-text');
         if (ritualTextContainer) {
             ritualTextContainer.classList.add('fade-out');
         }
 
-        // 🌟 第二階段：祭出 Double requestAnimationFrame (專治手機版 Safari 各種卡頓)
-        // 第一個 rAF 告訴瀏覽器準備更新畫面
-        requestAnimationFrame(() => {
-            // 第二個 rAF 確保「強制歸位」已經確實畫在螢幕上了，我們才開始做下一步
-            requestAnimationFrame(() => {
+        // 強制瀏覽器渲染「集結在中央」的畫面
+        void document.body.offsetHeight;
+
+        // ⏳ 階段三：整疊牌移動到扇形最上方 (2.25s)
+        setTimeout(() => {
+            cards.forEach((wrapper) => {
+                // 給予一個平滑的過渡，讓「整疊牌」一起飛到起點
+                wrapper.style.transition = 'all 0.5s cubic-bezier(0.2, 1.2, 0.3, 1)';
                 
-                // 🌟 第三階段：套用過渡動畫與最終展開座標
+                // 把所有牌移動到 index 為 0 的那張牌的最終位置（即扇形最上方）
+                if (isMobile) {
+                    wrapper.style.left = "0vw"; 
+                    wrapper.style.top = "50%";
+                    // -45deg 就是手機版扇形的最上方
+                    wrapper.style.transform = `translateY(-50%) rotate(-45deg) translateX(38vw)`; 
+                } else {
+                    wrapper.style.left = "50%";
+                    wrapper.style.bottom = "5vh"; 
+                    wrapper.style.top = "auto";
+                    // -60deg 就是電腦版扇形的最左方
+                    wrapper.style.transform = `translateX(-50%) rotate(-60deg) translateY(-18vh)`;
+                }
+            });
+
+            // ⏳ 階段四：從上方往下滑動展開 (2.8s)
+            // 等待整疊牌飛到上方定位後 (0.5s + 0.05s 緩衝)，開始展開
+            setTimeout(() => {
                 cards.forEach((wrapper, index) => {
-                    const duration = isMobile ? '1.2s' : '0.8s'; 
+                    const duration = isMobile ? '0.8s' : '0.6s'; 
                     
-                    wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), left ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), top ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), bottom ${duration} cubic-bezier(0.2, 1.2, 0.3, 1)`;
-                    wrapper.style.transitionDelay = `${index * 0.02}s`;
+                    // 這時候我們只需要改變 transform (角度)，因為 left/top 已經在階段三固定好了
+                    wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1)`;
+                    wrapper.style.transitionDelay = `${index * 0.03}s`; // 一張接一張展開的延遲
 
                     if (isMobile) {
                         const angle = -45 + (index * (90 / total)); 
-                        wrapper.style.transformOrigin = "left center";
-                        wrapper.style.left = "0vw"; 
-                        wrapper.style.top = "50%";
                         wrapper.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(38vw)`;
                         wrapper.style.setProperty('--pop-x', '30px');
                         wrapper.style.setProperty('--pop-y', '0px');
                     } else {
                         const angle = -60 + (index * (120 / total));
-                        wrapper.style.transformOrigin = "center bottom";
-                        wrapper.style.left = "50%";
-                        wrapper.style.top = "auto";
-                        wrapper.style.bottom = "5vh"; 
                         wrapper.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-18vh)`;
                         wrapper.style.setProperty('--pop-x', '0px');
                         wrapper.style.setProperty('--pop-y', '-50px');
                     }
                 });
-                
-            }); // 結束第二個 rAF
-        }); // 結束第一個 rAF
-        
+            }, 550); // 階段三結束後觸發
+
+        }, 50); // 階段二結束後給予 50 毫秒讓 DOM 穩定
+
     }, 2200);
 }
+
         function handleCardClick(e, wrapper) {
             e.stopPropagation();
             if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
