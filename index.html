@@ -2326,7 +2326,10 @@ function enterMainPage() {
         }
 
 
-function initSpreadView() {
+// ==========================================
+// 主控函式：負責指揮整個洗牌與發牌流程
+// ==========================================
+async function initSpreadView() {
     const spreadView = document.getElementById('spread-view');
     spreadView.style.display = 'block';
     setTimeout(() => spreadView.style.opacity = '1', 700);
@@ -2350,77 +2353,106 @@ function initSpreadView() {
 
     if (isMobile) {
         document.body.classList.add('is-initializing');
-        // Force paint to complete
         requestAnimationFrame(() => {
             document.body.classList.remove('is-initializing');
         });
     }
 
-    shuffledDeck.forEach((cardData, index) => {
-        const wrapper = document.createElement('div');
-        
-        // 🌟 優化核心：如果是在手機版，且牌數超過 7 張，則設為隱藏，不參與洗牌動畫
-        const isShuffleTarget = !isMobile || index < 7;
-        
-        wrapper.className = isShuffleTarget ? 'card-wrap shuffling' : 'card-wrap';
-        if (!isShuffleTarget) {
-            wrapper.style.display = 'none'; // 隱藏多餘的牌，大幅減輕 GPU 壓力
-        }
-        
-        wrapper.dataset.index = index;
-        wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
+    // 🌟 步驟 1：建立卡牌並播放洗牌動畫 (等待 2.2 秒)
+    const cards = await playShuffleAnimation(isMobile);
 
-        const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
+    // 🌟 步驟 2：執行展開動畫
+    await playSpreadAnimation(cards, isMobile, total);
+}
 
-        wrapper.innerHTML = `
-            <div class="card-inner">
-                <div class="card-face card-back">
-                    <img src="tarot-cards/photo-output.png" 
-                         style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
-                         onload="this.parentElement.style.backgroundImage='none';" 
-                         onerror="this.style.display='none';" 
-                         draggable="false">
+// ==========================================
+// 模組 1：洗牌階段 (回傳 Promise 等待結束)
+// ==========================================
+function playShuffleAnimation(isMobile) {
+    return new Promise((resolve) => {
+        const container = document.getElementById('cards-container');
+
+        shuffledDeck.forEach((cardData, index) => {
+            const wrapper = document.createElement('div');
+            
+            // 手機版超過 7 張設為隱藏，不參與洗牌動畫
+            const isShuffleTarget = !isMobile || index < 7;
+            wrapper.className = isShuffleTarget ? 'card-wrap shuffling' : 'card-wrap';
+            if (!isShuffleTarget) {
+                wrapper.style.display = 'none'; 
+            }
+            
+            wrapper.dataset.index = index;
+            wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
+
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
+
+            wrapper.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-face card-back">
+                        <img src="tarot-cards/photo-output.png" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+                             onload="this.parentElement.style.backgroundImage='none';" 
+                             onerror="this.style.display='none';" 
+                             draggable="false">
+                    </div>
+                    <div class="card-face card-front">${imgTag}</div>
                 </div>
-                <div class="card-face card-front">${imgTag}</div>
-            </div>
-        `;
+            `;
 
-        wrapper.style.left = "50%";
-        wrapper.style.top = "50%";
-        wrapper.style.transform = `translate(-50%, -50%)`;
+            // 洗牌時的初始位置 (都在正中央)
+            wrapper.style.left = "50%";
+            wrapper.style.top = "50%";
+            wrapper.style.transform = `translate(-50%, -50%)`;
 
-        wrapper.onclick = (e) => handleCardClick(e, wrapper);
-        container.appendChild(wrapper);
+            wrapper.onclick = (e) => handleCardClick(e, wrapper);
+            container.appendChild(wrapper);
+        });
+
+        // ⏳ 等待 2.2 秒洗牌動畫結束，把 DOM 節點傳給下一個階段
+        setTimeout(() => {
+            const cards = document.querySelectorAll('.card-wrap');
+            resolve(cards);
+        }, 2200);
     });
+}
 
-    // ⏳ 2.2秒後，洗牌動畫結束，準備展開
-    setTimeout(() => {
-        const cards = document.querySelectorAll('.card-wrap');
+// ==========================================
+// 模組 2：展開階段
+// ==========================================
+function playSpreadAnimation(cards, isMobile, total) {
+    return new Promise((resolve) => {
         
         // 🌟 第一階段：喚醒隱藏卡牌、拔除動畫、強制歸位
         cards.forEach((wrapper) => {
-            wrapper.style.display = 'block'; // 讓它們現身
+            wrapper.style.display = 'block'; 
             wrapper.classList.remove('shuffling');
-            wrapper.style.transition = 'none'; 
+            wrapper.style.transition = 'none'; // 關閉動畫，準備瞬間定位
 
-            // 🔧 修正：這幾行必須包在 forEach 裡面，不然程式會找不到 wrapper 是誰
-            wrapper.style.left = "50%";
-            wrapper.style.top = "50%";
-            wrapper.style.bottom = "auto";
-            wrapper.style.transform = "translate(-50%, -50%) rotate(0deg)"; 
+            if (isMobile) {
+                // 【手機版】專治卡頓：提前鎖定 left: 0vw，並用 transform 模擬居中
+                wrapper.style.transformOrigin = "left center";
+                wrapper.style.left = "0vw";
+                wrapper.style.top = "50%";
+                wrapper.style.bottom = "auto";
+                wrapper.style.transform = "translateY(-50%) rotate(0deg) translateX(calc(50vw - 50%))";
+            } else {
+                // 【電腦版】完全還原你的設計：維持在正中央，待會展開時才有「往下飛」的感覺
+                wrapper.style.left = "50%";
+                wrapper.style.top = "50%";
+                wrapper.style.bottom = "auto";
+                wrapper.style.transform = "translate(-50%, -50%) rotate(0deg)";
+            }
         });
 
         document.body.classList.remove('show-home-title');
-
         const ritualTextContainer = document.getElementById('spread-ritual-text');
         if (ritualTextContainer) {
             ritualTextContainer.classList.add('fade-out');
         }
 
-        // 🌟 第二階段：祭出 Double requestAnimationFrame (專治手機版 Safari 各種卡頓)
-        // 第一個 rAF 告訴瀏覽器準備更新畫面
+        // 🌟 第二階段：Double requestAnimationFrame
         requestAnimationFrame(() => {
-            // 第二個 rAF 確保「強制歸位」已經確實畫在螢幕上了，我們才開始做下一步
             requestAnimationFrame(() => {
                 
                 // 🌟 第三階段：套用過渡動畫與最終展開座標
@@ -2431,14 +2463,13 @@ function initSpreadView() {
                     wrapper.style.transitionDelay = `${index * 0.02}s`;
 
                     if (isMobile) {
+                        // 【手機版】只動角度與 translateX，完美弧線不卡頓
                         const angle = -45 + (index * (90 / total)); 
-                        wrapper.style.transformOrigin = "left center";
-                        wrapper.style.left = "0vw"; 
-                        wrapper.style.top = "50%";
                         wrapper.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(38vw)`;
                         wrapper.style.setProperty('--pop-x', '30px');
                         wrapper.style.setProperty('--pop-y', '0px');
                     } else {
+                        // 【電腦版】還原你的設定：從中央飛向下方扇形
                         const angle = -60 + (index * (120 / total));
                         wrapper.style.transformOrigin = "center bottom";
                         wrapper.style.left = "50%";
@@ -2450,10 +2481,11 @@ function initSpreadView() {
                     }
                 });
                 
-            }); // 結束第二個 rAF
-        }); // 結束第一個 rAF
-        
-    }, 2200);
+                // 動畫全數跑完後 resolve (1200ms 動畫 + 最長 delay)
+                setTimeout(resolve, 1500);
+            }); 
+        }); 
+    });
 }
         function handleCardClick(e, wrapper) {
             e.stopPropagation();
