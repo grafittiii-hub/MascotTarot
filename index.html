@@ -2103,13 +2103,13 @@ const liquidCocoonSVG = `
 
 // === 1. 提取所有需要載入的圖片路徑 ===
 const imageUrls = tarotData.map(card => `tarot-cards/${card.img}`);
-// 如果有牌背圖片，可以取消這行註解並填入正確路徑
+const cardBackUrl = "tarot-cards/photo-output.png";
 imageUrls.push("tarot-cards/photo-output.png");
 
 // === 2. 預載入控制核心 ===
 let loadedCount = 0;
 const totalImages = imageUrls.length;
-const threshold = 0.8; // 設定 80% 門檻
+const threshold = 0.85; // 設定 80% 門檻
 const progressBar = document.getElementById('progress-bar');
 const loadingScreen = document.getElementById('loading-screen');
 const mainPage = document.getElementById('main-page');
@@ -2153,18 +2153,55 @@ function prebuildDeckDOM() {
     }
 }
 
-function startPreloading() {
-    document.fonts.ready.then(() => {
-        // 先建立好 DOM 殼
-        prebuildDeckDOM(); 
+async function preloadCardBackFirst() {
+    return new Promise((resolve) => {
+        const cardBackImg = new Image();
+        cardBackImg.onload = () => {
+            // 🎴 CRITICAL: Force full decode before moving on
+            if (cardBackImg.decode) {
+                cardBackImg.decode()
+                    .then(() => {
+                        console.log('✅ Card back fully decoded');
+                        updateProgress();
+                        resolve();
+                    })
+                    .catch(() => {
+                        console.warn('⚠️ Card back decode failed, proceeding anyway');
+                        updateProgress();
+                        resolve();
+                    });
+            } else {
+                updateProgress();
+                resolve();
+            }
+        };
+        cardBackImg.onerror = () => {
+            console.error('❌ Card back failed to load');
+            updateProgress();
+            resolve();
+        };
+        // 🎴 Start loading card back FIRST
+        cardBackImg.src = cardBackUrl;
+    });
+}
 
-        imageUrls.forEach(url => {
+function startPreloading() {
+    document.fonts.ready.then(async () => {
+        prebuildDeckDOM();
+        console.log('🎴 Loading card back first...');
+        await preloadCardBackFirst();
+        
+        console.log('🎴 Loading card fronts...');
+        const otherImages = imageUrls.filter(url => url !== cardBackUrl);
+        
+        otherImages.forEach(url => {
             const img = new Image();
             img.src = url; 
             img.onload = () => {
-                // 新增：強制 Chrome 在背景解碼圖片，避免洗牌時卡頓
                 if (img.decode) {
-                    img.decode().then(() => updateProgress()).catch(() => updateProgress());
+                    img.decode()
+                        .then(() => updateProgress())
+                        .catch(() => updateProgress());
                 } else {
                     updateProgress();
                 }
@@ -2177,7 +2214,9 @@ function startPreloading() {
 function updateProgress() {
     loadedCount++;
     const progressPercent = (loadedCount / totalImages) * 100;
-    
+
+    console.log(`Progress: ${loadedCount}/${totalImages} (${Math.round(progressPercent)}%)`);
+
     // 更新進度條 UI
     if (progressBar) {
         progressBar.style.width = `${progressPercent}%`;
@@ -2188,10 +2227,25 @@ function updateProgress() {
         // 防止多次觸發
         if (loadingScreen.dataset.loadingComplete) return;
         loadingScreen.dataset.loadingComplete = "true";
-        
+
+        console.log('✅ Threshold reached, entering main page');
         setTimeout(enterMainPage, 500); 
     }
 }
+
+// 啟動預載入
+window.addEventListener('DOMContentLoaded', startPreloading);
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('themeBtn');
+            if (html.getAttribute('data-theme') === 'day') {
+                html.setAttribute('data-theme', 'night');
+                btn.innerText = '☼';
+            } else {
+                html.setAttribute('data-theme', 'day');
+                btn.innerText = '☽';
+            }
+        }
 
 // 確保這個函式定義在 enterMainPage 之前
 function initCustomCursor() {
@@ -2224,19 +2278,6 @@ function enterMainPage() {
     }, 1000); // 1秒淡出時間
 }
 
-// 啟動預載入
-window.addEventListener('DOMContentLoaded', startPreloading);
-        function toggleTheme() {
-            const html = document.documentElement;
-            const btn = document.getElementById('themeBtn');
-            if (html.getAttribute('data-theme') === 'day') {
-                html.setAttribute('data-theme', 'night');
-                btn.innerText = '☼';
-            } else {
-                html.setAttribute('data-theme', 'day');
-                btn.innerText = '☽';
-            }
-        }
 
         function setCat(btn, cat) {
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
