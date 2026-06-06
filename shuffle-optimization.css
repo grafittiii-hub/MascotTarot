@@ -1,0 +1,155 @@
+/**
+ * 🎴 OPTIMIZED SHUFFLE & SPREAD ANIMATION STYLES
+ * Mobile-friendly 3-phase system: Pure Shuffle → Transition → Smooth Spread
+ * 
+ * Add this CSS to your <style> section in index.html
+ * (After line 486 where .shuffling class is defined)
+ */
+
+/* ==================================================================================
+   PHASE 1: SHUFFLE PHASE - Keep all cards centered, minimal movement
+   ================================================================================== */
+
+.card-wrap.shuffle-phase {
+    /* Force all cards to center during shuffle - no spreading */
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 10;
+}
+
+.card-wrap.shuffle-phase .card-inner {
+    /* Run ONLY the shuffle animation, no other transforms */
+    animation: luxuryShuffle 1.2s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
+    /* Force back face during shuffle - no card fronts visible */
+    transform: rotateY(0deg) !important;
+    transition: none !important; /* No transition during shuffle */
+}
+
+/* Remove all other animation/class interference during shuffle */
+.card-wrap.shuffle-phase.is-chosen,
+.card-wrap.shuffle-phase.revealing,
+.card-wrap.shuffle-phase.active-draw,
+.card-wrap.shuffle-phase.ready-to-glow,
+.card-wrap.shuffle-phase.spread-phase {
+    animation: none !important;
+    pointer-events: none !important;
+}
+
+/* ==================================================================================
+   PHASE 2: SPREAD PHASE - Animate cards to fan positions one-by-one
+   ================================================================================== */
+
+.card-wrap.spread-phase {
+    /* Remove inline position styles - let JS control via transform3d */
+    position: absolute !important;
+    
+    /* Hardware-accelerated smooth transition */
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    
+    /* Prevent any animation from running during spread */
+    animation: none !important;
+}
+
+.card-wrap.spread-phase .card-inner {
+    /* Ensure back face during spread animation */
+    transform: rotateY(0deg) !important;
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ==================================================================================
+   PHASE 3: READY-TO-GLOW - Final interactive state after spread completes
+   ================================================================================== */
+
+.card-wrap.ready-to-glow {
+    /* Now accept pointer events for user interaction */
+    pointer-events: auto !important;
+    cursor: pointer;
+}
+
+/* ==================================================================================
+   FIX: Prevent 7 cards flying to the right (mobile issue root cause)
+   ================================================================================== */
+
+/* Force baseline position to origin - all positioning via transform */
+.card-wrap {
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Spread phase ONLY uses transform3d, never left/top inline styles */
+.card-wrap.spread-phase {
+    left: auto !important;
+    top: auto !important;
+}
+
+/* ==================================================================================
+   PERFORMANCE: Hardware acceleration hints
+   ================================================================================== */
+
+.card-wrap {
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.card-wrap.shuffle-phase {
+    /* Explicitly request GPU during high-motion shuffle */
+    will-change: transform, opacity;
+}
+
+.card-wrap.spread-phase {
+    /* GPU hints for smooth staggered animation */
+    will-change: transform;
+    transform: translateZ(0); /* Force GPU layer creation */
+}
+
+.card-wrap.ready-to-glow {
+    /* Prepare for interactive transforms */
+    will-change: transform, scale;
+}
+
+/* ==================================================================================
+   MOBILE OPTIMIZATION: Reduce animation complexity on smaller devices
+   ================================================================================== */
+
+@media (max-width: 768px) {
+    /* Slightly smaller cards on mobile */
+    .card-wrap {
+        width: 65px !important;
+        height: 110px !important;
+    }
+    
+    /* Faster stagger animation on mobile (feels snappier) */
+    .card-wrap.spread-phase {
+        transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    }
+    
+    /* Reduce shadow complexity during spread phase */
+    .card-wrap.spread-phase .card-inner {
+        box-shadow: 0 2px 8px rgba(182, 154, 104, 0.15) !important;
+    }
+}
+
+/* ==================================================================================
+   PREVENT ANIMATION CONFLICTS: Ensure clean phase transitions
+   ================================================================================== */
+
+/* When removing shuffle-phase class, clear all animation-related properties */
+.card-wrap:not(.shuffle-phase) {
+    animation: none !important;
+}
+
+/* If both classes exist (shouldn't happen), shuffle takes priority */
+.card-wrap.shuffle-phase.spread-phase {
+    animation: luxuryShuffle 1.2s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95) !important;
+}
+
+/* Allow spread animation to complete before glow is interactive */
+.card-wrap.spread-phase.ready-to-glow {
+    pointer-events: auto !important;
+}
+
