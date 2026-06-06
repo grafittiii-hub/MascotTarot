@@ -6,7 +6,13 @@
     <title>孫孫塔羅 Mascot Tarot</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<link rel="preload" as="image" href="tarot-cards/photo-output.png">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
     <style>
 /* 1. 隱藏原本笨重的瀏覽器內建鼠標 (僅在電腦版生效) */
 @media (pointer: fine) {
@@ -507,7 +513,8 @@ padding-bottom: env(safe-area-inset-bottom);
     animation: none !important; /* 徹底殺死任何閒置時的左右呼吸或搖擺動畫 */
 }
 
-        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; pointer-events: none; will-change: transform;
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; pointer-events: none; will-change: transform; -webkit-backface-visibility: hidden; 
+    backface-visibility: hidden;
     transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
         .card-face {
@@ -2100,6 +2107,39 @@ const liquidCocoonSVG = `
             }
 
         ];
+function preloadTarotDeck() {
+    const imagesToPreload = ['tarot-cards/photo-output.png']; // 卡背
+    
+    // 把所有卡牌正面圖加進清單
+    tarotData.forEach(card => {
+        imagesToPreload.push(`tarot-cards/${card.img}`);
+    });
+
+    // 靜默載入 (瀏覽器會在背景自動下載並快取)
+    imagesToPreload.forEach(src => {
+        const img = new Image();
+        img.src = src;
+    });
+}
+
+window.onload = () => {
+    // 1. 趁著 Loading 畫面，立刻在背景偷偷下載所有圖片
+    preloadTarotDeck();
+
+    // 2. 確保字體載入完畢，才開始跑進度條 (防止首頁標題字體閃爍)
+    document.fonts.ready.then(() => {
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 15;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+                setTimeout(enterMainPage, 600);
+            }
+        }, 100);
+    });
+};
 
 // === 1. 提取所有需要載入的圖片路徑 ===
 const imageUrls = tarotData.map(card => `tarot-cards/${card.img}`);
@@ -2366,7 +2406,7 @@ async function initSpreadView() {
 }
 
 // ==========================================
-// 模組 1：洗牌階段 (回傳 Promise 等待結束)
+// 模組 1：洗牌階段
 // ==========================================
 function playShuffleAnimation(isMobile) {
     return new Promise((resolve) => {
@@ -2375,11 +2415,14 @@ function playShuffleAnimation(isMobile) {
         shuffledDeck.forEach((cardData, index) => {
             const wrapper = document.createElement('div');
             
-            // 手機版超過 7 張設為隱藏，不參與洗牌動畫
             const isShuffleTarget = !isMobile || index < 7;
             wrapper.className = isShuffleTarget ? 'card-wrap shuffling' : 'card-wrap';
+            
+            // 🌟 關鍵修復 1：不用 display: none，改用 opacity 隱形
+            // 這樣瀏覽器不會在喚醒時卡頓，大幅減少 GPU 負擔
             if (!isShuffleTarget) {
-                wrapper.style.display = 'none'; 
+                wrapper.style.opacity = '0';
+                wrapper.style.pointerEvents = 'none'; 
             }
             
             wrapper.dataset.index = index;
@@ -2400,16 +2443,16 @@ function playShuffleAnimation(isMobile) {
                 </div>
             `;
 
-            // 洗牌時的初始位置 (都在正中央)
+            // 初始位置，全體統一鎖死在畫面正中央
             wrapper.style.left = "50%";
             wrapper.style.top = "50%";
+            wrapper.style.transformOrigin = "center center"; 
             wrapper.style.transform = `translate(-50%, -50%)`;
 
             wrapper.onclick = (e) => handleCardClick(e, wrapper);
             container.appendChild(wrapper);
         });
 
-        // ⏳ 等待 2.2 秒洗牌動畫結束，把 DOM 節點傳給下一個階段
         setTimeout(() => {
             const cards = document.querySelectorAll('.card-wrap');
             resolve(cards);
@@ -2423,24 +2466,21 @@ function playShuffleAnimation(isMobile) {
 function playSpreadAnimation(cards, isMobile, total) {
     return new Promise((resolve) => {
         
-        // 🌟 第一階段：喚醒隱藏卡牌、拔除動畫、強制歸位
+        // 🌟 第一階段：拔除動畫，強制收攏到正中央
         cards.forEach((wrapper) => {
-            wrapper.style.display = 'block'; 
             wrapper.classList.remove('shuffling');
-            wrapper.style.transition = 'none'; // 關閉動畫，準備瞬間定位
+            wrapper.style.transition = 'none'; // 拔除所有動畫
 
             if (isMobile) {
-                // 【手機版】專治卡頓：提前鎖定 left: 0vw，並用 transform 模擬居中
-                wrapper.style.transformOrigin = "left center";
-                wrapper.style.left = "0vw";
-                wrapper.style.top = "50%";
-                wrapper.style.bottom = "auto";
-                wrapper.style.transform = "translateY(-50%) rotate(0deg) translateX(calc(50vw - 50%))";
+                // 🌟 關鍵修復 2：手機版【絕對不要】改變 left 或 transformOrigin！
+                // 讓它們維持在正中央，單純疊整齊，避免 Safari 觸發 Layout Reflow
+                wrapper.style.transform = "translate(-50%, -50%)"; 
             } else {
-                // 【電腦版】完全還原你的設計：維持在正中央，待會展開時才有「往下飛」的感覺
+                // 電腦版維持你的原設定
                 wrapper.style.left = "50%";
                 wrapper.style.top = "50%";
                 wrapper.style.bottom = "auto";
+                wrapper.style.transformOrigin = "center center";
                 wrapper.style.transform = "translate(-50%, -50%) rotate(0deg)";
             }
         });
@@ -2451,25 +2491,38 @@ function playSpreadAnimation(cards, isMobile, total) {
             ritualTextContainer.classList.add('fade-out');
         }
 
-        // 🌟 第二階段：Double requestAnimationFrame
+        // 🌟 第二階段：Double rAF 確保畫面穩定
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 
-                // 🌟 第三階段：套用過渡動畫與最終展開座標
+                // 🌟 第三階段：套用展開動畫
                 cards.forEach((wrapper, index) => {
                     const duration = isMobile ? '1.2s' : '0.8s'; 
                     
-                    wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), left ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), top ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), bottom ${duration} cubic-bezier(0.2, 1.2, 0.3, 1)`;
-                    wrapper.style.transitionDelay = `${index * 0.02}s`;
-
                     if (isMobile) {
-                        // 【手機版】只動角度與 translateX，完美弧線不卡頓
+                        // 手機版：同時漸變 transform 與 opacity (讓隱藏的牌滑順浮現)
+                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), opacity 0.8s ease-out`;
+                        wrapper.style.transitionDelay = `${index * 0.02}s, 0s`; // opacity 不 delay
+                        
+                        wrapper.style.opacity = '1'; // 喚醒隱藏的卡牌
+                        wrapper.style.pointerEvents = 'auto'; 
+
                         const angle = -45 + (index * (90 / total)); 
-                        wrapper.style.transform = `translateY(-50%) rotate(${angle}deg) translateX(38vw)`;
+                        
+                        // 🌟 關鍵修復 3：純 Transform 空間魔法！(0 佈局變動)
+                        // 1. translate(-50%, -50%) -> 先將牌校準於螢幕正中央
+                        // 2. translateX(-50vw) -> 把旋轉軸心推到「螢幕最左側」
+                        // 3. rotate(angle) -> 旋轉角度
+                        // 4. translateX(calc(38vw + 50%)) -> 沿著角度推回 38vw。視覺上完美等同你原本的設定！
+                        wrapper.style.transform = `translate(-50%, -50%) translateX(-50vw) rotate(${angle}deg) translateX(calc(38vw + 50%))`;
+                        
                         wrapper.style.setProperty('--pop-x', '30px');
                         wrapper.style.setProperty('--pop-y', '0px');
                     } else {
-                        // 【電腦版】還原你的設定：從中央飛向下方扇形
+                        // 電腦版維持你的原設定：從中央飛向底部扇形
+                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), left ${duration}, top ${duration}, bottom ${duration}`;
+                        wrapper.style.transitionDelay = `${index * 0.02}s`;
+                        
                         const angle = -60 + (index * (120 / total));
                         wrapper.style.transformOrigin = "center bottom";
                         wrapper.style.left = "50%";
@@ -2481,13 +2534,11 @@ function playSpreadAnimation(cards, isMobile, total) {
                     }
                 });
                 
-                // 動畫全數跑完後 resolve (1200ms 動畫 + 最長 delay)
                 setTimeout(resolve, 1500);
             }); 
         }); 
     });
-}
-        function handleCardClick(e, wrapper) {
+}        function handleCardClick(e, wrapper) {
             e.stopPropagation();
             if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
 
