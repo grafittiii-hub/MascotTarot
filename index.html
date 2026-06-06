@@ -487,8 +487,7 @@ padding-bottom: env(safe-area-inset-bottom);
 
         .card-wrap {
             position: absolute; width: 75px; height: 120px;
-            cursor: pointer; z-index: 10;will-change: transform, opacity;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease;
-will-change: transform, left, top;
+            cursor: pointer; z-index: 10;will-change: transform, opacity, left, top;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease;
     backface-visibility: hidden; 
     -webkit-backface-visibility: hidden; /* 專為 iOS Safari 準備 */
         }
@@ -861,6 +860,14 @@ scrollbar-width: none; /* 針對 Firefox */
             .report-layout-triple .result-block:last-child {
                 margin-right: 0;
             }
+   .card-wrap {
+        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
+                    opacity 0.4s ease;  /* Halve the duration */
+    }
+    
+    #result-panel {
+        transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);  /* 0.9s → 0.5s */
+    }
         }
 	/* 當用戶正在用手指拖曳時，暫時移除 transition，讓面板「死死貼著手指」才不會有延遲感 */
 #result-panel.is-dragging {
@@ -874,8 +881,6 @@ scrollbar-width: none; /* 針對 Firefox */
 /* 1. 為所有卡牌外殼注入動態縮放基因 */
 .card-wrap {
     will-change: scale;
-    /* 🔒 核心魔法：縮放比例完全由 JS 實時計算傳入，預設為 1 */
-    scale: var(--card-preview-scale, 1) !important;
     /* 當放手重置時，恢復極致高奢的立方貝茲回彈動畫 */
     transition: transform 0.8s cubic-bezier(0.25, 1, 0.3, 1), 
                 scale 0.4s cubic-bezier(0.25, 1, 0.3, 1),
@@ -1344,7 +1349,13 @@ text-indent: 5px !important;
     cursor: pointer;
 }
 .modal-content button:hover { background: rgba(255, 255, 255, 0.1); }
-}</style>
+}
+
+body.is-initializing .card-wrap,
+body.is-initializing #result-panel {
+    transition: none !important;
+}
+</style>
 </head>
 <body>
 <div id="custom-magic-cursor"></div>
@@ -2295,6 +2306,14 @@ function initSpreadView() {
 
     const isMobile = window.innerWidth < 768;
     const total = shuffledDeck.length;
+
+    if (isMobile) {
+        document.body.classList.add('is-initializing');
+        // Force paint to complete
+        requestAnimationFrame(() => {
+            document.body.classList.remove('is-initializing');
+        });
+    }
 
     shuffledDeck.forEach((cardData, index) => {
         const wrapper = document.createElement('div');
