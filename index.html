@@ -2538,7 +2538,8 @@ function playSpreadAnimation(cards, isMobile, total) {
             }); 
         }); 
     });
-}        function handleCardClick(e, wrapper) {
+}
+        function handleCardClick(e, wrapper) {
             e.stopPropagation();
             if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
 
@@ -2646,9 +2647,10 @@ function finalizeSelection() {
         el.style.opacity = '0';
         el.style.pointerEvents = 'none';
         if (isMobile) {
-            el.style.left = '-50%'; 
+            el.style.left = '-50%'; el.style.transform = `${el.style.transform} translateX(-50vh) scale(0.8)`;
         } else {
-            el.style.bottom = '-50%'; el.style.transform = 'translate(-50%, 0) rotate(0deg)';
+            el.style.bottom = '5vh'; 
+	el.style.transform = `${el.style.transform} translateY(50vh) scale(0.8)`; el.style.left = '50%';
         }
     });
 
@@ -2662,7 +2664,7 @@ function finalizeSelection() {
                 inner.insertAdjacentHTML('beforeend', liquidCocoonSVG);
             }
         });
-    }, 600);
+    }, 1000);
 
     // --- 階段 3：已選卡牌來到中心 (T = 700ms, 耗時 600ms) ---
     // 給予 100ms 緩衝後，卡牌才開始飛向螢幕正中央
