@@ -1,9 +1,44 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" data-theme="day">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>孫孫塔羅 Mascot Tarot</title>
+<script>
+    // 💡 核心函式：偵測並設定主體顏色
+    function initSystemTheme() {
+        // 1. 檢查使用者先前有沒有手動切換過並記錄在 LocalStorage (如果你的專案有做這個功能的話)
+        const savedTheme = localStorage.getItem('user-tarot-theme');
+        
+        if (savedTheme) {
+            // 如果有手動紀錄，優先使用手動紀錄
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        } else {
+            // 2. 🌟 沒有紀錄時，精準偵測系統是否為夜間模式 (Dark Mode)
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (prefersDark) {
+                document.documentElement.setAttribute('data-theme', 'night');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'day');
+            }
+        }
+    }
+
+    // 立即執行，防止畫面閃爍
+    initSystemTheme();
+
+    // 🌟 加分功能：當使用者在手機設定裡「當場切換」日夜模式時，網頁會即時跟著變色！
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        // 只有在使用者沒有手動鎖定過主題的情況下，才跟隨系統即時連動
+        if (!localStorage.getItem('user-tarot-theme')) {
+            document.documentElement.setAttribute('data-theme', e.matches ? 'night' : 'day');
+            
+            // 💡 如果你有手動更新 Theme Toggle 按鈕文字或圖示的函式，可以在這裡一併呼叫
+            // 例如：updateThemeButtonUI(e.matches ? 'night' : 'day');
+        }
+    });
+</script>
+    <title>孫孫暉日塔羅 Mascot Tarot</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,7 +110,7 @@
            ========================================== */
         :root {
             --bg-color: #fffef7;
-            --text-color: #302814;
+            --text-color: #4f401b;
             --gold-primary: #dbba18;
             --gold-light: #faf6cf;
             --panel-bg: linear-gradient(135deg, #fffaf0, #f8f5f0);
@@ -146,11 +181,11 @@ padding-bottom: env(safe-area-inset-bottom);
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%; height: 50px;
+            width: 100%;
             padding: 0px 20px;
-	height: 10vh;display: block;
+	height: 15dvh; display: block;
             align-items: center;
-            z-index: 9999; background: transparent;
+            z-index: 9999; background: transparent; pointer-events: none;
         }
 
 
@@ -195,12 +230,12 @@ padding-bottom: env(safe-area-inset-bottom);
 
         .theme-toggle {
             background: transparent; position: absolute;
-    right: 3vw;     top: 50%;
+    right: 3vw; top: 50%;
     transform: translateY(-50%);width: 33px;height: 30px;
             border: var(--border-thin); color: var(--gold-primary);
             padding: 0; font-size: 0.65rem; display: flex;
     align-items: center; justify-content: center; cursor: pointer; z-index: 9999; text-transform: uppercase;
-            transition: 0.4s ease;
+            transition: 0.4s ease; pointer-events: auto;
         }
         .theme-toggle:hover { background: var(--gold-primary); color: var(--bg-color); }
 
@@ -218,14 +253,32 @@ padding-bottom: env(safe-area-inset-bottom);
             transition: opacity 1s ease;
         }
         .loading-title {
-            font-size: 1rem; letter-spacing: 3px; font-weight: 300;
-            color: var(--gold-primary); margin-bottom: 40px; padding: 0 10px;
-            animation: auraBreathing 3s infinite ease-in-out;
+            display: flex;
+    flex-direction: column;  /* 🌟 核心：讓裡面的內容由上往下像直列一樣排隊 */
+    align-items: center;      /* 🌟 核心：水平方向絕對居中 */
+    justify-content: center;   /* 🌟 核心：垂直方向絕對居中 */
+    text-align: center;
+    gap: 10px; color: var(--gold-primary); margin-bottom: 50px; padding: 0 10px;
+            animation: auraBreathing 3s infinite ease-in-out; flex-direction: column;
         }
         @keyframes auraBreathing {
             0%, 100% { text-shadow: 0 0 10px rgba(182, 154, 104, 0); transform: scale(1); }
             50% { text-shadow: 0 0 25px rgba(182, 154, 104, 0.4); transform: scale(1.02); }
         }
+.loading-title .title-zh {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 4px;      /* 稍微拉開中文字距，增加高級感 */
+}
+
+/* 針對英文字的精緻微調 */
+.loading-title .title-en {
+    font-size: 0.9rem;
+    font-weight: 300;
+    letter-spacing: 4px;
+    opacity: 0.85;
+    text-transform: uppercase;/* 視需求看要不要自動轉大寫 */
+}
         .progress-track { width: 150px; height: 1px; background: var(--gold-light); position: relative; }
         #progress-bar { width: 0%; height: 100%; background: var(--gold-primary); transition: width 0.3s ease; }
 
@@ -238,10 +291,10 @@ padding-bottom: env(safe-area-inset-bottom);
     
     /* 1. 從 Header 下方開始算起，確保絕對不重疊 */
     position: absolute; 
-    top: 10vh; 
+    top: 15dvh; margin-top: auto;
     left: 50%; 
     transform: translateX(-50%); 
-    height: 90dvh; /* 扣掉 Header 後剩下的高度 */
+    height: 80dvh; /* 扣掉 Header 後剩下的高度 */
     
     display: flex; 
     flex-direction: column; 
@@ -249,7 +302,7 @@ padding-bottom: env(safe-area-inset-bottom);
     /* 🚨 2. 拔除 justify-content: center; 改用 flex-start */
     justify-content: flex-start; 
     
-    padding: 20px 10%; /* 上下加 20px 安全內距，避免貼死邊緣 */
+    padding: 0px 10%; /* 上下加 20px 安全內距，避免貼死邊緣 */
     opacity: 0; 
     visibility: hidden; 
     transition: opacity 1.2s ease;
@@ -260,12 +313,7 @@ padding-bottom: env(safe-area-inset-bottom);
     touch-action: pan-y;
 }
 
-/* 👑 3. 核心魔法：利用 margin auto 實現「安全置中」 */
-/* 讓內部包裹表單的第一個 div 自動推擠上方空間 */
-#main-page > div:first-child {
-    margin-top: auto; 
-    width: 100%;
-}
+
 
 /* 讓底部的 footer 自動推擠下方空間 */
 #main-page > .tarot-footer {
@@ -492,12 +540,18 @@ padding-bottom: env(safe-area-inset-bottom);
 }
 
         .card-wrap {
-            position: absolute; width: 75px; height: 120px;
+            position: absolute; width: 150px; height: 240px;
             cursor: pointer; z-index: 10;will-change: transform, opacity, left, top;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease;
     backface-visibility: hidden; 
     -webkit-backface-visibility: hidden; /* 專為 iOS Safari 準備 */
         }
-        @media (min-width: 768px) { .card-wrap { width: 120px; height: 180px; } }
+        @media (min-width: 768px) and (pointer: coarse) {
+        .card-wrap { will-change: transform, opacity;} 
+        .card-face {
+                /* 平板版稍微調弱重疊陰影，避免 Webkit 渲染過載 */
+                box-shadow: 0 4px 10px var(--card-shadow); 
+            }
+        }
 
 /* 👑 精致防抖防摔防死循環規則 */
 .card-wrap.is-chosen,
@@ -1197,7 +1251,7 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
     width: 100vw;
     left: 50%;
     transform: translateX(-50%);
-    margin-top: clamp(20px, 8%, 68px);
+    margin-top: clamp(20px, 10%, 68px);
     position: relative;
     clear: both; padding: 10px 2px 0;
 
@@ -1369,13 +1423,16 @@ body.is-initializing #result-panel {
 <div class="nav-header">
 
     <div class="watermark">Grafittiii</div>
-    <div class="home-title">孫孫暉日塔羅 Mascot Tarot</div>
+    <div class="home-title">暉日塔羅 Mascot Tarot</div>
 
     <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☽</button>
     </div>
 
     <div id="loading-screen">
-        <div class="loading-title">孫孫塔羅 Mascot Tarot</div>
+        <div class="loading-title">
+    <span class="title-zh">孫孫暉日塔羅</span>
+    <span class="title-en">Sun Mascot Tarot</span>
+</div>
         <div class="progress-track"><div id="progress-bar"></div>           
     </div>
 </div>
@@ -2273,19 +2330,48 @@ function updateProgress() {
     }
 }
 
-// 啟動預載入
-window.addEventListener('DOMContentLoaded', startPreloading);
-        function toggleTheme() {
-            const html = document.documentElement;
-            const btn = document.getElementById('themeBtn');
-            if (html.getAttribute('data-theme') === 'day') {
-                html.setAttribute('data-theme', 'night');
-                btn.innerText = '☼';
-            } else {
-                html.setAttribute('data-theme', 'day');
-                btn.innerText = '☽';
-            }
-        }
+// ==========================================
+// 日夜模式系統：自動偵測 + 手動記憶
+// ==========================================
+
+// 1. 🌟 在 DOM 載入完成後，除了預載卡牌，也要初始化 Theme 按鈕的符號
+window.addEventListener('DOMContentLoaded', () => {
+    startPreloading(); // 你原本的預載函式
+    initThemeButtonUI(); // 初始化按鈕符號
+});
+
+// 2. 核心：手動切換 Theme 函式（已加入 localStorage 記憶功能）
+function toggleTheme() {
+    const html = document.documentElement;
+    const btn = document.getElementById('themeBtn');
+    
+    if (html.getAttribute('data-theme') === 'day') {
+        html.setAttribute('data-theme', 'night');
+        if (btn) btn.innerText = '☼';
+        // 🌟 記住使用者的選擇為 night
+        localStorage.setItem('user-tarot-theme', 'night');
+    } else {
+        html.setAttribute('data-theme', 'day');
+        if (btn) btn.innerText = '☽';
+        // 🌟 記住使用者的選擇為 day
+        localStorage.setItem('user-tarot-theme', 'day');
+    }
+}
+
+// 3. 輔助：根據當前實際套用的主題，自動校準按鈕上的符號
+function initThemeButtonUI() {
+    const html = document.documentElement;
+    const btn = document.getElementById('themeBtn');
+    if (!btn) return;
+    
+    // 如果當前是 day，按鈕要顯示 ☽（提示可以切換成夜晚）
+    // 如果當前是 night，按鈕要顯示 ☼（提示可以切換成白天）
+    if (html.getAttribute('data-theme') === 'day') {
+        btn.innerText = '☽';
+    } else {
+        btn.innerText = '☼';
+    }
+}
 
 // 確保這個函式定義在 enterMainPage 之前
 function initCustomCursor() {
@@ -2372,7 +2458,9 @@ function enterMainPage() {
 async function initSpreadView() {
     const spreadView = document.getElementById('spread-view');
     spreadView.style.display = 'block';
-    setTimeout(() => spreadView.style.opacity = '1', 700);
+    
+    // 💡 修正：不論手機或電腦，我們都精準控制淡入
+    setTimeout(() => spreadView.style.opacity = '1', 50);
 
     const ritualTextContainer = document.getElementById('spread-ritual-text');
     if (ritualTextContainer) {
@@ -2398,10 +2486,58 @@ async function initSpreadView() {
         });
     }
 
-    // 🌟 步驟 1：建立卡牌並播放洗牌動畫 (等待 2.2 秒)
-    const cards = await playShuffleAnimation(isMobile);
+    let cards;
 
-    // 🌟 步驟 2：執行展開動畫
+    if (isMobile) {
+        // ==========================================
+        // 📱 手機版：瞬間生成 DOM 節點，靜態堆疊在中央
+        // ==========================================
+        shuffledDeck.forEach((cardData, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card-wrap'; // 移除 shuffling 類別
+            wrapper.dataset.index = index;
+
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
+
+            wrapper.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-face card-back">
+                        <img src="tarot-cards/photo-output.png" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+                             onload="this.parentElement.style.backgroundImage='none';" 
+                             onerror="this.style.display='none';" 
+                             draggable="false">
+                    </div>
+                    <div class="card-face card-front">${imgTag}</div>
+                </div>
+            `;
+
+            // 🌟 關鍵優化：加上 transition: none 確保一開始切換頁面時，牌組不會因為任何 class 變動而產生滑動位移
+            wrapper.style.transition = 'none'; 
+            wrapper.style.left = "50%";
+            wrapper.style.top = "50%";
+            wrapper.style.transformOrigin = "center center"; 
+            wrapper.style.transform = `translate(-50%, -50%)`;
+            wrapper.style.opacity = '1'; 
+
+            wrapper.onclick = (e) => handleCardClick(e, wrapper);
+            container.appendChild(wrapper);
+        });
+
+        cards = document.querySelectorAll('.card-wrap');
+
+        // 🌟 核心調整：等待整個 spreadView 頁面淡入完成（原設定 700ms，我們等 850ms 確保畫面完全穩定）
+        // 在這段等待期間，使用者只會看到黑底/背景緩緩亮起，中央有一疊整齊的塔羅牌靜止不動
+        await new Promise(resolve => setTimeout(resolve, 950));
+
+    } else {
+        // ==========================================
+        // 💻 電腦版：維持原本的洗牌動畫流程 (等待 2.2 秒)
+        // ==========================================
+        cards = await playShuffleAnimation(isMobile);
+    }
+
+    // 🌟 完美的開牌時機：現在手機版會在這裡才「突然優雅地」展開成扇形牌陣！
     await playSpreadAnimation(cards, isMobile, total);
 }
 
