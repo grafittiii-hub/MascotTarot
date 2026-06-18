@@ -242,6 +242,9 @@ padding-bottom: env(safe-area-inset-bottom);
         @media (max-width: 480px) {
             .home-title { font-size: 0.8rem; letter-spacing: 1px; }
             .nav-header { padding: 10px 15px; }
+            .btn-solid {font-size: 0.7rem;}
+            .btn-outline {padding:9px 0;}
+            .btn-solid, #result-actions button, #result-actions .btn-cart, #result-actions .btn-save, #result-actions .btn-return {text-indent: 0px !important;}
         }
 
         /* ==========================================
@@ -287,45 +290,80 @@ padding-bottom: env(safe-area-inset-bottom);
            ========================================== */
 #main-page {
     width: 100%; 
-    max-width: 600px;
+    max-width: 650px;
+    
+    /* 🌟 1. 絕對定位：死死釘在 10dvh，絕對不允許向上挪動一步 */
     position: absolute; 
     top: 10dvh; 
     left: 50%; 
     transform: translateX(-50%); 
+    
+    /* 🌟 2. 嚴格限定最大高度與實際高度：剛好填滿剩下的 90dvh */
+    height: 90dvh;
     max-height: 90dvh; 
+    
     display: flex; 
     flex-direction: column; 
     justify-content: flex-start; 
     
-    /* 上下微調為 10px 內距，左右保持 10%，防範手機版高度被 padding 撐爆 */
-    padding: 10px 10% 20px 10%; 
+    /* 調整內距：上下給 10px 固定呼吸空間，避免 padding 把高度撐爆 */
+    padding: 10px 10%; 
     
     opacity: 0; 
     visibility: hidden; 
     transition: opacity 1.2s ease;
     margin: 0 auto; 
     
-    /* 當內容真的超過 80dvh 時才容許滾動（例如極小的手機） */
-    overflow-y: auto; 
+    /* 🌟 3. 最外層全面禁止滾動！確保頂部 top: 10dvh 穩如泰山、絕不穿頂 */
+    overflow-y: hidden !important; 
     overflow-x: hidden !important; 
     box-sizing: border-box;
     touch-action: pan-y;
 }
 
-/* 🌟 核心修改：讓中間的主內容容器自動長大，吸收掉所有剩餘的空白位 */
+/* 🌟 4. 中間主內容容器：接管滾動條 */
 #main-page > .main-content {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    
+    /* 🌟 核心：當手機畫面太矮時，只有這一個區域在內部默默滾動，絕對不影響外層頂部與底部 */
+    overflow-y: auto; 
+    overflow-x: hidden;
+    padding-bottom: 10px; /* 給 Start 按鈕與下方 Footer 留點安全距離 */
 }
 
-/* 🌟 核心修改：精準選取到 footer，並用 margin-top: auto 把它完美推到最底部貼齊 */
+/* 🌟 5. 精準選取到 footer，利用 margin-top: auto 推到底部貼齊 */
 #main-page .tarot-footer {
     margin-top: auto !important;
     margin-bottom: 0 !important;
-    padding-top: 20px; /* 給予上方按鈕一點點呼吸空間 */
-    padding-bottom: env(safe-area-inset-bottom); /* 針對 iPhone 底部黑條的安全區域 */
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important; 
+}
+
+/* ==========================================
+   精緻置中 Footer 視覺美學（已修正 100vw 惡性溢出 Bug）
+   ========================================== */
+.tarot-footer {
+    /* 🌟 核心修改：絕對不能用 100vw！改成 100% 才能完美契合外層的 600px 容器 */
+    width: 100% !important; 
+    
+    /* 🌟 移除容易造成位移偏置的 transform */
+    left: 0 !important;
+    transform: none !important;
+    
+    /* 縮小 margin，交由 Flex 的 auto 去彈性推擠 */
+    margin-top: 15px !important; 
+    position: relative;
+    clear: both; 
+    padding: 10px 2px 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    text-align: center; 
+    z-index: 9000; 
+    background: transparent; 
 }
 
 /* 針對互動元素防止「雙擊放大」 */
@@ -460,7 +498,7 @@ button, input, textarea, .cat-btn, .mode-btn {
         /* 統一按鈕基礎設定 */
         .btn-solid {
             width: 100%; padding: 18px; background: var(--gold-primary);
-            color: var(--bg-color); border: none; font-size: 0.9rem;
+            color: var(--bg-color); border: none; font-size: 0.8rem;
             letter-spacing: 5px; text-transform: uppercase; cursor: pointer;margin-right: -5px !important;
             transition: 0.4s; position: relative; overflow: hidden;
         }
@@ -498,6 +536,204 @@ button, input, textarea, .cat-btn, .mode-btn {
             background: var(--text-color);
             color: var(--bg-color);
         }
+
+/* ==========================================
+   精緻置中 Footer 視覺美學
+   ========================================== */
+.tarot-footer {
+    width: 100vw;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: clamp(20px, 10%, 68px);
+    position: relative;
+    clear: both; padding: 10px 2px 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    text-align: center; z-index:9000; 
+    background: transparent; /* 保持背景透明，完美融入你的主色調 */
+}
+
+.footer-content {
+    font-family: 'Georgia', 'Noto Serif TC', serif;  
+    font-size: clamp(0.5rem, 2.3vw, 0.6rem); /* 精緻細小的低調字體 */
+    letter-spacing: 2px; /* 高階感必備的字距留白 */
+    color: var(--text-color); 
+    opacity: 0.55; /* 降低醒目度，呈現高級隨性感 */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px; /* 元素之間的間距 */
+    line-height: 1.2;
+transition: transform 0.3s ease-out;
+}
+
+/* 分隔線樣式 */
+.footer-divider {
+    color: var(--gold-primary, #dbba18);
+    opacity: 0.5;
+    margin: 0 4px;
+}
+
+/* 超連結基本樣式 */
+.footer-link {
+    color: var(--text-color);
+    text-text-decoration: none;
+    position: relative;
+    transition: all 0.3s ease;
+    font-weight: 400;
+}
+
+/* 滑鼠懸停時的優雅金色變色與微光 */
+.footer-link:hover {
+    color: var(--gold-primary, #dbba18);
+    opacity: 1;
+    text-shadow: 0 0 8px rgba(219, 186, 24, 0.3);
+}
+
+/* 超連結下方的微細底線動態特效 */
+.footer-link::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 1px;
+    bottom: -2px;
+    left: 0;
+    background-color: var(--gold-primary, #dbba18);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease-out;
+}
+
+.footer-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}
+
+/* 手機版 RWD 微調 */
+@media (max-width: 480px) {
+    .footer-content {
+        letter-spacing: 1px;
+        gap: 4px;
+    }
+
+
+}
+
+@media (max-width: 320px) {
+    .footer-content {
+        gap: 1px;
+    }
+}
+
+@media (min-width: 481px) {
+.btn-solid {font-size: 0.85rem; padding: 15px; text-indent: 10px !important;}
+}
+
+/* 🚀 修正：強制讓三個按鈕內部的所有文字與符號完美居中 */
+.btn-solid, 
+#result-actions button, 
+#result-actions .btn-cart,
+#result-actions .btn-save,
+#result-actions .btn-return {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+
+letter-spacing: 5px; 
+}
+
+/* 🎯 如果按鈕裡面有包文字標籤，直接校正文字本身 */
+#result-actions button span,
+.btn-solid span {
+    letter-spacing: 5px !important;
+    display: inline-block !important;
+}
+
+/* 彈窗遮罩：新增動畫屬性 */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999;
+    
+    /* 動畫設定：初始隱藏 */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s;
+}
+
+/* 當加上 .is-visible class 時顯示 */
+.modal-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 核心卡片：加入浮動動畫 */
+.modal-content {
+    background: var(--panel-bg);
+    border: var(--border-thin);
+    color: var(--text-color);
+    width: 85%;
+    max-width: 320px;
+    padding: 40px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    
+    /* 初始狀態：往下位移一點點並透明 */
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    opacity: 0;
+}
+
+/* 顯現時回到原位 */
+.modal-overlay.is-visible .modal-content {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.modal-content h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.2rem;
+    margin-bottom: 25px;
+    opacity: 0.9;
+}
+
+.notice-list { 
+    text-align: center; 
+    margin: 0 auto 25px auto; 
+    font-size: 0.9rem; 
+    line-height: 2.0; 
+    list-style: none;
+    padding: 0;
+}
+
+.notice-list li { margin-bottom: 10px; opacity: 0.7; }
+
+.modal-content button {
+    background: transparent;
+    border: 1px solid var(--gold-primary);
+    color: var(--text-color);
+    padding: 8px 25px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    letter-spacing: 0.15rem;
+    cursor: pointer;
+}
+.modal-content button:hover { background: rgba(255, 255, 255, 0.1); }
+
+
+
+body.is-initializing .card-wrap,
+body.is-initializing #result-panel {
+    transition: none !important;
+}
 
         /* ==========================================
            5. 扇形展牌與洗牌系統
@@ -555,7 +791,7 @@ button, input, textarea, .cat-btn, .mode-btn {
     backface-visibility: hidden; 
     -webkit-backface-visibility: hidden; /* 專為 iOS Safari 準備 */
         }
-        @media (min-width: 768px) and (pointer: coarse) {
+        @media (min-width: 768px) {
         .card-wrap { 
 width: 120px; height: 180px; will-change: transform, opacity;} 
         .card-face {
@@ -804,6 +1040,7 @@ width: 120px; height: 180px; will-change: transform, opacity;}
 .card-wrap.ready-to-glow .card-inner {
     position: relative; border-radius: 8px;
     top: 0; /* 設定初始位置 */
+
     /* 將過渡屬性改為 top，完全不干擾 JS 的 transform 翻轉 */
     transition: box-shadow 1.2s cubic-bezier(0.25, 1, 0.3, 1), top 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     box-shadow: 0 6px 20px rgba(48, 40, 20, 0.12); 
@@ -852,14 +1089,14 @@ width: 120px; height: 180px; will-change: transform, opacity;}
 /* =====================================================
    👑 終極優雅版：1.5秒極致慢速懸浮互動 (不寫死陰影，完美相容四元素)
    ====================================================== */
+/* 🌟 核心修改 1：把手勢放大的變數綁在最外層的 .card-wrap 上 */
+.card-wrap.ready-to-glow {
+}
 
 /* 1. 當卡牌進入最終 ready-to-glow 狀態，賦予它超慢速互動的基因 */
 .card-wrap.ready-to-glow .card-inner {
     top: 0;
-    /* 🎯 設定 1.5 秒的超慢速遞減曲線 (Ease-Out-Quart 變體)
-       同時管理 3D翻轉(transform)、上升(top)、以及各元素的自訂光暈(box-shadow) */
-    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-                top 1.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transition: top 1.5s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 1.5s cubic-bezier(0.16, 1, 0.3, 1) !important; /* 用 !important 確保樣式優先級 */
 }
 
@@ -1036,7 +1273,7 @@ body.is-dragging-panel .card-wrap {
 /* 內層「CART」文字：初始隱形並向右偏移，確保是穩定的黑/暗色字 */
 #result-actions .btn-cart .cart-txt {
     opacity: 0;
-    transform: translateX(15px); margin-right: -5px !important;
+    transform: translateX(15px);
     color: var(--gold-primary, #dbba18) !important;
     /* 延遲 0.8s，等按鈕空間推開後文字才徐徐浮現 */
     transition: opacity 0.6s ease 0.8s, transform 0.6s cubic-bezier(0.25, 1, 0.3, 1) 0.8s;
@@ -1255,123 +1492,7 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
     100% { transform: scale(0.9); opacity: 0.4; box-shadow: 0 0 0 0 rgba(219, 186, 24, 0); }
 }
 
-/* ==========================================
-   精緻置中 Footer 視覺美學
-   ========================================== */
-.tarot-footer {
-    width: 100vw;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-top: clamp(20px, 10%, 68px);
-    position: relative;
-    clear: both; padding: 10px 2px 0;
 
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    text-align: center; z-index:9000; 
-    background: transparent; /* 保持背景透明，完美融入你的主色調 */
-}
-
-.footer-content {
-    font-family: 'Georgia', 'Noto Serif TC', serif;  
-    font-size: clamp(0.5rem, 2.3vw, 0.6rem); /* 精緻細小的低調字體 */
-    letter-spacing: 2px; /* 高階感必備的字距留白 */
-    color: var(--text-color); 
-    opacity: 0.55; /* 降低醒目度，呈現高級隨性感 */
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 8px; /* 元素之間的間距 */
-    line-height: 1.2;
-transition: transform 0.3s ease-out;
-}
-
-/* 分隔線樣式 */
-.footer-divider {
-    color: var(--gold-primary, #dbba18);
-    opacity: 0.5;
-    margin: 0 4px;
-}
-
-/* 超連結基本樣式 */
-.footer-link {
-    color: var(--text-color);
-    text-text-decoration: none;
-    position: relative;
-    transition: all 0.3s ease;
-    font-weight: 400;
-}
-
-/* 滑鼠懸停時的優雅金色變色與微光 */
-.footer-link:hover {
-    color: var(--gold-primary, #dbba18);
-    opacity: 1;
-    text-shadow: 0 0 8px rgba(219, 186, 24, 0.3);
-}
-
-/* 超連結下方的微細底線動態特效 */
-.footer-link::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    transform: scaleX(0);
-    height: 1px;
-    bottom: -2px;
-    left: 0;
-    background-color: var(--gold-primary, #dbba18);
-    transform-origin: bottom right;
-    transition: transform 0.3s ease-out;
-}
-
-.footer-link:hover::after {
-    transform: scaleX(1);
-    transform-origin: bottom left;
-}
-
-/* 手機版 RWD 微調 */
-@media (max-width: 480px) {
-    .footer-content {
-        letter-spacing: 1px;
-        gap: 4px;
-    }
-
-    .btn-solid {font-size: 0.7rem;}
-.btn-outline {padding:9px 0;}
-}
-
-@media (min-width: 481px) {
-.btn-solid {font-size: 0.85rem;    padding: 15px;}
-
-
-/* 🚀 修正：強制讓三個按鈕內部的所有文字與符號完美居中 */
-.btn-solid, 
-#result-actions button, 
-#result-actions .btn-cart,
-#result-actions .btn-save,
-#result-actions .btn-return {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-
-letter-spacing: 5px; text-indent: 5px !important;
-}
-
-/* 🎯 如果按鈕裡面有包文字標籤，直接校正文字本身 */
-#result-actions button span,
-.btn-solid span {
-    letter-spacing: 5px !important;
-text-indent: 5px !important;
-    display: inline-block !important;
-}
-
-
-body.is-initializing .card-wrap,
-body.is-initializing #result-panel {
-    transition: none !important;
-}
 </style>
 </head>
 <body>
@@ -1440,7 +1561,7 @@ body.is-initializing #result-panel {
             <span class="footer-divider">|</span>
             <a href="https://www.instagram.com/grafittiii_uru/" target="_blank" class="footer-link">Instagram</a>
             <span class="footer-divider">|</span>
-            <a href="https://payme.hsbc/" target="_blank" class="footer-link">請我喝奶茶~</a>
+            <a href="https://payme.hsbc/jlpl22" target="_blank" class="footer-link">請我喝奶茶~</a>
         </div> 
     </footer>
 </div>
@@ -1480,13 +1601,13 @@ body.is-initializing #result-panel {
         </div>
 <footer class="tarot-footer">
     <div class="footer-content">
-        <span>Mascot Tarot© Grafittiii</span>
+        <span>Mascot Tarot©</span>
         <span class="footer-divider">|</span>
         <span>僅供參考</span>
         <span class="footer-divider">|</span>
         <a href="https://www.instagram.com/grafittiii_uru/" target="_blank" class="footer-link">Instagram</a>
         <span class="footer-divider">|</span>
-        <a href="#" target="_blank" class="footer-link">請我喝奶茶~</a>
+        <a href="https://payme.hsbc/jlpl22" target="_blank" class="footer-link">請我喝奶茶~</a>
     </div>
 </footer>
 
@@ -1505,6 +1626,32 @@ body.is-initializing #result-panel {
 
     </div>
 
+<div id="notice-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <h2>占卜須知</h2>
+        <ul class="notice-list">
+            <li>一事一占。</li>
+            <li>不強制他人意願，<p>占卜應基於當事人主動參與。</li>
+            <li>不涉入第三方感情及事件。</li>
+            <li>不預測時間，<p>將結果視為現階段的策略參考。</li>
+            <li>占卜僅供參考，<p>最終選擇權在於您本人。</li>
+        </ul>
+        <button onclick="closeNotice()">了解並關閉</button>
+    </div>
+</div>
+
+<div id="limit-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <h2>今日額度已滿</h2>
+        <p style="margin-bottom: 20px;">每日提供 2 次免費占卜。<br>請輸入密鑰解鎖次數：</p>
+        
+        <textarea id="unlock-input" placeholder="輸入密鑰" style="width: 80%; margin-bottom: 15px;"></textarea>
+        
+        <div>
+            <button onclick="handleUnlock()">驗證密鑰</button>
+        </div>
+    </div>
+</div>
 
 
     <script>
@@ -1688,91 +1835,148 @@ function clearTextArea() {
 }
 
 // ==========================================
-// 結果面板下滑 檢視卡牌手勢聯動系統
+// 👑 統一自適應排版引擎（2026 最終完美自適應版）
+// ==========================================
+function getLayoutMetrics(totalCards, progress) {
+    const width = window.innerWidth;
+    const isMobile = width < 768;
+    const isUltraSmall = width <= 360; // 🎯 專門捕捉 320px ~ 360px 的超窄手機（如 iPhone SE）
+
+    let baseScale = 1.0;
+    let targetScale = 1.3; 
+    let baseGap = 28;
+    let gapCompensationRatio = 0; // 正數代表下拉時縮窄，負數代表下拉時撐開
+
+    if (isMobile) {
+        // 📱 手機與平板版面 (< 768px)
+        if (totalCards === 1) {
+            baseScale = 1.1; targetScale = 1.3; baseGap = 0; gapCompensationRatio = 0;
+        } 
+        else if (totalCards === 2) {
+            // 🎯 您的要求：2張牌不論平時或下拉都希望隔開、均分寬度
+            baseScale = isUltraSmall ? 0.9 : 0.95;
+            targetScale = isUltraSmall ? 1.1 : 1.2;     // 320px 螢幕稍微調小放大率防撞
+            baseGap = isUltraSmall ? 34 : 36;           // 大幅拉開初始間距，讓兩張牌分居兩側
+            gapCompensationRatio = -0.06;                // 🌟 核心修正：下拉時不縮窄，反而微調「更開一點點」，絕不重疊
+        } 
+        else if (totalCards === 3) {
+            baseScale = isUltraSmall ? 0.8 : 0.85;
+            targetScale = isUltraSmall ? 1.02 : 1.15;
+            baseGap = isUltraSmall ? 26 : 28;
+            gapCompensationRatio = -0.03;
+        } 
+        else if (totalCards >= 4) {
+            // 🎯 您的要求：<=400px預留多點空間、320px下拉防重疊
+            baseScale = isUltraSmall ? 0.65 : 0.72;
+            targetScale = isUltraSmall ? 0.80 : 0.90;   // 🌟 320px螢幕極限控制在 0.80 倍，精緻防炸
+            baseGap = isUltraSmall ? 22 : 24;           // 🌟 未下拉時從24提高到27，幫卡牌預留呼吸空間
+            gapCompensationRatio = 0;                // 🌟 將原本 0.20 的過度擠壓放鬆到 0.06，維持展開間距
+        }
+    } else {
+        // 🖥️ 橫屏幕 / 電腦版 / 大平版 (>= 768px)
+        if (totalCards === 1) {
+            baseScale = 1.1; targetScale = 1.3; baseGap = 0;
+        } 
+        else if (totalCards === 2) {
+            baseScale = 1.05; targetScale = 1.3; baseGap = 32; gapCompensationRatio = 0;
+        } 
+        else if (totalCards === 3) {
+            baseScale = 1.0; targetScale = 1.3; baseGap = 28; gapCompensationRatio = -0.03;
+        } 
+        else if (totalCards >= 4) {
+            // 🎯 您的要求：4張牌未下拉時希望間距小一點，下拉展開時比例小一點
+            baseScale = 0.85;
+            targetScale = 1.12;          // 🌟 下拉放大目標調小（原1.3 -> 1.12），更顯高階優雅
+            baseGap = 20;               // 🌟 未下拉時（progress=0）初始間距縮窄（原28 -> 22），緊湊好看
+            gapCompensationRatio = -0.03; // 🌟 下拉時不縮窄，反而微微向外展開 3%，抵消放大帶來的擁擠感
+        }
+    }
+
+    // 線性內插計算當下的即時比例與間距
+    const currentScale = baseScale + progress * (targetScale - baseScale);
+    const currentGap = baseGap * (1 - progress * gapCompensationRatio);
+
+    return { scale: currentScale, gap: currentGap };
+}
+
+// ==========================================
+// 👑 結果面板下滑 檢視卡牌手勢聯動系統 + 安全守護網
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const panel = document.getElementById('result-panel');
     if (!panel) return;
 
-    let startY = 0;          // 手指/滑鼠點下時的初始 Y 座標
-    let pullDistance = 0;    // 當前實際下拉的位移像素
+    let startY = 0;          
+    let pullDistance = 0;    
+    const MAX_PULL_DIST = 30; // 允許下拉的最大視覺極限（像素）
 
-    // 👑 物理性能參數設定
-    const MAX_PULL_DIST = 20; // 允許下拉的最大視覺感官極限（像素）
-    const MAX_SCALE = 1.1;    // 卡牌放大的最大倍率 (1.25 倍)
-
-    // ==========================================
-    // 🪄 核心物理渲染函式（即時計算下拉進度與縮放）
-    // ==========================================
-    function updatePullPosition(clientY) {
-        let diff = clientY - startY;
-
-        if (diff < 0) diff = 0; // 嚴格限制：只能向下窺視，往上推不觸發
-
-        // 注入物理阻尼感，模擬高檔機械鍵盤的彈簧阻力，越往下拉越沉
-        if (diff > MAX_PULL_DIST) {
-            pullDistance = MAX_PULL_DIST + (diff - MAX_PULL_DIST) * 0.15; 
-        } else {
-            pullDistance = diff;
-        }
-
-        // 1. 實時位移報告面板
+    // 👑 簡化後的動態手勢跟手核心引擎
+    function updatePullPosition(currentY) {
+        let diff = currentY - startY;
+        if (diff < 0) diff = 0;
+        
+        // 面板阻尼位移
+        pullDistance = Math.min(diff * 0.4, MAX_PULL_DIST);
         panel.style.transform = `translateY(${pullDistance}px)`;
+        
+        const totalCards = drawnCards.length;
+        if (totalCards === 0) return;
 
-        // 2. 實時計算百分比進度 (0 到 1 之間)
-        const progress = Math.min(pullDistance / MAX_PULL_DIST, 1);
+        // 下拉進度百分比 (0 到 1)
+        const progress = pullDistance / MAX_PULL_DIST; 
+
+        // 🌟 直接呼叫中央排版引擎，精準抓取最新比例
+        const metrics = getLayoutMetrics(totalCards, progress);
         
-        // 3. 根據進度，讓卡牌從 1.0 線性放大到 1.25
-        const currentScale = 1 + (progress * (MAX_SCALE - 1));
-        
-        // 4. 一行代碼，秒速同步更新全畫面上所有卡牌的尺寸
-        document.documentElement.style.setProperty('--card-preview-scale', currentScale);
+        // 將放大變數即時同步（供 CSS 及系統相容讀取）
+        document.documentElement.style.setProperty('--card-preview-scale', metrics.scale);
+
+        // 重新動態計算起始點，確保核心永遠絕對置中
+        const startX = 50 - ((totalCards - 1) * metrics.gap / 2);
+
+        // 施加 Inline 樣式（手勢期間 transition 為 none，達成零延遲跟手感）
+        drawnCards.forEach((drawn, i) => {
+            const el = drawn.elementDOM;
+            const leftPos = `${startX + (i * metrics.gap)}%`;
+            
+            el.style.transition = 'none'; 
+            el.style.left = leftPos;
+            el.style.top = window.innerWidth < 768 ? '8%' : '12%';
+            el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${metrics.scale})`;
+        });
     }
 
-    // ==========================================
-    // ↩ 核心重置函式（放手時瞬間完美回彈）
-    // ==========================================
+    // 🌟 釋放手勢：完美洗掉所有殘留的 Inline 樣式，平滑回彈
     function handleDragEnd() {
-        // 移除拖曳狀態 Class，瞬間喚醒 CSS 的 transition 平滑過渡動畫
-        panel.classList.remove('is-dragging');
-        document.body.classList.remove('is-dragging-panel');
-
-        // 讓面板與卡牌同步優雅地彈回初始狀態
+        panel.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
         panel.style.transform = 'translateY(0px)';
+        
+        // 在呼叫排版引擎前，先幫所有卡牌加上過渡，讓橫移、縮小回彈的過程絲滑無比
+        drawnCards.forEach(drawn => {
+            drawn.elementDOM.style.setProperty('transition', 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), left 0.4s cubic-bezier(0.16, 1, 0.3, 1)', 'important');
+        });
+
+        // 呼叫中央排版引擎，平滑收回未放大狀態 (progress = 0)
+        relayoutCards();
+        
         document.documentElement.style.setProperty('--card-preview-scale', '1');
 
-        // 歸零數值
-        pullDistance = 0; 
+        // 動畫結束後，徹底清除殘留的 inline transition 屬性，為下一次完美下拉做準備
+        setTimeout(() => {
+            drawnCards.forEach(drawn => {
+                drawn.elementDOM.style.removeProperty('transition');
+            });
+        }, 400);
     }
 
     // ==========================================
-    // 📱 行動端：觸控手勢監聽
-    // ==========================================
-    panel.addEventListener('touchstart', (e) => {
-        if (panel.scrollTop > 0) return; // 如果面板內部正在向下捲動文字，不觸發窺視
-        startY = e.touches[0].clientY;
-        panel.classList.add('is-dragging');
-        document.body.classList.add('is-dragging-panel');
-    }, { passive: true });
-
-    panel.addEventListener('touchmove', (e) => {
-        if (!panel.classList.contains('is-dragging')) return;
-        updatePullPosition(e.touches[0].clientY);
-    }, { passive: true });
-
-    panel.addEventListener('touchend', () => {
-        handleDragEnd();
-    });
-
-    // ==========================================
-    // 💻 電腦版：滑鼠點擊拖曳模擬
+    // 電腦版：滑鼠點擊拖曳監聽
     // ==========================================
     let isMouseDragging = false;
 
     panel.addEventListener('mousedown', (e) => {
         if (panel.scrollTop > 0) return;
-        // 安全防禦：點擊按鈕、連結或 QR Code 時，保留點擊功能，不觸發拖曳
-        if (e.target.closest('button, textarea, input, a, #qr-code, .save-btn')) return;
+        if (e.target.closest('button, textarea, input, a, #qr-code, .save-btn, #advice-section')) return;
 
         isMouseDragging = true;
         startY = e.clientY;
@@ -1788,29 +1992,72 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mouseup', () => {
         if (!isMouseDragging) return;
         isMouseDragging = false;
+        panel.classList.remove('is-dragging');
+        document.body.classList.remove('is-dragging-panel');
         handleDragEnd();
     });
 
     // ==========================================
-    // 💻 電腦版：Mac 觸控板雙指 / 滾輪動態 peek
+    // 手機版：觸控滑動監聽
     // ==========================================
-    panel.addEventListener('wheel', (e) => {
-        // 當面板在最頂端，使用者雙指向下滑動時 (e.deltaY < 0)
-        if (panel.scrollTop === 0 && e.deltaY < 0) {
-            e.preventDefault();
-            // 直接展現放大狀態
-            panel.style.transform = `translateY(${MAX_PULL_DIST}px)`;
-            document.documentElement.style.setProperty('--card-preview-scale', MAX_SCALE);
-        } 
-        // 當處於放大狀態，使用者雙指向上滑動時 (e.deltaY > 0)
-        else if (e.deltaY > 0 && panel.style.transform !== 'translateY(0px)' && panel.style.transform !== '') {
-            e.preventDefault();
-            // 立即收回
-            panel.style.transform = 'translateY(0px)';
-            document.documentElement.style.setProperty('--card-preview-scale', '1');
+    panel.addEventListener('touchstart', (e) => {
+        if (panel.scrollTop > 0) return;
+        if (e.target.closest('button, textarea, input, a, #qr-code, .save-btn, #advice-section')) return;
+        
+        startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    panel.addEventListener('touchmove', (e) => {
+        if (panel.scrollTop > 0) return;
+        const currentY = e.touches[0].clientY;
+        
+        if (currentY > startY) {
+            if (e.cancelable) e.preventDefault();
+            updatePullPosition(currentY);
         }
     }, { passive: false });
-});
+
+    panel.addEventListener('touchend', () => {
+        handleDragEnd();
+    });
+
+    // ==========================================
+    // 電腦版：Mac 觸控板 / 滾輪動態預覽
+    // ==========================================
+    panel.addEventListener('wheel', (e) => {
+        if (panel.scrollTop === 0 && e.deltaY < 0) {
+            e.preventDefault();
+            startY = 0;
+            updatePullPosition(MAX_PULL_DIST / 0.4); 
+        } 
+        else if (e.deltaY > 0 && panel.style.transform !== 'translateY(0px)' && panel.style.transform !== '') {
+            e.preventDefault();
+            handleDragEnd();
+        }
+    }, { passive: false });
+
+    // ==========================================
+    // 🛡️ 面板狀態觀察器 (MutationObserver)：移入安全網內，確保對齊
+    // ==========================================
+    const resultPanel = document.getElementById('result-panel');
+    const resultActions = document.querySelector('.result-actions');
+
+    if (resultPanel && resultActions) {
+        const panelObserver = new MutationObserver((mutationsList) => {
+            for (let mutation of mutationsList) {
+                if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+                    setTimeout(() => {
+                        resultActions.classList.add('expanded');
+                    }, 3000);
+                    panelObserver.disconnect(); // 功成身退
+                }
+            }
+        });
+        panelObserver.observe(resultPanel, { attributes: true, attributeFilter: ['style', 'class'] });
+    }
+}); // 🎯 完美的結尾大括號，徹底根除全域語法錯誤
+
+
 // ==========================================
 // Idea 3: 星光漣漪點擊生成邏輯 (完美修復版)
 // ==========================================
@@ -2397,6 +2644,23 @@ function enterMainPage() {
                 alert("請先選擇占卜範疇。");
                 return;
             }
+
+	// 🌟 核心修正：在這裡接上次數限制的檢查開關！
+            if (!canPerformReading()) {
+                const limitModal = document.getElementById('limit-modal');
+                limitModal.style.display = 'flex';
+                // 觸發優雅的淡入動畫
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        limitModal.classList.add('is-visible');
+                    });
+                });
+                return; // 🚨 次數超過，直接終止後續占卜流程
+            }
+
+            // 檢查通過，扣除一次額度
+            incrementReading();
+
             isRelationship = document.getElementById('is-relation').checked;
             
             const main = document.getElementById('main-page');
@@ -2732,6 +2996,11 @@ function finalizeSelection() {
         confirmBtn.style.pointerEvents = 'none'; 
         setTimeout(() => confirmBtn.style.display = 'none', 400); 
     }
+// 🌟 核心修正 1：瞬間封印所有「已選卡牌」的點擊神經！
+    // 確保在整個過場動畫期間，使用者無論怎麼戳螢幕，都不會喚醒任何多餘的按鈕或反應
+    drawnCards.forEach(drawn => {
+        drawn.elementDOM.style.setProperty('pointer-events', 'none', 'important');
+    });
 
     // --- 階段 1：未選卡牌退場離開 (T = 0ms, 耗時 500ms) ---
     document.querySelectorAll('.card-wrap:not(.confirmed)').forEach(el => {
@@ -2793,35 +3062,42 @@ function finalizeSelection() {
         });
     }, 1400);
 
-    // --- 階段 5：翻牌後往上移動，並啟動特效 (T = 2400ms, 耗時 800ms) ---
-    // 翻轉結束後 (1400+800=2200，抓 2400ms 讓使用者看清楚牌面)，卡牌上移並發光
+// --- 階段 5：翻牌後往上移動，並啟動特效 (T = 2400ms, 耗時 800ms) ---
     setTimeout(() => {
+        const isMobile = window.innerWidth < 768;
+        const totalCards = drawnCards.length;
+
+        // 🌟 呼叫進度為 0 的完美 metrics
+        const metrics = getLayoutMetrics(totalCards, 0);
+        const startX = 50 - ((totalCards - 1) * metrics.gap / 2);
+
         drawnCards.forEach((drawn, i) => { 
             const el = drawn.elementDOM;
-            el.classList.add('ready-to-glow');
             
-            // 啟動 SVG 光束動畫
             const svg = el.querySelector('.liquid-cocoon-svg');
             if (svg) svg.classList.add('run-cocoon');
 
-            // 往上移動到最終位置
-            el.style.transition = 'transform 0.8s ease, left 0.8s ease, top 0.8s ease';
+            el.style.setProperty('transition', 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), left 0.8s cubic-bezier(0.25, 1, 0.5, 1), top 0.8s cubic-bezier(0.25, 1, 0.5, 1)', 'important');
             
             const inner = el.querySelector('.card-inner');
             if (inner) {
-                inner.style.transition = ''; // 拔除內層 transition 避免後續互動衝突
-                inner.style.willChange = 'auto'; // 釋放 GPU 記憶體
+                inner.style.transition = ''; 
+                inner.style.willChange = 'auto'; 
             }
 
-            let leftPos = '50%'; 
-            if (totalCards === 3) {
-                const gap = isMobile ? 25 : 30;
-                leftPos = `${50 + (i - 1) * gap}%`;
-            }
-            
+            // 🌟 嚴格遵照完美百分比公式定位
+            let leftPos = `${startX + (i * metrics.gap)}%`;
+            const baseScale = metrics.scale;
+                
             el.style.left = leftPos;
             el.style.top = isMobile ? '8%' : '12%';
-            el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${isMobile && totalCards === 3 ? 0.85 : 1})`;
+            el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${baseScale})`;
+
+            setTimeout(() => {
+                el.classList.add('ready-to-glow');
+                el.style.removeProperty('transition');
+                el.style.removeProperty('pointer-events');
+            }, 800); 
         });
     }, 2400);
 
@@ -2964,40 +3240,36 @@ function redirectToPaywall() {
     window.open(targetUrl, '_blank');
 }
 
-// 👑 通用排版引擎：根據目前 drawnCards 的數量，自動平滑地重新分配位置
-function relayoutCards() {
-    const isMobile = window.innerWidth < 768;
+
+ 
+function relayoutCards(transitionStyle = 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), left 0.8s cubic-bezier(0.25, 1, 0.5, 1), top 0.8s cubic-bezier(0.25, 1, 0.5, 1)') {
     const totalCards = drawnCards.length;
-    
-    // 動態計算間距：牌越多，間距稍微縮緊一點以防超出螢幕
-    const gap = isMobile ? (totalCards === 4 ? 24 : 26) : 28; 
-    
-    // 找出第一張牌的起始 X 軸位置 (確保整體牌陣永遠置中)
-    const startX = 50 - ((totalCards - 1) * gap / 2);
+    if (totalCards === 0) return;
+
+    const isMobile = window.innerWidth < 768;
+    // 取得基礎狀態 (progress = 0)
+    const metrics = getLayoutMetrics(totalCards, 0); 
+    const startX = 50 - ((totalCards - 1) * metrics.gap / 2);
 
     drawnCards.forEach((drawn, i) => {
         const el = drawn.elementDOM;
-        const leftPos = `${startX + (i * gap)}%`;
-        
-        // 動態縮放：如果手機版且卡牌變多，稍微縮小避免擠爆畫面
-        let scale = 1;
-        if (isMobile) {
-            if (totalCards === 3) scale = 0.85;
-            if (totalCards >= 4) scale = 0.75;
-        } else {
-            if (totalCards >= 4) scale = 0.9;
-        }
-        if (totalCards === 1) scale = 1.1;
+        const leftPos = `${startX + (i * metrics.gap)}%`;
 
-        // 啟動絲滑的過渡動畫
-        el.style.transition = 'transform 0.8s ease, left 0.8s ease, top 0.8s ease';
+        el.style.transition = transitionStyle;
         el.style.left = leftPos;
         el.style.top = isMobile ? '8%' : '12%';
-        el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${scale})`;
+        el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${metrics.scale})`;
+
+        setTimeout(() => {
+            el.style.transition = '';
+        }, parseFloat(transitionStyle.match(/[\d.]+s/)[0]) * 1000 + 50);
     });
 }
 
-        function drawAdvice() {
+
+
+
+function drawAdvice() {
     document.getElementById('advice-section').style.display = 'none'; 
     
     const usedIds = drawnCards.map(c => c.id);
@@ -3015,7 +3287,9 @@ function relayoutCards() {
     // ==========================================
     const container = document.getElementById('cards-container');
     const wrapper = document.createElement('div');
-    wrapper.className = 'card-wrap ready-to-glow'; // 直接賦予最終高光狀態
+    
+    // 🌟 初始化先不加上 ready-to-glow，直到滑入動畫停穩
+    wrapper.className = 'card-wrap'; 
     
     if (advCard.element) wrapper.classList.add(`element-${advCard.element.toLowerCase()}`);
     
@@ -3039,19 +3313,29 @@ function relayoutCards() {
     
     container.appendChild(wrapper);
 
-    // 👑 將新卡牌推入全局狀態 (這一步確保了 Save 功能可以完美擷取到它！)
+    // 👑 將新卡牌推入全局狀態
     drawnCards.push({ ...advCard, isReversed, elementDOM: wrapper });
+
+    // 🌟 核心修正：在呼叫排版引擎之前，暫時將前三張牌的 ready-to-glow 拔除！
+    // 這樣它們在重排時就不會受到任何 CSS 的 !important 強行綁定，確保能完美觸發 transition 橫移！
+    const olderCards = drawnCards.slice(0, -1);
+    olderCards.forEach(c => c.elementDOM.classList.remove('ready-to-glow'));
 
     // 延遲一點點，讓瀏覽器渲染 DOM，然後啟動飛入動畫與排版
     setTimeout(() => {
-        // 點燃這張新卡牌的 SVG 虹光弧影
         const svg = wrapper.querySelector('.liquid-cocoon-svg');
         if (svg) svg.classList.add('run-cocoon');
         
         wrapper.style.opacity = '1';
         
-        // 呼叫排版引擎：讓原本的牌往左讓位，新牌平滑插入！
+        // 呼叫排版引擎：此時原本的牌沒有 ready-to-glow 束縛，會非常平滑、跟隨動畫一起向左讓位！
         relayoutCards();
+        
+        // 🌟 當 0.8 秒重排與飛入動畫完全結束、卡牌全數在終點完美停穩時：
+        setTimeout(() => {
+            // 集體重新加回 ready-to-glow，無縫解鎖最終狀態與手勢放大系統
+            drawnCards.forEach(c => c.elementDOM.classList.add('ready-to-glow'));
+        }, 800);
     }, 50);
 
     // ==========================================
@@ -3402,7 +3686,7 @@ async function exportImage() {
 
 
 // 預設密鑰 (你可以設定一個固定的密鑰)
-const UNLOCK_KEY = "SUN260604"; 
+const UNLOCK_KEY = "SUN26"; 
 
 function canPerformReading() {
     // 1. 檢查是否已使用密鑰解鎖
@@ -3486,53 +3770,37 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 console.log("%c停！別看我的code了，需要抽牌定制的就來找我吧！", "color: blue; font-size: 15px; font-weight: bold;");
-    </script>
 
-<div id="notice-modal" class="modal-overlay" style="display:none;">
-    <div class="modal-content">
-        <h2>占卜須知</h2>
-        <ul class="notice-list">
-            <li>一事一占。</li>
-            <li>不強制他人意願，<p>占卜應基於當事人主動參與。</li>
-            <li>不涉入第三方感情及事件。</li>
-            <li>不預測時間，<p>將結果視為現階段的策略參考。</li>
-            <li>占卜僅供參考，<p>最終選擇權在於您本人。</li>
-        </ul>
-        <button onclick="closeNotice()">了解並關閉</button>
-    </div>
-</div>
-
-<div id="limit-modal" class="modal-overlay" style="display:none;">
-    <div class="modal-content">
-        <h2>今日額度已滿</h2>
-        <p style="margin-bottom: 20px;">每日提供 2 次免費占卜。<br>請輸入密鑰解鎖次數：</p>
-        
-        <textarea id="unlock-input" placeholder="輸入密鑰" style="width: 80%; margin-bottom: 15px;"></textarea>
-        
-        <div>
-            <button onclick="handleUnlock()">驗證密鑰</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    function handleUnlock() {
-        const input = document.getElementById('unlock-input').value;
-        if (checkUnlockKey(input)) {
-            document.getElementById('limit-modal').style.display = 'none';
-        }
-    }
-
-    function openNotice() {
+// 🌟 統一彈窗開關邏輯 (適用於「占卜須知」與「次數限制」)
+function openNotice() {
     const modal = document.getElementById('notice-modal');
-    modal.style.display = 'flex';
-    setTimeout(() => modal.classList.add('show'), 10);
+    modal.style.display = 'flex'; 
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modal.classList.add('is-visible');
+        });
+    });
 }
 
 function closeNotice() {
     const modal = document.getElementById('notice-modal');
-    modal.classList.remove('show');
+    modal.classList.remove('is-visible');
+    // 等待 0.4s 動畫結束後，才徹底隱藏
     setTimeout(() => modal.style.display = 'none', 400);
+}
+
+function handleUnlock() {
+    const input = document.getElementById('unlock-input').value;
+    if (checkUnlockKey(input)) {
+        const limitModal = document.getElementById('limit-modal');
+        // 解鎖成功後，同樣播放優雅的關閉動畫
+        limitModal.classList.remove('is-visible');
+        setTimeout(() => {
+            limitModal.style.display = 'none';
+            // 清空輸入框準備下次使用
+            document.getElementById('unlock-input').value = ''; 
+        }, 400);
+    }
 }
 </script>
 </body>
