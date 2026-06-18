@@ -3266,9 +3266,6 @@ function relayoutCards(transitionStyle = 'transform 0.8s cubic-bezier(0.25, 1, 0
     });
 }
 
-
-
-
 function drawAdvice() {
     document.getElementById('advice-section').style.display = 'none'; 
     
@@ -3423,7 +3420,7 @@ function drawQRCodeToCanvas(ctx, x, y, dark, light) {
     return new Promise((resolve, reject) => { 
         const qrDiv = document.createElement('div');
         new QRCode(qrDiv, {
-            text: "https://grafittiii-hub.github.io/MascotTarot/",
+            text: "https://mascot-tarot.vercel.app/",
             width: 80,
             height: 80,
             colorDark: dark,
