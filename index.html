@@ -185,7 +185,7 @@ padding-bottom: env(safe-area-inset-bottom);
             padding: 0px 20px;
 	height: 10dvh; display: block;
             align-items: center;
-            z-index: 9999; background: transparent; pointer-events: none;
+            z-index: 9999; background: var(--bg-color); pointer-events: none;
         }
 
 
@@ -289,13 +289,10 @@ padding-bottom: env(safe-area-inset-bottom);
     width: 100%; 
     max-width: 600px;
     position: absolute; 
-    top: 12dvh; 
+    top: 10dvh; 
     left: 50%; 
     transform: translateX(-50%); 
-    
-    /* 🌟 核心修改：改用 min-height。如果畫面夠高，它就剛好是 80dvh。 */
-    /* 這樣一來，不論是在 iPad 還是大螢幕電腦上，只要內容沒超出，絕對不會觸發 overflow-y */
-    min-height: 80dvh; 
+    max-height: 80dvh; 
     
     display: flex; 
     flex-direction: column; 
@@ -1334,60 +1331,6 @@ transition: transform 0.3s ease-out;
     transform-origin: bottom left;
 }
 
-/* 占卜須知彈窗：高級優雅版 */
-/* 彈窗遮罩：保留毛玻璃但讓它更輕盈 */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(8px);
-    display: flex; justify-content: center; align-items: center;
-    z-index: 9999;
-}
-
-/* 核心卡片：不碰邊緣，四邊留有寬裕間距 */
-.modal-content {
-    background: var(--panel-bg);
-    border: var(--border-thin);
-    color: var(--text-color);
-    width: 85%;            /* 確保不會貼邊 */
-    max-width: 320px;      /* 限制最大寬度，保持優雅比例 */
-    padding: 40px;
-    border-radius: 24px;   /* 柔和的圓角 */
-    text-align: center;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-}
-
-.modal-content h2 {
-    font-family: 'Noto Serif TC', serif;
-    font-size: 1.1rem;
-    letter-spacing: 0.2rem;
-    margin-bottom: 25px;
-    opacity: 0.9;
-}
-
-.notice-list { 
-    text-align: center; 
-    margin: 0 auto 25px auto; 
-    font-size: 0.9rem; 
-    line-height: 2.0; 
-    list-style: none;
-    padding: 0;
-}
-
-.notice-list li { margin-bottom: 10px; opacity: 0.7; }
-
-.modal-content button {
-    background: transparent;
-    border: 1px solid var(--gold-primary);
-    color: var(--text-color);
-    padding: 8px 25px;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    letter-spacing: 0.15rem;
-    cursor: pointer;
-}
-.modal-content button:hover { background: rgba(255, 255, 255, 0.1); }
-}
 /* 手機版 RWD 微調 */
 @media (max-width: 480px) {
     .footer-content {
