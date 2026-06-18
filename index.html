@@ -292,8 +292,7 @@ padding-bottom: env(safe-area-inset-bottom);
     top: 10dvh; 
     left: 50%; 
     transform: translateX(-50%); 
-    max-height: 80dvh; 
-    
+    max-height: 90dvh; 
     display: flex; 
     flex-direction: column; 
     justify-content: flex-start; 
@@ -307,7 +306,7 @@ padding-bottom: env(safe-area-inset-bottom);
     margin: 0 auto; 
     
     /* 當內容真的超過 80dvh 時才容許滾動（例如極小的手機） */
-    overflow-y: auto; 
+    overflow-y: hidden; 
     overflow-x: hidden !important; 
     box-sizing: border-box;
     touch-action: pan-y;
