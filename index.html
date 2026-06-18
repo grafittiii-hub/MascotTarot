@@ -183,7 +183,7 @@ padding-bottom: env(safe-area-inset-bottom);
             left: 0;
             width: 100%;
             padding: 0px 20px;
-	height: 15dvh; display: block;
+	height: 10dvh; display: block;
             align-items: center;
             z-index: 9999; background: transparent; pointer-events: none;
         }
@@ -202,7 +202,7 @@ padding-bottom: env(safe-area-inset-bottom);
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%); white-space: nowrap;pointer-events: none;
-            font-size: clamp(0.4rem, 5vh, 1rem); 
+            font-size: clamp(0.4rem, 8dvh, 1rem); 
             letter-spacing: 3px;
             font-weight: 300;
             color: var(--gold-primary);
@@ -240,7 +240,7 @@ padding-bottom: env(safe-area-inset-bottom);
         .theme-toggle:hover { background: var(--gold-primary); color: var(--bg-color); }
 
         @media (max-width: 480px) {
-            .home-title { font-size: 0.7rem; letter-spacing: 1px; }
+            .home-title { font-size: 0.8rem; letter-spacing: 1px; }
             .nav-header { padding: 10px 15px; }
         }
 
@@ -287,45 +287,59 @@ padding-bottom: env(safe-area-inset-bottom);
            ========================================== */
 #main-page {
     width: 100%; 
-    max-width: clamp(600px, 90%, 700px); 
-    
-    /* 1. 從 Header 下方開始算起，確保絕對不重疊 */
+    max-width: 600px;
     position: absolute; 
-    top: 15dvh; margin-top: auto;
+    top: 12dvh; 
     left: 50%; 
     transform: translateX(-50%); 
-    height: 80dvh; /* 扣掉 Header 後剩下的高度 */
+    
+    /* 🌟 核心修改：改用 min-height。如果畫面夠高，它就剛好是 80dvh。 */
+    /* 這樣一來，不論是在 iPad 還是大螢幕電腦上，只要內容沒超出，絕對不會觸發 overflow-y */
+    min-height: 80dvh; 
     
     display: flex; 
     flex-direction: column; 
-    
-    /* 🚨 2. 拔除 justify-content: center; 改用 flex-start */
     justify-content: flex-start; 
     
-    padding: 0px 10%; /* 上下加 20px 安全內距，避免貼死邊緣 */
+    /* 上下微調為 10px 內距，左右保持 10%，防範手機版高度被 padding 撐爆 */
+    padding: 10px 10% 20px 10%; 
+    
     opacity: 0; 
     visibility: hidden; 
     transition: opacity 1.2s ease;
     margin: 0 auto; 
+    
+    /* 當內容真的超過 80dvh 時才容許滾動（例如極小的手機） */
     overflow-y: auto; 
     overflow-x: hidden !important; 
     box-sizing: border-box;
     touch-action: pan-y;
 }
 
-
-
-/* 讓底部的 footer 自動推擠下方空間 */
-#main-page > .tarot-footer {
-    margin-bottom: auto;
+/* 🌟 核心修改：讓中間的主內容容器自動長大，吸收掉所有剩餘的空白位 */
+#main-page > .main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
-	/* 針對互動元素防止「雙擊放大」 */
-	button, input, textarea, .cat-btn, .mode-btn {
+
+/* 🌟 核心修改：精準選取到 footer，並用 margin-top: auto 把它完美推到最底部貼齊 */
+#main-page .tarot-footer {
+    margin-top: auto !important;
+    margin-bottom: 0 !important;
+    padding-top: 20px; /* 給予上方按鈕一點點呼吸空間 */
+    padding-bottom: env(safe-area-inset-bottom); /* 針對 iPhone 底部黑條的安全區域 */
+}
+
+/* 針對互動元素防止「雙擊放大」 */
+button, input, textarea, .cat-btn, .mode-btn {
     touch-action: manipulation; 
 }
-/* ==========================================================================
+
+/* =======================================
    現代奢華美學：宇宙星塵 (聚散流動背景)
-   ========================================================================== */
+   ======================================= */
 
 .cosmic-star {
     position: fixed;
@@ -540,13 +554,14 @@ padding-bottom: env(safe-area-inset-bottom);
 }
 
         .card-wrap {
-            position: absolute; width: 150px; height: 240px;
+            position: absolute; width: 75px; height: 120px;
             cursor: pointer; z-index: 10;will-change: transform, opacity, left, top;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease;
     backface-visibility: hidden; 
     -webkit-backface-visibility: hidden; /* 專為 iOS Safari 準備 */
         }
         @media (min-width: 768px) and (pointer: coarse) {
-        .card-wrap { will-change: transform, opacity;} 
+        .card-wrap { 
+width: 120px; height: 180px; will-change: transform, opacity;} 
         .card-face {
                 /* 平板版稍微調弱重疊陰影，避免 Webkit 渲染過載 */
                 box-shadow: 0 4px 10px var(--card-shadow); 
@@ -1319,44 +1334,6 @@ transition: transform 0.3s ease-out;
     transform-origin: bottom left;
 }
 
-/* 手機版 RWD 微調 */
-@media (max-width: 480px) {
-    .footer-content {
-        letter-spacing: 1px;
-        gap: 4px;
-    }
-
-    .btn-solid {font-size: 0.7rem;}
-.btn-outline {padding:9px 0;}
-}
-
-@media (min-width: 481px) {
-.btn-solid {font-size: 0.85rem;    padding: 15px;}
-
-#main-page {max-width: 600px;}
-
-/* 🚀 修正：強制讓三個按鈕內部的所有文字與符號完美居中 */
-.btn-solid, 
-#result-actions button, 
-#result-actions .btn-cart,
-#result-actions .btn-save,
-#result-actions .btn-return {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-
-letter-spacing: 5px; text-indent: 5px !important;
-}
-
-/* 🎯 如果按鈕裡面有包文字標籤，直接校正文字本身 */
-#result-actions button span,
-.btn-solid span {
-    letter-spacing: 5px !important;
-text-indent: 5px !important;
-    display: inline-block !important;
-}
-
 /* 占卜須知彈窗：高級優雅版 */
 /* 彈窗遮罩：保留毛玻璃但讓它更輕盈 */
 .modal-overlay {
@@ -1411,6 +1388,43 @@ text-indent: 5px !important;
 }
 .modal-content button:hover { background: rgba(255, 255, 255, 0.1); }
 }
+/* 手機版 RWD 微調 */
+@media (max-width: 480px) {
+    .footer-content {
+        letter-spacing: 1px;
+        gap: 4px;
+    }
+
+    .btn-solid {font-size: 0.7rem;}
+.btn-outline {padding:9px 0;}
+}
+
+@media (min-width: 481px) {
+.btn-solid {font-size: 0.85rem;    padding: 15px;}
+
+
+/* 🚀 修正：強制讓三個按鈕內部的所有文字與符號完美居中 */
+.btn-solid, 
+#result-actions button, 
+#result-actions .btn-cart,
+#result-actions .btn-save,
+#result-actions .btn-return {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+
+letter-spacing: 5px; text-indent: 5px !important;
+}
+
+/* 🎯 如果按鈕裡面有包文字標籤，直接校正文字本身 */
+#result-actions button span,
+.btn-solid span {
+    letter-spacing: 5px !important;
+text-indent: 5px !important;
+    display: inline-block !important;
+}
+
 
 body.is-initializing .card-wrap,
 body.is-initializing #result-panel {
@@ -1437,57 +1451,57 @@ body.is-initializing #result-panel {
     </div>
 </div>
 
-    <div id="main-page">
-        <div>
-            <div class="input-group">
-                <div class="label">Your Query</div>
-                <div class="textarea-wrapper">
-			<textarea id="q-input" rows="1" placeholder="寫下你的困惑 (選填)..." oninput="toggleClearBtn()"></textarea>
-			<button id="clear-btn" class="clear-btn" onclick="clearTextArea()">✕</button>
-    </div>
+<div id="main-page">
+    <div class="main-content">
+        <div class="input-group">
+            <div class="label">Your Query</div>
+            <div class="textarea-wrapper">
+                <textarea id="q-input" rows="1" placeholder="寫下你的困惑 (選填)..." oninput="toggleClearBtn()"></textarea>
+                <button id="clear-btn" class="clear-btn" onclick="clearTextArea()">✕</button>
             </div>
-            
-            <div class="input-group">
-                <div class="label">Category</div>
-                <div class="grid-3">
-                    <button class="btn-outline cat-btn" onclick="setCat(this, '學業')">學業</button>
-                    <button class="btn-outline cat-btn" onclick="setCat(this, '事業')">事業</button>
-                    <button class="btn-outline cat-btn" onclick="setCat(this, '愛情')">愛情</button>
-                    <button class="btn-outline cat-btn" onclick="setCat(this, '親友')">親友</button>
-                    <button class="btn-outline cat-btn" onclick="setCat(this, '健康')">健康</button>
-                    <button class="btn-outline cat-btn" onclick="setCat(this, '心靈')">心靈</button>
-                    <button class="btn-outline cat-btn" onclick="setCat(this, '旅程')">旅程</button>
-                    <button class="btn-outline cat-btn" onclick="setCat(this, '決策')">決策</button>
-                    <button class="btn-outline cat-btn" onclick="setCat(this, '其他')">其他</button>
-                </div>
-            </div>
-
-            <div id="relation-container">
-                <span>是查問你與他/她的關係嗎？（使用關係解牌）</span>
-                <input type="checkbox" id="is-relation">
-            </div>
-
-            <div class="input-group" style="margin-top: 30px;">
-                <div class="label">Spread Mode</div>
-                <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
-                    <button class="btn-outline mode-btn active" id="btn-single" onclick="setMode('single')">單牌指引</button>
-                    <button class="btn-outline mode-btn" id="btn-triple" onclick="setMode('triple')">三牌陣</button>
-                </div>
-            </div>
-        <button class="btn-solid" onclick="startDivination()">Start Divination</button>
-
         </div>
-<footer class="tarot-footer">
-    <div class="footer-content">
-        <span>Grafittiii© 2026 </span>
-<span class="footer-divider">|</span><span onclick="openNotice()" style="text-decoration: underline; cursor: pointer;">占卜須知</span></p>
-        <span class="footer-divider">|</span>
-        <a href="https://www.instagram.com/grafittiii_uru/" target="_blank" class="footer-link">Instagram</a>
-        <span class="footer-divider">|</span>
-        <a href="https://payme.hsbc/" target="_blank" class="footer-link">請我喝奶茶~</a>
-    </div> 
-</footer>
-    </div>
+        
+        <div class="input-group">
+            <div class="label">Category</div>
+            <div class="grid-3">
+                <button class="btn-outline cat-btn" onclick="setCat(this, '學業')">學業</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '事業')">事業</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '愛情')">愛情</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '親友')">親友</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '健康')">健康</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '心靈')">心靈</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '旅程')">旅程</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '決策')">決策</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '其他')">其他</button>
+            </div>
+        </div>
+
+        <div id="relation-container" style="margin-bottom: 20px;">
+            <span>是查問你與他/她的關係嗎？（使用關係解牌）</span>
+            <input type="checkbox" id="is-relation">
+        </div>
+
+        <div class="input-group" >
+            <div class="label">Spread Mode</div>
+            <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
+                <button class="btn-outline mode-btn active" id="btn-single" onclick="setMode('single')">單牌指引</button>
+                <button class="btn-outline mode-btn" id="btn-triple" onclick="setMode('triple')">三牌陣</button>
+            </div>
+        </div>
+        
+        <button class="btn-solid" onclick="startDivination()">Start Divination</button>
+    </div> <footer class="tarot-footer">
+        <div class="footer-content">
+            <span>Grafittiii© 2026</span>
+            <span class="footer-divider">|</span>
+            <span onclick="openNotice()" style="text-decoration: underline; cursor: pointer;">占卜須知</span>
+            <span class="footer-divider">|</span>
+            <a href="https://www.instagram.com/grafittiii_uru/" target="_blank" class="footer-link">Instagram</a>
+            <span class="footer-divider">|</span>
+            <a href="https://payme.hsbc/" target="_blank" class="footer-link">請我喝奶茶~</a>
+        </div> 
+    </footer>
+</div>
 
     <div id="spread-view" onclick="retractCards(event)">
         <div id="draw-counter">0/3</div>
