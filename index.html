@@ -185,7 +185,7 @@ padding-bottom: env(safe-area-inset-bottom);
             padding: 0px 20px;
 	height: 10dvh; display: block;
             align-items: center;
-            z-index: 9999; background: var(--bg-color); pointer-events: none;
+            z-index: 9999; background: transparent; pointer-events: none;
         }
 
 
@@ -306,7 +306,7 @@ padding-bottom: env(safe-area-inset-bottom);
     margin: 0 auto; 
     
     /* 當內容真的超過 80dvh 時才容許滾動（例如極小的手機） */
-    overflow-y: hidden; 
+    overflow-y: auto; 
     overflow-x: hidden !important; 
     box-sizing: border-box;
     touch-action: pan-y;
