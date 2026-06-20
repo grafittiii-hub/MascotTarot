@@ -656,7 +656,6 @@ letter-spacing: 5px;
 /* 彈窗遮罩：新增動畫屬性 */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(8px);
     display: flex; justify-content: center; align-items: center;
     z-index: 9999;
@@ -1719,52 +1718,74 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
     }
 }
 
-/* 🌟 完善後的神秘學幻影關閉按鈕（星辰） */
-.illusion-close-btn {
-    position: absolute;
-    width: 36px;
-    height: 36px;
-    background: transparent; /* 改為透明背景，靠 text-shadow 營造星辰感 */
-    border: none;            /* 移除粗暴的按鈕邊框 */
-    color: var(--gold-primary, #dbba18); /* 強制套用你的神秘學金色 */
-    font-size: 20px;         /* 放大星芒符號 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 20;            /* 🌟 關鍵修正：必須大於 10，才能浮在文字與輸入框之上 */
-    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    text-shadow: 0 0 10px rgba(219, 186, 24, 0.6);
-    pointer-events: auto;    /* 確保滑鼠可以點到 */
+/* 🌟 幻影星辰關閉鈕 - 改為 span 標籤專用，徹底斷絕 button 樣式污染 */
+span.illusion-close-btn {
+    position: absolute !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--gold-primary, #dbba18) !important;
+    font-size: 24px !important; /* 大顆一點更清晰 */
+    cursor: pointer !important;
+    z-index: 99 !important; /* 在中央區塊內部也是最高層 */
+    text-shadow: 0 0 12px rgba(219, 186, 24, 0.8);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    user-select: none;
+    pointer-events: auto !important;
 }
 
-/* 鍵盤聚焦或滑鼠Hover時的優雅脈衝 */
-.illusion-close-btn:hover {
-    transform: scale(1.3);
-    color: #fff;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 1);
+span.illusion-close-btn:hover {
+    transform: scale(1.4) !important;
+    color: #ffffff !important;
+    text-shadow: 0 0 18px rgba(255, 255, 255, 1);
 }
 
-/* 點錯時的星辰消散動畫 */
-.illusion-close-btn.shatter {
-    transform: scale(0) rotate(180deg);
-    opacity: 0;
-    pointer-events: none;
+/* 點錯時的消散 */
+span.illusion-close-btn.shatter {
+    transform: scale(0) rotate(180deg) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
-/* 🌟 主頁背景神祕探照燈卡牌 */
+/* 🌟 主頁背景神祕壁畫卡牌 */
 .ambient-lantern-card {
     position: fixed;
-    width: 100px;        /* 淡淡隱現的卡牌大小，可自行調整 */
-    height: 160px;
+    width: 110px;        /* 稍微放大一點，更有壁畫感 */
+    height: 176px;
     border-radius: 6px;
-    pointer-events: none; /* 絕對不能干擾原本輸入框的點擊 */
-    z-index: 0;          /* 放在 body 背景之上，但必須在所有按鈕、輸入框與 main-page 內容之下 */
-    opacity: 0;
-    transition: opacity 0.8s ease; /* 淡入淡出要慢、要有迷霧感 */
-    mix-blend-mode: overlay; /* 與你的背景雜訊、底色進行高級神祕學融合，若想更清晰可改為 normal */
-    box-shadow: 0 0 15px rgba(182, 154, 104, 0.1);
-    filter: sepia(0.3) contrast(0.9); /* 稍微帶點復古黃褐色，融合宮廷風 */
+    pointer-events: none; /* 穿透點擊，絕不干擾原本網頁的任何輸入 */
+    z-index: 0;          /* 在所有按鈕、輸入框與內容之下 */
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    
+    /* 🌟 初始狀態：未被火把照亮時，保持極低的神祕低透明度 */
+    opacity: 0.06; 
+    
+    /* 讓火把靠近、遠離時的明暗變化極為絲滑 */
+    transition: opacity 0.4s ease-out, filter 0.4s ease-out;
+    
+    /* 古老壁畫濾鏡：帶點復古與高對比 */
+    filter: sepia(0.3) contrast(0.9) brightness(0.9);
+}
+
+/* 🌟 日間模式專屬微調 (解決原本隱形的問題) */
+:root:not([data-theme="night"]) .ambient-lantern-card {
+    /* 日間背景很亮，調低未照亮時的能見度，並加上淡淡的宮廷灰色濾鏡，使其融入米白背景 */
+    opacity: 0.04;
+    filter: sepia(0.2) contrast(0.85) grayscale(0.2);
+}
+
+/* 🌟 夜間模式專屬微調 */
+[data-theme="night"] .ambient-lantern-card {
+    opacity: 0.08;
+    filter: sepia(0.4) contrast(0.95) brightness(0.7);
 }
 </style>
 </head>
@@ -1915,24 +1936,26 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
 </div>
 
 <div id="limit-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
-    <div class="modal-content" id="limit-content" style="position: relative; overflow: hidden; height: 320px; width: 90%; max-width: 400px; display: flex; flex-direction: column; justify-content: center;">
+    <div class="modal-content" style="position: relative; min-height: 280px; width: 90%; max-width: 400px; display: flex; flex-direction: column; justify-content: center;">
         
-        <div style="position: relative; z-index: 5; text-align: center;">
-            <h2 style="color: var(--gold-primary);">今日額度已滿</h2>
+        <div id="limit-content" style="position: relative; z-index: 10; text-align: center; padding: 20px 10px; width: 100%; height: 100%;">
+            <h2 style="color: var(--gold-primary, #dbba18); margin-top: 10px;">今日額度已滿</h2>
             <p style="margin-bottom: 20px; font-size: 0.95em; line-height: 1.6;">
                 每日提供 2 次免費占卜。<br>
-                <span style="font-size: 0.85em; opacity: 0.8; color: var(--gold-secondary);">輸入密鑰，或點擊星辰退出頁面結界。</span>
+                <span style="font-size: 0.85em; opacity: 0.8; color: var(--gold-secondary, #b69a68);">輸入密鑰，或憑直覺點擊周圍的星辰退出頁面結界。</span>
             </p>
             
-            <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--gold-primary); color: #fff; border-radius: 4px; resize: none;"></textarea>
+            <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--gold-primary, #dbba18); color: #fff; border-radius: 4px; resize: none;"></textarea>
             
             <div>
-                <button class="btn-outline" onclick="handleUnlock()">驗證密鑰</button>
+                <button onclick="handleUnlock()">驗證密鑰</button>
             </div>
-        </div>
+            
+            </div>
         
     </div>
 </div>
+
 <div id="history-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="history-title">
     <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
         <h2 id="history-title">歷史占卜記錄</h2>
@@ -4494,95 +4517,134 @@ function trapFocus(e) {
     }
 }
 
-// 🌟 啟動主頁背景「提燈尋牌」探照燈特效
 function initAmbientLanternEffect() {
     const mainPage = document.getElementById('main-page');
     if (!mainPage || typeof tarotData === 'undefined') return;
 
-    const cardCount = 2; // 同時最多出現 2 張卡牌
+    // 清除舊的探照牌（防重複加載）
+    document.querySelectorAll('.ambient-lantern-card').forEach(el => el.remove());
+
+    const totalCards = 4; // 🌟 固定在主頁背景的 4 張神祕壁畫
     const lanternCards = [];
 
-    // 1. 建立背景探照牌容器
-    for (let i = 0; i < cardCount; i++) {
+    // 隨機抽選 4 張不重複的塔羅牌
+    const shuffledTarot = [...tarotData].sort(() => 0.5 - Math.random());
+
+    // 🌟 在畫面四個象限固定坐標（避開正中央的輸入框與標題）
+    const positions = [
+        { top: '12%', left: '8%', rotate: '-12deg' },   // 左上
+        { top: '15%', right: '8%', rotate: '8deg' },    // 右上
+        { bottom: '15%', left: '10%', rotate: '15deg' }, // 左下
+        { bottom: '12%', right: '10%', rotate: '-6deg' } // 右下
+    ];
+
+    // 1. 生成固定壁畫
+    for (let i = 0; i < totalCards; i++) {
+        if (!shuffledTarot[i]) break;
+
         const cardEl = document.createElement('div');
         cardEl.className = 'ambient-lantern-card';
+        cardEl.style.backgroundImage = `url('tarot-cards/${shuffledTarot[i].img}')`;
+        
+        // 設定固定佈局位置
+        const pos = positions[i];
+        if (pos.top) cardEl.style.top = pos.top;
+        if (pos.bottom) cardEl.style.bottom = pos.bottom;
+        if (pos.left) cardEl.style.left = pos.left;
+        if (pos.right) cardEl.style.right = pos.right;
+        cardEl.style.transform = `rotate(${pos.rotate})`;
+
         document.body.appendChild(cardEl);
+
         lanternCards.push({
             el: cardEl,
-            active: false,
-            lastX: 0,
-            lastY: 0
+            rect: null // 用於快取物理位置
         });
     }
 
-    let lastTriggerTime = 0;
-
-    function handleLanternMove(x, y) {
-        // 確保只有在「主頁顯示中」才觸發背景探照燈，抽牌或看歷史紀錄時不干擾
+    // 2. 核心火把距離計算函式
+    function torchLightEffect(x, y) {
+        // 如果主頁被隱藏（進入牌陣或歷史紀錄），背景壁畫完全隱形
         if (mainPage.style.display === 'none' || mainPage.style.opacity === '0') {
             lanternCards.forEach(c => c.el.style.opacity = '0');
             return;
         }
 
-        const now = Date.now();
-        // 節流限制：每 600ms 才允許卡牌隨機更換一次位置與圖片，避免畫面瘋狂閃爍
-        if (now - lastTriggerTime > 600) {
-            lastTriggerTime = now;
+        // 取得當前的預設基礎透明度（根據日夜模式變動）
+        const isNight = document.documentElement.getAttribute('data-theme') === 'night';
+        const baseOpacity = isNight ? 0.08 : 0.04;
 
-            // 隨機抽選其中一張探照牌進行歸位與顯影
-            const targetIndex = Math.floor(Math.random() * cardCount);
-            const card = lanternCards[targetIndex];
-            const randomTarot = tarotData[Math.floor(Math.random() * tarotData.length)];
-
-            if (card && randomTarot) {
-                // 亂數決定要出現在游標周圍的哪個角落 (範圍 -120px ~ +120px)
-                const offsetX = (Math.random() - 0.5) * 240;
-                const offsetY = (Math.random() - 0.5) * 240;
-
-                // 換上預載入的圖片
-                card.el.style.backgroundImage = `url('tarot-cards/${randomTarot.img}')`;
-                card.el.style.backgroundSize = 'cover';
-                card.el.style.backgroundPosition = 'center';
-                
-                // 定位在滑鼠/手指附近
-                card.el.style.left = `${x + offsetX - 50}px`;
-                card.el.style.top = `${y + offsetY - 80}px`;
-                
-                // 隨機微小角度旋轉，增加手工占卜散落感
-                card.el.style.transform = `rotate(${(Math.random() - 0.5) * 20}deg)`;
-
-                // 溫柔淡入 (按照你的要求設為 0.35)
-                card.el.style.opacity = '0.35';
-
-                // 3秒後若滑鼠沒再動到附近，該張牌自動沒入黑夜中
-                setTimeout(() => {
-                    if (Date.now() - lastTriggerTime > 2500) {
-                        card.el.style.opacity = '0';
-                    }
-                }, 3000);
+        lanternCards.forEach(card => {
+            // 每幾次重算一次元素位置，確保縮放網頁時依然精準
+            if (!card.rect || Math.random() < 0.05) {
+                card.rect = card.el.getBoundingClientRect();
             }
+
+            if (card.rect.width === 0) return;
+
+            // 計算卡牌中心點坐標
+            const cardCenterX = card.rect.left + card.rect.width / 2;
+            const cardCenterY = card.rect.top + card.rect.height / 2;
+
+            // 🌟 勾股定理：計算滑鼠指針（火把）到卡牌中心的物理距離（像素）
+            const deltaX = x - cardCenterX;
+            const deltaY = y - cardCenterY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            const maxDistance = 220; // 🌟 火把的光照半徑 (220px)
+
+            if (distance < maxDistance) {
+                // 越靠近中心，亮度越高
+                const factor = 1 - (distance / maxDistance); // 0 到 1 之間
+                
+                // 按照你的要求，最高明亮透明度限制在 0.45 左右
+                const targetOpacity = baseOpacity + (0.45 - baseOpacity) * factor;
+                card.el.style.opacity = targetOpacity;
+                
+                // 被照亮時，壁畫色彩會稍微變清晰（brightness 提高）
+                card.el.style.filter = isNight 
+                    ? `sepia(0.3) contrast(1) brightness(${0.7 + 0.3 * factor})`
+                    : `sepia(0.1) contrast(1) brightness(${0.9 + 0.1 * factor})`;
+            } else {
+                // 超出火把範圍，退回深邃的微弱背景色
+                card.el.style.opacity = baseOpacity;
+                card.el.style.filter = isNight 
+                    ? 'sepia(0.4) contrast(0.95) brightness(0.7)'
+                    : 'sepia(0.2) contrast(0.85) grayscale(0.2)';
+            }
+        });
+    }
+
+    // 3. 監聽火把移動 (防震節流，確保手機運行絕對流暢不發熱)
+    let ticking = false;
+    function handleMove(clientX, clientY) {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                torchLightEffect(clientX, clientY);
+                ticking = false;
+            });
+            ticking = true;
         }
     }
 
-    // 2. 同步監聽電腦滑鼠與手機觸控
     window.addEventListener('mousemove', (e) => {
-        handleLanternMove(e.clientX, e.clientY);
+        handleMove(e.clientX, e.clientY);
     });
 
     window.addEventListener('touchmove', (e) => {
         if (e.touches.length > 0) {
-            handleLanternMove(e.touches[0].clientX, e.touches[0].clientY);
+            handleMove(e.touches[0].clientX, e.touches[0].clientY);
         }
     }, { passive: true });
-    
+
     window.addEventListener('touchstart', (e) => {
         if (e.touches.length > 0) {
-            handleLanternMove(e.touches[0].clientX, e.touches[0].clientY);
+            handleMove(e.touches[0].clientX, e.touches[0].clientY);
         }
     }, { passive: true });
 }
 
-// 確保在頁面載入完成後安全啟動
+// 確保安全啟動
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAmbientLanternEffect);
 } else {
@@ -4623,42 +4685,54 @@ function spawnIllusionButtons() {
     const container = document.getElementById('limit-content');
     if (!container) return;
     
-    // 清除上一次生成的按鈕
+    // 清除舊星辰
     container.querySelectorAll('.illusion-close-btn').forEach(b => b.remove());
 
-    const totalButtons = 4; 
+    const totalButtons = 6; 
     const realIndex = Math.floor(Math.random() * totalButtons);
 
     for (let i = 0; i < totalButtons; i++) {
-        let btn = document.createElement('button');
+        // 🌟 關鍵修正：改用 span 標籤，完美避開全局 button CSS 污染
+        let btn = document.createElement('span');
         btn.className = 'illusion-close-btn';
-        btn.innerHTML = '✭'; 
+        btn.innerHTML = '✦'; 
         
-        // 🌟 優化演算法：分佈在邊緣，但上下左右留出 8% ~ 12% 的安全邊距，絕不飛出框外
+        // 🌟 演算法優化：精準分佈在邊緣，絕對避開正中央的 textarea 區塊
         let top, left;
         if (Math.random() > 0.5) {
-            // 分佈在上下邊緣
-            top = Math.random() > 0.5 ? (8 + Math.random() * 10) : (80 + Math.random() * 10);
-            left = 10 + Math.random() * 80;
+            // 分佈在極靠上或極靠下的安全區
+            top = Math.random() > 0.5 ? (2 + Math.random() * 8) : (82 + Math.random() * 8);
+            left = 5 + Math.random() * 90;
         } else {
-            // 分佈在左右邊緣
-            top = 10 + Math.random() * 80;
-            left = Math.random() > 0.5 ? (8 + Math.random() * 10) : (82 + Math.random() * 10);
+            // 分佈在極靠左或極靠右的安全區
+            top = 5 + Math.random() * 80;
+            left = Math.random() > 0.5 ? (2 + Math.random() * 8) : (88 + Math.random() * 8);
         }
 
         btn.style.top = `${top}%`;
         btn.style.left = `${left}%`;
 
         if (i === realIndex) {
-            // 🌟 真正的出口
-            btn.onclick = closeLimitModal;
-            btn.setAttribute('aria-label', '關閉結界'); 
-            btn.setAttribute('tabindex', '0'); 
-        } else {
-            // 🌟 假的幻影星辰
+            // 真正的出口
             btn.onclick = function(e) {
                 e.stopPropagation();
-                this.classList.add('shatter'); // 觸發優雅旋轉縮小消散
+                closeLimitModal();
+            };
+            btn.setAttribute('role', 'button');
+            btn.setAttribute('aria-label', '解除結界'); 
+            btn.setAttribute('tabindex', '0'); 
+            
+            // 讓鍵盤使用者按 Enter 也能觸發
+            btn.onkeydown = function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    closeLimitModal();
+                }
+            };
+        } else {
+            // 假的幻影星辰
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                this.classList.add('shatter'); 
             };
             btn.setAttribute('aria-hidden', 'true'); 
             btn.setAttribute('tabindex', '-1'); 
