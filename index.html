@@ -1753,39 +1753,54 @@ span.illusion-close-btn.shatter {
     pointer-events: none !important;
 }
 
-/* 🌟 主頁背景神祕壁畫卡牌 */
+/* 🌟 主頁背景神秘壁畫卡牌 - 局部探照燈版 */
 .ambient-lantern-card {
     position: fixed;
-    width: 110px;        /* 稍微放大一點，更有壁畫感 */
-    height: 176px;
+    width: 120px;
+    height: 192px;
     border-radius: 6px;
-    pointer-events: none; /* 穿透點擊，絕不干擾原本網頁的任何輸入 */
-    z-index: 0;          /* 在所有按鈕、輸入框與內容之下 */
+    pointer-events: none; /* 穿透點擊 */
+    z-index: 0;
     background-size: cover;
     background-position: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     
-    /* 🌟 初始狀態：未被火把照亮時，保持極低的神祕低透明度 */
-    opacity: 0.06; 
-    
-    /* 讓火把靠近、遠離時的明暗變化極為絲滑 */
-    transition: opacity 0.4s ease-out, filter 0.4s ease-out;
-    
-    /* 古老壁畫濾鏡：帶點復古與高對比 */
-    filter: sepia(0.3) contrast(0.9) brightness(0.9);
+    /* 🌟 核心控制：卡牌本身永遠是可見的，但亮度很低，就像黑暗中的壁畫 */
+    opacity: 0.6;
+    filter: sepia(0.3) contrast(0.8) brightness(0.15) grayscale(0.4);
+    transition: filter 0.2s ease-out; /* 當火把掃過時，色彩恢復的過渡 */
+
+    /* 🌟 核心黑科技：利用 CSS 遮罩，只在滑鼠周圍 100px 直徑範圍內「高亮」釋放濾鏡 */
+    /* 我們預先定義一個動態放射狀圓形遮罩 */
+    --mask-radius: 90px; /* 火把照亮的半徑範圍，可自由調整大小 */
 }
 
-/* 🌟 日間模式專屬微調 (解決原本隱形的問題) */
+/* 🌟 當滑鼠/手指靠近時，透過 JS 加上 .in-torch-range 激活局部色彩還原 */
+.ambient-lantern-card.in-torch-range {
+    /* 透過 mask 遮罩，計算滑鼠相對於這張卡牌的局部座標，剪出一個高亮圓圈 */
+    -webkit-mask-image: radial-gradient(
+        circle var(--mask-radius) at var(--mx) var(--my), 
+        rgba(0,0,0,1) 0%, 
+        rgba(0,0,0,0.4) 60%, 
+        rgba(0,0,0,0.1) 100%
+    );
+    mask-image: radial-gradient(
+        circle var(--mask-radius) at var(--mx) var(--my), 
+        rgba(0,0,0,1) 0%, 
+        rgba(0,0,0,0.4) 60%, 
+        rgba(0,0,0,0.1) 100%
+    );
+    
+    /* 被火把圓圈照到的地方，濾鏡會被這裡增強（大幅提升亮度與色彩） */
+    filter: sepia(0.2) contrast(1.1) brightness(0.85) grayscale(0);
+}
+
+/* ☀️ 日間模式微調：讓白天模式下的暗處不要那麼黑，像被陰影籠罩而已 */
 :root:not([data-theme="night"]) .ambient-lantern-card {
-    /* 日間背景很亮，調低未照亮時的能見度，並加上淡淡的宮廷灰色濾鏡，使其融入米白背景 */
-    opacity: 0.04;
-    filter: sepia(0.2) contrast(0.85) grayscale(0.2);
+    filter: sepia(0.2) contrast(0.7) brightness(0.6) grayscale(0.5);
 }
-
-/* 🌟 夜間模式專屬微調 */
-[data-theme="night"] .ambient-lantern-card {
-    opacity: 0.08;
-    filter: sepia(0.4) contrast(0.95) brightness(0.7);
+:root:not([data-theme="night"]) .ambient-lantern-card.in-torch-range {
+    filter: sepia(0.1) contrast(1.0) brightness(0.95) grayscale(0);
 }
 </style>
 </head>
@@ -4521,32 +4536,25 @@ function initAmbientLanternEffect() {
     const mainPage = document.getElementById('main-page');
     if (!mainPage || typeof tarotData === 'undefined') return;
 
-    // 清除舊的探照牌（防重複加載）
     document.querySelectorAll('.ambient-lantern-card').forEach(el => el.remove());
 
-    const totalCards = 4; // 🌟 固定在主頁背景的 4 張神祕壁畫
+    const totalCards = 4; 
     const lanternCards = [];
-
-    // 隨機抽選 4 張不重複的塔羅牌
     const shuffledTarot = [...tarotData].sort(() => 0.5 - Math.random());
 
-    // 🌟 在畫面四個象限固定坐標（避開正中央的輸入框與標題）
     const positions = [
-        { top: '12%', left: '8%', rotate: '-12deg' },   // 左上
-        { top: '15%', right: '8%', rotate: '8deg' },    // 右上
-        { bottom: '15%', left: '10%', rotate: '15deg' }, // 左下
-        { bottom: '12%', right: '10%', rotate: '-6deg' } // 右下
+        { top: '12%', left: '8%', rotate: '-12deg' },   
+        { top: '15%', right: '8%', rotate: '8deg' },    
+        { bottom: '15%', left: '10%', rotate: '15deg' }, 
+        { bottom: '12%', right: '10%', rotate: '-6deg' } 
     ];
 
-    // 1. 生成固定壁畫
     for (let i = 0; i < totalCards; i++) {
         if (!shuffledTarot[i]) break;
-
         const cardEl = document.createElement('div');
         cardEl.className = 'ambient-lantern-card';
         cardEl.style.backgroundImage = `url('tarot-cards/${shuffledTarot[i].img}')`;
         
-        // 設定固定佈局位置
         const pos = positions[i];
         if (pos.top) cardEl.style.top = pos.top;
         if (pos.bottom) cardEl.style.bottom = pos.bottom;
@@ -4555,96 +4563,72 @@ function initAmbientLanternEffect() {
         cardEl.style.transform = `rotate(${pos.rotate})`;
 
         document.body.appendChild(cardEl);
-
-        lanternCards.push({
-            el: cardEl,
-            rect: null // 用於快取物理位置
-        });
+        lanternCards.push({ el: cardEl, rect: null });
     }
 
-    // 2. 核心火把距離計算函式
-    function torchLightEffect(x, y) {
-        // 如果主頁被隱藏（進入牌陣或歷史紀錄），背景壁畫完全隱形
+    // 🌟 核心：火把圓形光暈軌跡跟隨
+    function updateTorchLight(x, y) {
         if (mainPage.style.display === 'none' || mainPage.style.opacity === '0') {
-            lanternCards.forEach(c => c.el.style.opacity = '0');
+            lanternCards.forEach(c => c.el.classList.remove('in-torch-range'));
             return;
         }
 
-        // 取得當前的預設基礎透明度（根據日夜模式變動）
-        const isNight = document.documentElement.getAttribute('data-theme') === 'night';
-        const baseOpacity = isNight ? 0.08 : 0.04;
-
         lanternCards.forEach(card => {
-            // 每幾次重算一次元素位置，確保縮放網頁時依然精準
-            if (!card.rect || Math.random() < 0.05) {
+            // 每隔一段時間更新快取邊界，防網頁縮放錯位
+            if (!card.rect || Math.random() < 0.02) {
                 card.rect = card.el.getBoundingClientRect();
             }
 
-            if (card.rect.width === 0) return;
+            const rect = card.rect;
+            if (rect.width === 0) return;
 
-            // 計算卡牌中心點坐標
-            const cardCenterX = card.rect.left + card.rect.width / 2;
-            const cardCenterY = card.rect.top + card.rect.height / 2;
-
-            // 🌟 勾股定理：計算滑鼠指針（火把）到卡牌中心的物理距離（像素）
-            const deltaX = x - cardCenterX;
-            const deltaY = y - cardCenterY;
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-            const maxDistance = 220; // 🌟 火把的光照半徑 (220px)
-
-            if (distance < maxDistance) {
-                // 越靠近中心，亮度越高
-                const factor = 1 - (distance / maxDistance); // 0 到 1 之間
+            // 🌟 計算滑鼠與這張卡牌四周的「碰撞範圍」（允許擴展 100px 溢出照亮）
+            const padding = 100;
+            if (x >= rect.left - padding && x <= rect.right + padding &&
+                y >= rect.top - padding && y <= rect.bottom + padding) {
                 
-                // 按照你的要求，最高明亮透明度限制在 0.45 左右
-                const targetOpacity = baseOpacity + (0.45 - baseOpacity) * factor;
-                card.el.style.opacity = targetOpacity;
-                
-                // 被照亮時，壁畫色彩會稍微變清晰（brightness 提高）
-                card.el.style.filter = isNight 
-                    ? `sepia(0.3) contrast(1) brightness(${0.7 + 0.3 * factor})`
-                    : `sepia(0.1) contrast(1) brightness(${0.9 + 0.1 * factor})`;
+                // 1. 計算滑鼠點擊/游標在這張卡牌內部的「相對像素坐標」
+                const relativeX = x - rect.left;
+                const relativeY = y - rect.top;
+
+                // 2. 將這個坐標透過 CSS 變數傳遞給這一張卡牌的 Mask
+                card.el.style.setProperty('--mx', `${relativeX}px`);
+                card.el.style.setProperty('--my', `${relativeY}px`);
+
+                // 3. 點亮該區域
+                card.el.classList.add('in-torch-range');
             } else {
-                // 超出火把範圍，退回深邃的微弱背景色
-                card.el.style.opacity = baseOpacity;
-                card.el.style.filter = isNight 
-                    ? 'sepia(0.4) contrast(0.95) brightness(0.7)'
-                    : 'sepia(0.2) contrast(0.85) grayscale(0.2)';
+                // 遠離後移除局部高亮，回歸幽暗壁畫狀態
+                card.el.classList.remove('in-torch-range');
+                // 清除遮罩，節省手機 GPU 渲染效能
+                card.el.style.removeProperty('-webkit-mask-image');
+                card.el.style.removeProperty('mask-image');
             }
         });
     }
 
-    // 3. 監聽火把移動 (防震節流，確保手機運行絕對流暢不發熱)
+    // 監聽指針（效能節流優化）
     let ticking = false;
     function handleMove(clientX, clientY) {
         if (!ticking) {
             window.requestAnimationFrame(() => {
-                torchLightEffect(clientX, clientY);
+                updateTorchLight(clientX, clientY);
                 ticking = false;
             });
             ticking = true;
         }
     }
 
-    window.addEventListener('mousemove', (e) => {
-        handleMove(e.clientX, e.clientY);
-    });
-
+    window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
     window.addEventListener('touchmove', (e) => {
-        if (e.touches.length > 0) {
-            handleMove(e.touches[0].clientX, e.touches[0].clientY);
-        }
+        if (e.touches.length > 0) handleMove(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
-
     window.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 0) {
-            handleMove(e.touches[0].clientX, e.touches[0].clientY);
-        }
+        if (e.touches.length > 0) handleMove(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
 }
 
-// 確保安全啟動
+// 啟動
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAmbientLanternEffect);
 } else {
@@ -4688,7 +4672,7 @@ function spawnIllusionButtons() {
     // 清除舊星辰
     container.querySelectorAll('.illusion-close-btn').forEach(b => b.remove());
 
-    const totalButtons = 6; 
+    const totalButtons = 4; 
     const realIndex = Math.floor(Math.random() * totalButtons);
 
     for (let i = 0; i < totalButtons; i++) {
@@ -4742,7 +4726,7 @@ function spawnIllusionButtons() {
     }
 }
 
-// 全域宣告一個變態的監聽器變數，方便註冊與卸載
+// 全域宣告一個監聽器變數，方便註冊與卸載
 let limitModalFocusHandler = null;
 
 function openLimitModal() {
