@@ -113,7 +113,7 @@
             --text-color: #4f401b;
             --gold-primary: #dbba18;
             --gold-light: #faf6cf;
-            --panel-bg: linear-gradient(135deg, #fffaf0, #f8f5f0);
+            --panel-bg: linear-gradient(135deg, rgba(255, 250, 240, 0.97), rgba(248, 245, 240, 0.9));
             --border-thin: 1px solid rgba(182, 154, 104, 0.3);
             --glass-shadow: 0 -10px 40px rgba(0,0,0,0.03);
             --input-bg: rgba(0,0,0,0.02);
@@ -1511,18 +1511,18 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
     border: none;
     cursor: pointer;
     z-index: 9999;
-    font-size: 16px;
+    font-size: 16px; opacity: 0.7;
 }
 .history-fab:hover {
     background: var(--text-color); 
     border: 2px;
     border-color: var(--gold-primary);
-    box-shawdow: 
+    box-shawdow: var(--gold-primary);
 }
 
 /* 歷史記錄彈窗內部精細優化 */
 #history-modal .modal-content {
-    background: var(--panel-bg);
+    background: var(--bg-color);
     color: var(--text-color);
     border: var(--border-thin);
     box-shadow: var(--glass-shadow);
@@ -1719,38 +1719,53 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
     }
 }
 
-/* 🌟 神秘學幻影關閉按鈕 */
+/* 🌟 完善後的神秘學幻影關閉按鈕（星辰） */
 .illusion-close-btn {
     position: absolute;
-    width: 30px;
-    height: 30px;
-    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    color: var(--text-color);
-    font-size: 14px;
+    width: 36px;
+    height: 36px;
+    background: transparent; /* 改為透明背景，靠 text-shadow 營造星辰感 */
+    border: none;            /* 移除粗暴的按鈕邊框 */
+    color: var(--gold-primary, #dbba18); /* 強制套用你的神秘學金色 */
+    font-size: 20px;         /* 放大星芒符號 */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 5; /* 在文字層之下，但在背景之上 */
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+    z-index: 20;            /* 🌟 關鍵修正：必須大於 10，才能浮在文字與輸入框之上 */
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    text-shadow: 0 0 10px rgba(219, 186, 24, 0.6);
+    pointer-events: auto;    /* 確保滑鼠可以點到 */
 }
 
+/* 鍵盤聚焦或滑鼠Hover時的優雅脈衝 */
 .illusion-close-btn:hover {
-    transform: scale(1.2);
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    transform: scale(1.3);
+    color: #fff;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 1);
 }
 
-/* 點錯時的消散動畫 */
+/* 點錯時的星辰消散動畫 */
 .illusion-close-btn.shatter {
-    transform: scale(0) rotate(90deg);
+    transform: scale(0) rotate(180deg);
     opacity: 0;
     pointer-events: none;
 }
 
-
+/* 🌟 主頁背景神祕探照燈卡牌 */
+.ambient-lantern-card {
+    position: fixed;
+    width: 100px;        /* 淡淡隱現的卡牌大小，可自行調整 */
+    height: 160px;
+    border-radius: 6px;
+    pointer-events: none; /* 絕對不能干擾原本輸入框的點擊 */
+    z-index: 0;          /* 放在 body 背景之上，但必須在所有按鈕、輸入框與 main-page 內容之下 */
+    opacity: 0;
+    transition: opacity 0.8s ease; /* 淡入淡出要慢、要有迷霧感 */
+    mix-blend-mode: overlay; /* 與你的背景雜訊、底色進行高級神祕學融合，若想更清晰可改為 normal */
+    box-shadow: 0 0 15px rgba(182, 154, 104, 0.1);
+    filter: sepia(0.3) contrast(0.9); /* 稍微帶點復古黃褐色，融合宮廷風 */
+}
 </style>
 </head>
 <body>
@@ -1899,20 +1914,20 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
     </div>
 </div>
 
-<div id="limit-modal" class="modal-overlay" style="display:none;">
-    <div class="modal-content" id="limit-content" style="position: relative; overflow: hidden; min-height: 250px;">
+<div id="limit-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal-content" id="limit-content" style="position: relative; overflow: hidden; height: 320px; width: 90%; max-width: 400px; display: flex; flex-direction: column; justify-content: center;">
         
-        <div style="position: relative; z-index: 10;">
-            <h2>今日額度已滿</h2>
-            <p style="margin-bottom: 20px;">
+        <div style="position: relative; z-index: 5; text-align: center;">
+            <h2 style="color: var(--gold-primary);">今日額度已滿</h2>
+            <p style="margin-bottom: 20px; font-size: 0.95em; line-height: 1.6;">
                 每日提供 2 次免費占卜。<br>
-                <span style="font-size: 0.9em; opacity: 0.8;">輸入密鑰，或憑直覺點擊周圍的星辰退出頁面結界。</span>
+                <span style="font-size: 0.85em; opacity: 0.8; color: var(--gold-secondary);">輸入密鑰，或點擊星辰退出頁面結界。</span>
             </p>
             
-            <textarea id="unlock-input" placeholder="輸入密鑰" style="width: 80%; margin-bottom: 15px;"></textarea>
+            <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--gold-primary); color: #fff; border-radius: 4px; resize: none;"></textarea>
             
             <div>
-                <button onclick="handleUnlock()">驗證密鑰</button>
+                <button class="btn-outline" onclick="handleUnlock()">驗證密鑰</button>
             </div>
         </div>
         
@@ -4265,7 +4280,7 @@ function openHistoryModal() {
         let adviceCardName = '';
         if (rec.hasAdvice && rec.adviceData && rec.adviceData.card) {
             adviceBadge = `<span class="badge-advice">✤ 建議</span>`;
-            adviceCardName = ` ➔ [建議：${rec.adviceData.card.name}${rec.adviceData.card.isReversed ? '↓':'↑'}]`;
+            adviceCardName = ` ➔ [${rec.adviceData.card.name}${rec.adviceData.card.isReversed ? '↓':'↑'}]`;
         }
         
         const modeLabel = rec.spreadMode === 'triple' ? '三牌陣' : '單牌指引';
@@ -4479,6 +4494,101 @@ function trapFocus(e) {
     }
 }
 
+// 🌟 啟動主頁背景「提燈尋牌」探照燈特效
+function initAmbientLanternEffect() {
+    const mainPage = document.getElementById('main-page');
+    if (!mainPage || typeof tarotData === 'undefined') return;
+
+    const cardCount = 2; // 同時最多出現 2 張卡牌
+    const lanternCards = [];
+
+    // 1. 建立背景探照牌容器
+    for (let i = 0; i < cardCount; i++) {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'ambient-lantern-card';
+        document.body.appendChild(cardEl);
+        lanternCards.push({
+            el: cardEl,
+            active: false,
+            lastX: 0,
+            lastY: 0
+        });
+    }
+
+    let lastTriggerTime = 0;
+
+    function handleLanternMove(x, y) {
+        // 確保只有在「主頁顯示中」才觸發背景探照燈，抽牌或看歷史紀錄時不干擾
+        if (mainPage.style.display === 'none' || mainPage.style.opacity === '0') {
+            lanternCards.forEach(c => c.el.style.opacity = '0');
+            return;
+        }
+
+        const now = Date.now();
+        // 節流限制：每 600ms 才允許卡牌隨機更換一次位置與圖片，避免畫面瘋狂閃爍
+        if (now - lastTriggerTime > 600) {
+            lastTriggerTime = now;
+
+            // 隨機抽選其中一張探照牌進行歸位與顯影
+            const targetIndex = Math.floor(Math.random() * cardCount);
+            const card = lanternCards[targetIndex];
+            const randomTarot = tarotData[Math.floor(Math.random() * tarotData.length)];
+
+            if (card && randomTarot) {
+                // 亂數決定要出現在游標周圍的哪個角落 (範圍 -120px ~ +120px)
+                const offsetX = (Math.random() - 0.5) * 240;
+                const offsetY = (Math.random() - 0.5) * 240;
+
+                // 換上預載入的圖片
+                card.el.style.backgroundImage = `url('tarot-cards/${randomTarot.img}')`;
+                card.el.style.backgroundSize = 'cover';
+                card.el.style.backgroundPosition = 'center';
+                
+                // 定位在滑鼠/手指附近
+                card.el.style.left = `${x + offsetX - 50}px`;
+                card.el.style.top = `${y + offsetY - 80}px`;
+                
+                // 隨機微小角度旋轉，增加手工占卜散落感
+                card.el.style.transform = `rotate(${(Math.random() - 0.5) * 20}deg)`;
+
+                // 溫柔淡入 (按照你的要求設為 0.35)
+                card.el.style.opacity = '0.35';
+
+                // 3秒後若滑鼠沒再動到附近，該張牌自動沒入黑夜中
+                setTimeout(() => {
+                    if (Date.now() - lastTriggerTime > 2500) {
+                        card.el.style.opacity = '0';
+                    }
+                }, 3000);
+            }
+        }
+    }
+
+    // 2. 同步監聽電腦滑鼠與手機觸控
+    window.addEventListener('mousemove', (e) => {
+        handleLanternMove(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+            handleLanternMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+    }, { passive: true });
+    
+    window.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) {
+            handleLanternMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+    }, { passive: true });
+}
+
+// 確保在頁面載入完成後安全啟動
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAmbientLanternEffect);
+} else {
+    initAmbientLanternEffect();
+}
+
 // 🌟 全局監聽 ESC 鍵，優化商業產品的閉合體驗
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' || e.key === 'Esc') {
@@ -4509,64 +4619,116 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// 每次打開 limit-modal 時呼叫這個函數
-function openLimitModal() {
-    const modal = document.getElementById('limit-modal');
-    modal.style.display = 'flex'; // 或 'block'，取決於你的設計
-    spawnIllusionButtons();
-}
-
-function closeLimitModal() {
-    const modal = document.getElementById('limit-modal');
-    modal.style.display = 'none';
-    document.getElementById('unlock-input').value = ''; // 清空輸入框
-}
-
 function spawnIllusionButtons() {
     const container = document.getElementById('limit-content');
+    if (!container) return;
     
-    // 清除上一次生成的按鈕（如果有）
+    // 清除上一次生成的按鈕
     container.querySelectorAll('.illusion-close-btn').forEach(b => b.remove());
 
-    const totalButtons = 5;
-    // 隨機決定哪一個是真正的出口 (0 到 4)
+    const totalButtons = 4; 
     const realIndex = Math.floor(Math.random() * totalButtons);
 
     for (let i = 0; i < totalButtons; i++) {
         let btn = document.createElement('button');
         btn.className = 'illusion-close-btn';
-        btn.innerHTML = '✖'; // 你可以換成 '✦' 或其他特殊符號
+        btn.innerHTML = '✭'; 
         
-        // 🌟 演算法：將按鈕散佈在邊緣，避開中央輸入框區域
+        // 🌟 優化演算法：分佈在邊緣，但上下左右留出 8% ~ 12% 的安全邊距，絕不飛出框外
         let top, left;
         if (Math.random() > 0.5) {
-            // 分佈在上下邊緣 (0~20% 或 80~100%)
-            top = Math.random() > 0.5 ? Math.random() * 20 : 80 + Math.random() * 15;
-            left = Math.random() * 90;
+            // 分佈在上下邊緣
+            top = Math.random() > 0.5 ? (8 + Math.random() * 10) : (80 + Math.random() * 10);
+            left = 10 + Math.random() * 80;
         } else {
-            // 分佈在左右邊緣 (0~20% 或 80~100%)
-            top = Math.random() * 90;
-            left = Math.random() > 0.5 ? Math.random() * 20 : 80 + Math.random() * 15;
+            // 分佈在左右邊緣
+            top = 10 + Math.random() * 80;
+            left = Math.random() > 0.5 ? (8 + Math.random() * 10) : (82 + Math.random() * 10);
         }
 
         btn.style.top = `${top}%`;
         btn.style.left = `${left}%`;
 
         if (i === realIndex) {
-            // 🌟 真正的關閉按鈕
+            // 🌟 真正的出口
             btn.onclick = closeLimitModal;
-            btn.setAttribute('aria-label', '真正的關閉按鈕'); 
-            btn.setAttribute('tabindex', '0'); // A11y: 讓鍵盤使用者可以按到
+            btn.setAttribute('aria-label', '關閉結界'); 
+            btn.setAttribute('tabindex', '0'); 
         } else {
-            // 🌟 假按鈕（幻影）
-            btn.onclick = function() {
-                this.classList.add('shatter'); // 觸發消散動畫
+            // 🌟 假的幻影星辰
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                this.classList.add('shatter'); // 觸發優雅旋轉縮小消散
             };
-            btn.setAttribute('aria-hidden', 'true'); // A11y: 對視障閱讀器隱藏假按鈕，避免混淆
-            btn.setAttribute('tabindex', '-1'); // A11y: 防止鍵盤使用者一直按到假按鈕而生氣
+            btn.setAttribute('aria-hidden', 'true'); 
+            btn.setAttribute('tabindex', '-1'); 
         }
         
         container.appendChild(btn);
+    }
+}
+
+// 全域宣告一個變態的監聽器變數，方便註冊與卸載
+let limitModalFocusHandler = null;
+
+function openLimitModal() {
+    const modal = document.getElementById('limit-modal');
+    if (!modal) return;
+    
+    modal.style.display = 'flex'; 
+    spawnIllusionButtons(); // 生成星辰
+    
+    // 🌟 關鍵：立刻將游標焦點注入到密鑰輸入框內
+    setTimeout(() => {
+        const unlockInput = document.getElementById('unlock-input');
+        if (unlockInput) unlockInput.focus();
+    }, 50);
+
+    // 🌟 建立專屬限制面板的 Focus Trap 機制
+    if (limitModalFocusHandler) window.removeEventListener('keydown', limitModalFocusHandler);
+    
+    limitModalFocusHandler = function(e) {
+        if (e.key !== 'Tab') return;
+        
+        const content = document.getElementById('limit-content');
+        if (!content) return;
+
+        // 撈出當前結界內「真正」可以被聚焦的元素 (排除 tabindex="-1" 的假按鈕)
+        const focusableElements = Array.from(content.querySelectorAll('textarea, button'))
+            .filter(el => el.getAttribute('tabindex') !== '-1');
+            
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) { // Shift + Tab 往回走
+            if (document.activeElement === firstElement) {
+                e.preventDefault();
+                lastElement.focus();
+            }
+        } else { // Tab 往前走
+            if (document.activeElement === lastElement) {
+                e.preventDefault();
+                firstElement.focus();
+            }
+        }
+    };
+
+    window.addEventListener('keydown', limitModalFocusHandler);
+}
+
+function closeLimitModal() {
+    const modal = document.getElementById('limit-modal');
+    if (modal) modal.style.display = 'none';
+    
+    const unlockInput = document.getElementById('unlock-input');
+    if (unlockInput) unlockInput.value = ''; // 清空輸入框
+    
+    // 🌟 完美解除結界，移除 Tab 鎖定監聽器
+    if (limitModalFocusHandler) {
+        window.removeEventListener('keydown', limitModalFocusHandler);
+        limitModalFocusHandler = null;
     }
 }
 </script>
