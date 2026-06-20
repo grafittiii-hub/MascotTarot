@@ -1753,54 +1753,73 @@ span.illusion-close-btn.shatter {
     pointer-events: none !important;
 }
 
-/* 🌟 主頁背景神秘壁畫卡牌 - 局部探照燈版 */
-.ambient-lantern-card {
+/* 🌟 專屬背景卡牌底層容器 - 確保絕對不阻擋任何主頁按鈕 */
+/* 🌟 專屬背景卡牌底層容器 - 增加漸隱動畫支援 */
+#ambient-lantern-container {
     position: fixed;
-    width: 120px;
-    height: 192px;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none; 
+    z-index: -1;          
+    overflow: hidden;
+    opacity: 1;
+    /* 🌟 當離開首頁時，整個容器會一起絲滑淡出 */
+    transition: opacity 0.4s ease;
+}
+
+/* 🌟 主頁背景神秘壁畫卡牌 - 局部探照燈+回應尺寸版 */
+.ambient-lantern-card {
+    position: absolute;
+    width: 24vw;
+    max-width: 110px;
+    aspect-ratio: 1 / 1.6; 
     border-radius: 6px;
-    pointer-events: none; /* 穿透點擊 */
-    z-index: 0;
+    pointer-events: auto;  
+    cursor: pointer;
     background-size: cover;
     background-position: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     
-    /* 🌟 核心控制：卡牌本身永遠是可見的，但亮度很低，就像黑暗中的壁畫 */
-    opacity: 0.6;
-    filter: sepia(0.3) contrast(0.8) brightness(0.15) grayscale(0.4);
-    transition: filter 0.2s ease-out; /* 當火把掃過時，色彩恢復的過渡 */
-
-    /* 🌟 核心黑科技：利用 CSS 遮罩，只在滑鼠周圍 100px 直徑範圍內「高亮」釋放濾鏡 */
-    /* 我們預先定義一個動態放射狀圓形遮罩 */
-    --mask-radius: 90px; /* 火把照亮的半徑範圍，可自由調整大小 */
+    opacity: 0.12;
+    filter: sepia(0.3) contrast(0.8) brightness(0.2) grayscale(0.2);
+    
+    -webkit-mask-image: radial-gradient(circle 0px at -100px -100px, #000 100%, transparent 100%);
+    mask-image: radial-gradient(circle 0px at -100px -100px, #000 100%, transparent 100%);
+    
+    transition: opacity 0.4s ease, filter 0.4s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity; 
 }
 
-/* 🌟 當滑鼠/手指靠近時，透過 JS 加上 .in-torch-range 激活局部色彩還原 */
-.ambient-lantern-card.in-torch-range {
-    /* 透過 mask 遮罩，計算滑鼠相對於這張卡牌的局部座標，剪出一個高亮圓圈 */
-    -webkit-mask-image: radial-gradient(
-        circle var(--mask-radius) at var(--mx) var(--my), 
-        rgba(0,0,0,1) 0%, 
-        rgba(0,0,0,0.4) 60%, 
-        rgba(0,0,0,0.1) 100%
-    );
-    mask-image: radial-gradient(
-        circle var(--mask-radius) at var(--mx) var(--my), 
-        rgba(0,0,0,1) 0%, 
-        rgba(0,0,0,0.4) 60%, 
-        rgba(0,0,0,0.1) 100%
-    );
-    
-    /* 被火把圓圈照到的地方，濾鏡會被這裡增強（大幅提升亮度與色彩） */
-    filter: sepia(0.2) contrast(1.1) brightness(0.85) grayscale(0);
-}
-
-/* ☀️ 日間模式微調：讓白天模式下的暗處不要那麼黑，像被陰影籠罩而已 */
+/* 🌟 日間模式優化：正片疊底水墨羊皮紙效果 */
 :root:not([data-theme="night"]) .ambient-lantern-card {
-    filter: sepia(0.2) contrast(0.7) brightness(0.6) grayscale(0.5);
+    opacity: 0.25;
+    mix-blend-mode: multiply; 
+    filter: sepia(0.4) contrast(0.85) brightness(0.85) grayscale(0.1);
 }
+
+/* 🌟 火把照亮範圍內的狀態 */
+.ambient-lantern-card.in-torch-range {
+    opacity: 0.65; 
+    -webkit-mask-image: radial-gradient(circle 80px at var(--mx) var(--my), rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%);
+    mask-image: radial-gradient(circle 80px at var(--mx) var(--my), rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%);
+}
+
+/* 🌟 夜間模式照亮時恢復豐富色彩 */
+[data-theme="night"] .ambient-lantern-card.in-torch-range {
+    filter: sepia(0.1) contrast(1.15) brightness(0.5) grayscale(0);
+}
+/* 🌟 日間模式照亮時恢復清晰 */
 :root:not([data-theme="night"]) .ambient-lantern-card.in-torch-range {
-    filter: sepia(0.1) contrast(1.0) brightness(0.95) grayscale(0);
+    filter: sepia(0.1) contrast(1.1) brightness(0.65) grayscale(0);
+}
+
+/* 🌟 點擊後沉下去隱形狀態 */
+.ambient-lantern-card.shattered-sink {
+    transform: scale(0.6) translateY(30px) !important; 
+    opacity: 0 !important;
+    pointer-events: none !important; 
 }
 </style>
 </head>
@@ -4536,17 +4555,25 @@ function initAmbientLanternEffect() {
     const mainPage = document.getElementById('main-page');
     if (!mainPage || typeof tarotData === 'undefined') return;
 
+    // 清除舊的容器與卡牌
+    document.getElementById('ambient-lantern-container')?.remove();
     document.querySelectorAll('.ambient-lantern-card').forEach(el => el.remove());
+
+    // 建立專屬的底層容器，確保絕對不擋住主頁按鈕
+    const bgContainer = document.createElement('div');
+    bgContainer.id = 'ambient-lantern-container';
+    document.body.appendChild(bgContainer);
 
     const totalCards = 4; 
     const lanternCards = [];
     const shuffledTarot = [...tarotData].sort(() => 0.5 - Math.random());
 
+    // 百分比佈局
     const positions = [
-        { top: '12%', left: '8%', rotate: '-12deg' },   
-        { top: '15%', right: '8%', rotate: '8deg' },    
-        { bottom: '15%', left: '10%', rotate: '15deg' }, 
-        { bottom: '12%', right: '10%', rotate: '-6deg' } 
+        { top: '10%', left: '6%', rotate: '-10deg' },   
+        { top: '13%', right: '6%', rotate: '8deg' },    
+        { bottom: '25%', left: '8%', rotate: '12deg' }, 
+        { bottom: '11%', right: '8%', rotate: '-6deg' } 
     ];
 
     for (let i = 0; i < totalCards; i++) {
@@ -4560,21 +4587,41 @@ function initAmbientLanternEffect() {
         if (pos.bottom) cardEl.style.bottom = pos.bottom;
         if (pos.left) cardEl.style.left = pos.left;
         if (pos.right) cardEl.style.right = pos.right;
+        
         cardEl.style.transform = `rotate(${pos.rotate})`;
 
-        document.body.appendChild(cardEl);
+        // 點擊卡牌時優雅下沉縮小隱藏
+        cardEl.addEventListener('click', function(e) {
+            e.stopPropagation(); 
+            this.classList.add('shattered-sink');
+        });
+
+        bgContainer.appendChild(cardEl);
         lanternCards.push({ el: cardEl, rect: null });
     }
 
-    // 🌟 核心：火把圓形光暈軌跡跟隨
+    // 🌟 核心修正：火把跟隨與探照門禁控制
     function updateTorchLight(x, y) {
-        if (mainPage.style.display === 'none' || mainPage.style.opacity === '0') {
+        // 🚨 嚴格門禁檢查：如果首頁被隱藏 (display==none) 或 正在淡出 (opacity==0)，或者進入了牌陣檢視，
+        // 則立刻將所有卡牌移出探照範圍並隱形，絕不允許在其他頁面亮起！
+        if (
+            !mainPage || 
+            mainPage.style.display === 'none' || 
+            mainPage.style.opacity === '0' ||
+            document.getElementById('spread-view')?.style.display === 'block'
+        ) {
+            document.getElementById('ambient-lantern-container').style.opacity = '0';
             lanternCards.forEach(c => c.el.classList.remove('in-torch-range'));
             return;
+        } else {
+            // 重新回到首頁時，恢復容器可見度
+            document.getElementById('ambient-lantern-container').style.opacity = '1';
         }
 
         lanternCards.forEach(card => {
-            // 每隔一段時間更新快取邊界，防網頁縮放錯位
+            // 如果這張卡牌已經被點擊隱藏了，就不再計算它
+            if (card.el.classList.contains('shattered-sink')) return;
+
             if (!card.rect || Math.random() < 0.02) {
                 card.rect = card.el.getBoundingClientRect();
             }
@@ -4582,32 +4629,25 @@ function initAmbientLanternEffect() {
             const rect = card.rect;
             if (rect.width === 0) return;
 
-            // 🌟 計算滑鼠與這張卡牌四周的「碰撞範圍」（允許擴展 100px 溢出照亮）
-            const padding = 100;
+            // 觸發探照燈的邊緣緩衝區 (80px)
+            const padding = 80;
             if (x >= rect.left - padding && x <= rect.right + padding &&
                 y >= rect.top - padding && y <= rect.bottom + padding) {
                 
-                // 1. 計算滑鼠點擊/游標在這張卡牌內部的「相對像素坐標」
                 const relativeX = x - rect.left;
                 const relativeY = y - rect.top;
 
-                // 2. 將這個坐標透過 CSS 變數傳遞給這一張卡牌的 Mask
                 card.el.style.setProperty('--mx', `${relativeX}px`);
                 card.el.style.setProperty('--my', `${relativeY}px`);
 
-                // 3. 點亮該區域
                 card.el.classList.add('in-torch-range');
             } else {
-                // 遠離後移除局部高亮，回歸幽暗壁畫狀態
                 card.el.classList.remove('in-torch-range');
-                // 清除遮罩，節省手機 GPU 渲染效能
-                card.el.style.removeProperty('-webkit-mask-image');
-                card.el.style.removeProperty('mask-image');
             }
         });
     }
 
-    // 監聽指針（效能節流優化）
+    // 監聽指針移動
     let ticking = false;
     function handleMove(clientX, clientY) {
         if (!ticking) {
