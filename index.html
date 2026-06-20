@@ -88,7 +88,7 @@
 
 /* 3. 當滑過普通按鈕或連結時，稍微放大 */
 #custom-magic-cursor.hover-link {
-    transform: translate(-50%, -50%) scale(1.3);
+    transform: translate(-50%, -50%) scale(1.4);
     color: #fff;
     text-shadow: 0 0 10px var(--gold-primary);
 }
@@ -721,7 +721,6 @@ letter-spacing: 5px;
     border: 1px solid var(--gold-primary);
     color: var(--text-color);
     padding: 8px 25px;
-    border-radius: 50px;
     font-size: 0.75rem;
     letter-spacing: 0.15rem;
     cursor: pointer;
@@ -1105,6 +1104,9 @@ width: 120px; height: 180px; will-change: transform, opacity;}
 .card-wrap.ready-to-glow:active .card-inner {
     top: -12px !important; /* 強制執行上升 12px */
     
+.card-wrap.ready-to-glow:focus-visible .card-inner {
+    top: -12px !important;
+}
     /* 🚨 這裡「故意不寫死任何 box-shadow」！
        這樣一來，它就會自動、完美地去讀取你原本在程式碼上方早就寫好的：
        .element-fire:hover .card-inner、.element-water:hover .card-inner 等專屬彩色光暈！ */
@@ -1169,10 +1171,6 @@ scrollbar-width: none; /* 針對 Firefox */
             .report-layout-triple .result-block:last-child {
                 margin-right: 0;
             }
-   .card-wrap {
-        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), 
-                    opacity 0.4s ease;  /* Halve the duration */
-    }
     
     #result-panel {
         transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);  /* 0.9s → 0.5s */
@@ -1194,6 +1192,14 @@ scrollbar-width: none; /* 針對 Firefox */
     transition: transform 0.8s cubic-bezier(0.25, 1, 0.3, 1), 
                 scale 0.4s cubic-bezier(0.25, 1, 0.3, 1),
                 opacity 0.8s ease ;
+}
+
+/* CSS：加入專屬的高級焦點視覺，取代瀏覽器預設的醜陋藍框 */
+.card-wrap:focus-visible {
+    outline: none;
+    /* 利用原有的光暈機制或加上優雅的金邊 */
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.4) !important; border-radius: 12px;
+    transform: translateY(-12px); /* 讓鍵盤選中時也有升起的互動感 */
 }
 
 /* 2. 當手指/滑鼠正在拖曳面板時，拔除過渡動畫，讓卡牌縮放 100% 零延遲跟隨手勢，絕不黏糊 */
@@ -1492,6 +1498,258 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
     100% { transform: scale(0.9); opacity: 0.4; box-shadow: 0 0 0 0 rgba(219, 186, 24, 0); }
 }
 
+/* 歷史記錄懸浮按鈕 */
+.history-fab {
+    position: fixed;
+    bottom: 7dvh;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--gold-primary) 20%, transparent);
+    color: var(--text-color);
+    border: none;
+    cursor: pointer;
+    z-index: 9999;
+    font-size: 16px;
+}
+.history-fab:hover {
+    background: var(--text-color); 
+    border: 2px;
+    border-color: var(--gold-primary);
+    box-shawdow: 
+}
+
+/* 歷史記錄彈窗內部精細優化 */
+#history-modal .modal-content {
+    background: var(--panel-bg);
+    color: var(--text-color);
+    border: var(--border-thin);
+    box-shadow: var(--glass-shadow);
+    max-width: 450px;
+    width: 85%;
+    max-height: 70vh;
+    padding: 30px 25px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+#history-modal h2 {
+    color: var(--gold-primary);
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+/* 滾動條美化 */
+#history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding:0 5px; 
+}
+
+#history-list::-webkit-scrollbar {
+    width: 4px;
+}
+#history-list::-webkit-scrollbar-thumb {
+    background: var(--gold-primary);
+    border-radius: 2px;
+}
+
+/* 🕒 歷史紀錄項目卡牌化樣式 */
+.history-item-card {
+    /* 1. 消除 button 的預設邊框與內距，讓它恢復 div 的乾淨外觀 */
+    background: none;
+    border: none;
+    padding: 10px; /* 根據你原本的設計需求調整 */
+    margin: 5px 0;
+    width: 100%; /* 確保按鈕填滿容器，邊緣就會對齊 */
+    
+    /* 2. 恢復原本 div 的佈局邏輯 */
+    display: block; 
+    text-align: center; /* 確保文字靠左對齊，不再置中 */
+    cursor: pointer;
+    font: inherit; /* 繼承原本的字體 */
+    
+    /* 3. 視覺上的高級感，確保選中時有效果但不會跑版 */
+    box-sizing: border-box; /* 這是關鍵，確保 padding 不會撐破邊緣 */
+    transition: all 0.2s ease;
+    border-radius: 8px; /* 保持圓角一致性 */
+}
+
+/* 當滑鼠懸停或鍵盤選中時的優化 */
+.history-item-card:hover, 
+.history-item-card:focus-visible {
+    background-color: rgba(255, 255, 255, 0.1);
+    outline: 2px solid var(--gold-primary, #d4af37);border-color: var(--gold-primary);
+    outline-offset: -2px; /* 讓邊框向內收，不影響外層對齊 */
+}
+
+/* 夜間模式背景微調 */
+[data-theme="night"] .history-item-card {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* 左上角精緻範疇標籤 */
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-badge-cat {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--text-color);
+    background: var(--gold-light);
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(219, 186, 24, 0.15);
+}
+
+.history-item-mode {
+    font-size: 0.7rem;
+    opacity: 0.5;
+    letter-spacing: 0.5px;
+}
+
+/* 問題與卡牌線 */
+.history-item-query {
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.4;
+    opacity: 0.9;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.history-item-cards-line {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--text-color);
+    letter-spacing: 0.5px;
+    margin: 12px 0;
+}
+
+.history-item-footer-time {
+    font-size: 0.65rem;
+    opacity: 0.5;
+    text-align: center; 
+    margin-bottom: 8px;
+}
+
+/* 建議標籤小優化 */
+.badge-advice {
+    font-size: 0.7rem;
+    background: rgba(219, 186, 24, 0.15);
+    color: var(--gold-primary);
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: 5px;
+    font-weight: normal;
+}
+/* 關閉按鈕 */
+.history-close-btn {
+    background: transparent;
+    color: var(--text-color);
+    border: var(--border-thin);
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.history-close-btn:hover {
+    background: var(--gold-light);
+    border-color: var(--gold-primary);
+}
+
+/* 歷史記錄關閉按鈕的優雅懸停回饋 */
+#history-close-btn {
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+#history-close-btn:hover {
+    opacity: 1;
+    color: var(--gold-primary) !important;
+    border-color: var(--gold-primary) !important;
+    background: rgba(182, 154, 104, 0.1) !important;
+}
+/* 🌟 商業級重設：讓按鈕完美融入文本，同時具備高級焦點提示 */
+.a11y-text-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    display: inline;
+}
+
+/* 當使用者用鍵盤 Tab 選中它時，顯示優雅的雙重光暈提示，而不是瀏覽器醜陋的藍框 */
+.a11y-text-btn:focus-visible {
+    outline: 2px solid var(--text-color, #fff);
+    outline-offset: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    /* 針對塔羅牌的特別處理：取消光暈動畫，直接顯示結果 */
+    .liquid-cocoon-svg.run-cocoon {
+        display: none !important; 
+    }
+}
+
+/* 🌟 神秘學幻影關閉按鈕 */
+.illusion-close-btn {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    color: var(--text-color);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5; /* 在文字層之下，但在背景之上 */
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.illusion-close-btn:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+/* 點錯時的消散動畫 */
+.illusion-close-btn.shatter {
+    transform: scale(0) rotate(90deg);
+    opacity: 0;
+    pointer-events: none;
+}
+
 
 </style>
 </head>
@@ -1527,15 +1785,15 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
         <div class="input-group">
             <div class="label">Category</div>
             <div class="grid-3">
-                <button class="btn-outline cat-btn" onclick="setCat(this, '學業')">學業</button>
-                <button class="btn-outline cat-btn" onclick="setCat(this, '事業')">事業</button>
-                <button class="btn-outline cat-btn" onclick="setCat(this, '愛情')">愛情</button>
-                <button class="btn-outline cat-btn" onclick="setCat(this, '親友')">親友</button>
-                <button class="btn-outline cat-btn" onclick="setCat(this, '健康')">健康</button>
-                <button class="btn-outline cat-btn" onclick="setCat(this, '心靈')">心靈</button>
-                <button class="btn-outline cat-btn" onclick="setCat(this, '旅程')">旅程</button>
-                <button class="btn-outline cat-btn" onclick="setCat(this, '決策')">決策</button>
-                <button class="btn-outline cat-btn" onclick="setCat(this, '其他')">其他</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '學業')" aria-label="學業">學業</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '事業')" aria-label="事業">事業</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '愛情')" aria-label="愛情">愛情</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '親友')" aria-label="親友">親友</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '健康')" aria-label="健康">健康</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '心靈')" aria-label="心靈">心靈</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '旅程')" aria-label="旅程">旅程</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '決策')" aria-label="決策">決策</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '其他')" aria-label="其他">其他</button>
             </div>
         </div>
 
@@ -1557,13 +1815,14 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
         <div class="footer-content">
             <span>Grafittiii© 2026</span>
             <span class="footer-divider">|</span>
-            <span onclick="openNotice()" style="text-decoration: underline; cursor: pointer;">占卜須知</span>
+            <button onclick="openNotice()" class="a11y-text-btn" aria-label="打開占卜須知彈窗">占卜須知</button>
             <span class="footer-divider">|</span>
             <a href="https://www.instagram.com/grafittiii_uru/" target="_blank" class="footer-link">Instagram</a>
             <span class="footer-divider">|</span>
             <a href="https://payme.hsbc/jlpl22" target="_blank" class="footer-link">請我喝奶茶~</a>
         </div> 
     </footer>
+<button class="history-fab" onclick="openHistoryModal()">🕒</button>
 </div>
 
     <div id="spread-view" onclick="retractCards(event)">
@@ -1582,7 +1841,7 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
 
     <div id="result-panel">
         <div style="font-size:0.8rem; opacity:0.5; margin-bottom: 20px;" id="report-question"></div>
-        <div id="report-content"></div>
+        <div id="report-content" aria-live="polite"></div>
         
         <div id="advice-section" style="display:none; border-top: var(--border-thin); padding: 25px 0px 10px;">
             <div class="label" style="margin-bottom:15px;">Guidance</div>
@@ -1641,19 +1900,31 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
 </div>
 
 <div id="limit-modal" class="modal-overlay" style="display:none;">
-    <div class="modal-content">
-        <h2>今日額度已滿</h2>
-        <p style="margin-bottom: 20px;">每日提供 2 次免費占卜。<br>請輸入密鑰解鎖次數：</p>
+    <div class="modal-content" id="limit-content" style="position: relative; overflow: hidden; min-height: 250px;">
         
-        <textarea id="unlock-input" placeholder="輸入密鑰" style="width: 80%; margin-bottom: 15px;"></textarea>
-        
-        <div>
-            <button onclick="handleUnlock()">驗證密鑰</button>
+        <div style="position: relative; z-index: 10;">
+            <h2>今日額度已滿</h2>
+            <p style="margin-bottom: 20px;">
+                每日提供 2 次免費占卜。<br>
+                <span style="font-size: 0.9em; opacity: 0.8;">輸入密鑰，或憑直覺點擊周圍的星辰退出頁面結界。</span>
+            </p>
+            
+            <textarea id="unlock-input" placeholder="輸入密鑰" style="width: 80%; margin-bottom: 15px;"></textarea>
+            
+            <div>
+                <button onclick="handleUnlock()">驗證密鑰</button>
+            </div>
         </div>
+        
     </div>
 </div>
-
-
+<div id="history-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="history-title">
+    <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+        <h2 id="history-title">歷史占卜記錄</h2>
+        <div id="history-list"></div>
+        <button id="history-close-btn" class="btn-outline" onclick="closeHistoryModal()" style="margin-top: 15px; width: 100%; pointer-events: auto;" tabindex="0">關閉</button>
+    </div>
+</div>
     <script>
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('copy', e => e.preventDefault());
@@ -1706,7 +1977,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCursor() {
         // 加上一點點延遲緩動效果 (0.2)，讓滑鼠看起來有靈動的漂浮感
         cursorX += (mouseX - cursorX) * 0.85;
-        cursorY += (mouseY - cursorY) * 0.85;
+        cursorY += (mouseY - cursorY) * 0.95;
         
         magicCursor.style.left = `${cursorX}px`;
         magicCursor.style.top = `${cursorY}px`;
@@ -1844,7 +2115,7 @@ function getLayoutMetrics(totalCards, progress) {
 
     let baseScale = 1.0;
     let targetScale = 1.3; 
-    let baseGap = 28;
+    let baseGap = 40;
     let gapCompensationRatio = 0; // 正數代表下拉時縮窄，負數代表下拉時撐開
 
     if (isMobile) {
@@ -2055,7 +2326,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         panelObserver.observe(resultPanel, { attributes: true, attributeFilter: ['style', 'class'] });
     }
-}); // 🎯 完美的結尾大括號，徹底根除全域語法錯誤
+});
 
 
 // ==========================================
@@ -2167,7 +2438,7 @@ const liquidCocoonSVG = `
 
             { id: "4", name: "皇帝", img: "card4.png", element: "Fire", type: "solo", gaze: "forward",
 
-                upright: { keywords: ["權威", "結構", "穩定"], general_meaning: "代表紀律、領導力與穩定的結構。", spread_meanings: { past: "穩固的基礎是成功的關鍵。", present: "需要理智與果斷的決策。", future: "將會獲得長期的穩定。", my_view: "你希望掌握全局。", their_view: "對方視你為可靠的人。", current_status: "組織嚴密且有序發展。" }, advice: "運用邏輯與意志力。" },
+                upright: { keywords: ["權威", "結構", "穩定"], general_meaning: "代表紀律、領導力與穩定的結構。", spread_meanings: { past: "穩固的基礎是成功的關鍵。", present: "需要理智與果斷的決策。", future: "將會獲得長期的穩定。", my_view: "你希望掌握全局。", their_view: "對方視你為可靠的人。", current_status: "組織严密且有序發展。" }, advice: "運用邏輯與意志力。" },
 
                 reversed: { keywords: ["專橫", "僵化", "缺乏自律"], general_meaning: "警告不要過於固執，或因缺乏秩序而失控。", spread_meanings: { past: "曾受困於嚴苛的規則。", present: "感到壓力過大或受制於人。", future: "結構可能因僵化而崩解。", my_view: "你覺得深受束縛。", their_view: "對方覺得你太霸道。", current_status: "權力鬥爭或管理不善。" }, advice: "放鬆控制，展現靈活性。" }
 
@@ -2431,6 +2702,18 @@ function prebuildDeckDOM() {
         const wrapper = document.createElement('div');
         wrapper.className = 'card-wrap';
         wrapper.style.display = 'none'; // 初始隱藏
+	// 在創建卡牌 DOM 的邏輯中加入 tabindex 與 aria-role
+	wrapper.setAttribute('tabindex', '0');
+	wrapper.setAttribute('role', 'button');
+	wrapper.setAttribute('aria-label', '抽取這張牌');
+
+	// 監聽鍵盤 Enter 鍵，讓鍵盤使用者也能「點擊」抽牌
+	wrapper.addEventListener('keydown', function(e) {
+	    if (e.key === 'Enter' || e.key === ' ') {
+ 	       e.preventDefault();
+   	     this.click(); // 觸發原本寫好的點擊事件
+ 	   }
+	});
         
         // 這裡完全保留你提供的 HTML 結構，包含 img 的樣式
         wrapper.innerHTML = `
@@ -3001,7 +3284,7 @@ function finalizeSelection() {
     drawnCards.forEach(drawn => {
         drawn.elementDOM.style.setProperty('pointer-events', 'none', 'important');
     });
-
+HistoryManager.save(drawnCards);
     // --- 階段 1：未選卡牌退場離開 (T = 0ms, 耗時 500ms) ---
     document.querySelectorAll('.card-wrap:not(.confirmed)').forEach(el => {
         el.style.transition = 'opacity 0.5s ease-out, left 0.5s ease-in, bottom 0.5s ease-in, transform 0.5s ease-in'; 
@@ -3108,63 +3391,93 @@ function finalizeSelection() {
     }, 3300);
 }
 
-        function generateReport() {
-            try {
-                const panel = document.getElementById('result-panel');
-                const content = document.getElementById('report-content');
-                const qStr = document.getElementById('q-input').value.trim();
-                
-                document.getElementById('report-question').innerText = qStr ? `你的提問：${qStr}` : `占卜範疇：${currentCategory}`;
+function generateReport(isHistoryView = false) {
+    try {
+        const panel = document.getElementById('result-panel');
+        const content = document.getElementById('report-content');
+        const adviceSection = document.getElementById('advice-section');
+        const adviceContent = document.getElementById('advice-content');
+        const qStr = document.getElementById('q-input').value.trim();
+        
+        document.getElementById('report-question').innerText = qStr ? `你的提問：${qStr}` : `占卜範疇：${currentCategory}`;
 
-                let html = '';
-                const isTriple = spreadMode === 'triple';
-                
-                const tripleLabels = (isRelationship && (currentCategory === '愛情' || currentCategory === '親友')) 
-                    ? [{label: '我的看法', key: 'my_view'}, {label: '對方的看法', key: 'their_view'}, {label: '現況', key: 'current_status'}]
-                    : [{label: '過去', key: 'past'}, {label: '現在', key: 'present'}, {label: '未來', key: 'future'}];
+        let html = '';
+        const isTriple = spreadMode === 'triple';
+        
+        const tripleLabels = (isRelationship && (currentCategory === '愛情' || currentCategory === '親友')) 
+            ? [{label: '我的看法', key: 'my_view'}, {label: '對方的看法', key: 'their_view'}, {label: '現況', key: 'current_status'}]
+            : [{label: '過去', key: 'past'}, {label: '現在', key: 'present'}, {label: '未來', key: 'future'}];
 
-                drawnCards.forEach((card, i) => {
-                    let stateData = card.isReversed ? card.reversed : card.upright;
-                    if (!stateData) stateData = card.upright; 
-                    
-                    let posLabel = '核心指引';
-                    let meaningText = stateData.general_meaning || '牌義正在連結中...';
+        // 🌟 核心修改：將主牌與建議牌分開，防止破壞三牌陣排版
+        const mainCards = drawnCards.filter(c => !c.isAdvice);
+        const adviceCard = drawnCards.find(c => c.isAdvice);
 
-                    if (isTriple) {
-                        posLabel = tripleLabels[i].label;
-                        if (stateData.spread_meanings && stateData.spread_meanings[tripleLabels[i].key]) {
-                            meaningText = stateData.spread_meanings[tripleLabels[i].key];
-                        }
-                    } else {
-                        if (isRelationship && (currentCategory === '愛情' || currentCategory === '親友')) {
-                            meaningText = stateData.advice || meaningText;
-                            posLabel = '關係建議'; 
-                        }
-                    }
+        mainCards.forEach((card, i) => {
+            let stateData = card.isReversed ? card.reversed : card.upright;
+            if (!stateData) stateData = card.upright; 
+            
+            let posLabel = '核心指引';
+            let meaningText = stateData.general_meaning || '牌義正在連結中...';
 
-                    const kwStr = (stateData.keywords && Array.isArray(stateData.keywords)) ? stateData.keywords.join(' / ') : '';
-
-                    html += `
-                        <div class="result-block">
-                            <div class="res-position">${posLabel}</div>
-                            <div class="res-title">${card.name} ${card.isReversed ? '(逆位)' : '(正位)'}</div>
-                            <div class="res-position" style="color:var(--text-color); opacity:0.6;">Keywords: ${kwStr}</div>
-                            <div class="res-text">${meaningText}</div>
-                        </div>
-                    `;
-                });
-
-                content.innerHTML = isTriple ? `<div class="report-layout-triple">${html}</div>` : html;
-                panel.classList.add('active');
-                document.getElementById('advice-section').style.display = 'block';
-
-                document.getElementById('retry-btn').style.display = 'none';
-
-            } catch (error) {
-                console.error("生成報告時發生錯誤：", error);
-if (document.getElementById('retry-btn')) document.getElementById('retry-btn').style.display = 'block';
+            if (isTriple) {
+                posLabel = tripleLabels[i].label;
+                if (stateData.spread_meanings && stateData.spread_meanings[tripleLabels[i].key]) {
+                    meaningText = stateData.spread_meanings[tripleLabels[i].key];
+                }
+            } else {
+                if (isRelationship && (currentCategory === '愛情' || currentCategory === '親友')) {
+                    meaningText = stateData.advice || meaningText;
+                    posLabel = '關係建議'; 
+                }
             }
+
+            const kwStr = (stateData.keywords && Array.isArray(stateData.keywords)) ? stateData.keywords.join(' / ') : '';
+
+            html += `
+                <div class="result-block">
+                    <div class="res-position">${posLabel}</div>
+                    <div class="res-title">${card.name} ${card.isReversed ? '(逆位)' : '(正位)'}</div>
+                    <div class="res-position" style="color:var(--text-color); opacity:0.6;">Keywords: ${kwStr}</div>
+                    <div class="res-text">${meaningText}</div>
+                </div>
+            `;
+        });
+
+        content.innerHTML = isTriple ? `<div class="report-layout-triple">${html}</div>` : html;
+        panel.classList.add('active');
+
+        // 🌟 核心修改：判斷是否為歷史模式，智慧切換按鈕與內容
+        if (isHistoryView) {
+            if (adviceSection) adviceSection.style.display = 'none'; // 歷史紀錄隱藏抽取按鈕
+            
+            if (adviceCard && adviceContent) {
+                // 如果歷史紀錄中有建議牌，直接寫入建議內容並顯示
+                adviceContent.innerHTML = `
+                    <div class="result-block" style="border-color: var(--text-color); padding-left: 20px;">
+                        <div class="res-position" style="color: var(--text-color);">追加建議</div>
+                        <div class="res-title">${adviceCard.name} ${adviceCard.isReversed ? '(逆位)' : '(正位)'}</div>
+                        <div class="res-text"><strong>建議：</strong>${adviceCard.adviceText || '跟隨內心的指引。'}</div>
+                    </div>
+                `;
+                adviceContent.style.opacity = '1';
+                adviceContent.style.animation = 'none'; // 歷史紀錄直接顯示，不需動畫
+            } else if (adviceContent) {
+                adviceContent.innerHTML = ''; // 若無建議牌則清空
+            }
+        } else {
+            if (adviceSection) adviceSection.style.display = 'block'; // 正常新占卜，開放追問按鈕
+            if (adviceContent) adviceContent.innerHTML = ''; // 清空先前的建議
         }
+        
+        if (document.getElementById('retry-btn')) {
+            document.getElementById('retry-btn').style.display = 'none';
+        }
+    } catch (error) {
+        console.error("生成報告時發生錯誤：", error);
+        if (document.getElementById('retry-btn')) document.getElementById('retry-btn').style.display = 'block';
+    }
+}
+
 
 // 眼神對視與交互偵測系統
 function analyzeInteractions(results) {
@@ -3266,6 +3579,9 @@ function relayoutCards(transitionStyle = 'transform 0.8s cubic-bezier(0.25, 1, 0
     });
 }
 
+
+
+
 function drawAdvice() {
     document.getElementById('advice-section').style.display = 'none'; 
     
@@ -3311,7 +3627,12 @@ function drawAdvice() {
     container.appendChild(wrapper);
 
     // 👑 將新卡牌推入全局狀態
-    drawnCards.push({ ...advCard, isReversed, elementDOM: wrapper });
+    drawnCards.push({ ...advCard, isReversed, elementDOM: wrapper, 
+        isAdvice: true, 
+        adviceText: stateData.advice });
+
+// 🌟 呼叫剛才寫好的合併儲存功能
+    HistoryManager.saveAdviceToCurrentRecord(advCard, stateData.advice);
 
     // 🌟 核心修正：在呼叫排版引擎之前，暫時將前三張牌的 ready-to-glow 拔除！
     // 這樣它們在重排時就不會受到任何 CSS 的 !important 強行綁定，確保能完美觸發 transition 橫移！
@@ -3378,13 +3699,11 @@ function restartApp() {
         hasTriggeredCartAnimation = false;
     }
 
-
-    document.getElementById('spread-view').style.opacity = '0';
+   document.getElementById('spread-view').style.opacity = '0';
     document.getElementById('retry-btn').style.display = 'none';
     
-    // 安全檢查：若有 ID 才操作
     const saveBtn = document.getElementById('save-btn');
-    if (saveBtn) saveBtn.style.display = 'flex'; // 恢復原本的 flex 屬性
+    if (saveBtn) saveBtn.style.display = 'flex'; 
 
     const confirmBtn = document.getElementById('confirm-btn-float');
     if (confirmBtn) {
@@ -3399,14 +3718,25 @@ function restartApp() {
         if(document.getElementById('advice-content')) document.getElementById('advice-content').innerHTML = '';
         document.getElementById('advice-section').style.display = 'none';
         
+        // 🌟【完美回歸 CSS】完全清空檢視歷史時可能殘留的行內隱藏樣式
+        // 這樣一來，它就能無干擾地套用你原本寫在 CSS 裡的 1.2s 漸變
+        const homeTitle = document.getElementById('home-title') || document.querySelector('.home-title');
+        if (homeTitle) {
+            homeTitle.style.display = '';    
+            homeTitle.style.opacity = '';    
+            homeTitle.style.transform = '';  
+            homeTitle.style.transition = ''; // 徹底釋放 JS 控制，擁抱 CSS 1.2s 
+        }
+
         const main = document.getElementById('main-page');
         if (main) {
             main.style.display = 'flex';
             main.style.opacity = '0';
+            main.style.transform = ''; 
             
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    // 這裡加入類別，才會真正觸發 CSS 的 1.5s transition
+                    // 🌟 注入這個類別，觸發你原本的 CSS 1.2s opacity/visibility 動畫
                     document.body.classList.add('show-home-title');
                     main.style.opacity = '1';
                 });
@@ -3414,13 +3744,14 @@ function restartApp() {
         }
     }, 900);
 }
+
 // 輔助函式維持不變
 function drawQRCodeToCanvas(ctx, x, y, dark, light) {
     // 必須 return 一個 Promise
     return new Promise((resolve, reject) => { 
         const qrDiv = document.createElement('div');
         new QRCode(qrDiv, {
-            text: "https://mascot-tarot.vercel.app/",
+            text: "https://grafittiii-hub.github.io/MascotTarot/",
             width: 80,
             height: 80,
             colorDark: dark,
@@ -3797,6 +4128,445 @@ function handleUnlock() {
             // 清空輸入框準備下次使用
             document.getElementById('unlock-input').value = ''; 
         }, 400);
+    }
+}
+// ==========================================
+// 📜 歷史紀錄管理器 (不遺漏任何原本資訊，完美修復語法錯誤)
+// ==========================================
+// 🌟 1. 全域變數：追蹤當前正在進行的占卜 ID
+let currentReadingSessionId = null;
+
+// 🌟 2. 終極統合版：歷史紀錄管理器
+const HistoryManager = {
+    // 儲存主牌陣
+    save(cards) {
+        if (!cards || cards.length === 0) return;
+        const history = this.getAll();
+        
+        const qStr = document.getElementById('q-input') ? document.getElementById('q-input').value.trim() : '';
+        const cat = typeof currentCategory !== 'undefined' ? currentCategory : '其他';
+        const isRel = document.getElementById('is-relation') ? document.getElementById('is-relation').checked : false;
+        const mode = typeof spreadMode !== 'undefined' ? spreadMode : 'single';
+
+        // 建立唯一識別碼並賦予全域變數
+        currentReadingSessionId = 'tarot_' + Date.now(); 
+
+        const newRecord = {
+            id: currentReadingSessionId,
+            timestamp: new Date().toISOString(),
+            category: cat,
+            query: qStr,
+            isRelationship: isRel,
+            spreadMode: mode,
+            cards: cards.map(c => ({
+                id: c.id,
+                name: c.name,
+                isReversed: c.isReversed,
+                upright: c.upright,
+                reversed: c.reversed,
+                gaze: c.gaze
+            })),
+            hasAdvice: false,
+            adviceData: null
+        };
+        history.unshift(newRecord);
+        localStorage.setItem('tarot_history_data', JSON.stringify(history));
+    },
+
+    // 完美合併：儲存追加建議牌到當前紀錄
+    saveAdviceToCurrentRecord(adviceCard, adviceText) {
+        if (!currentReadingSessionId) return; 
+
+        let history = this.getAll();
+        const recordIndex = history.findIndex(r => r.id === currentReadingSessionId);
+        
+        if (recordIndex !== -1) {
+            history[recordIndex].hasAdvice = true;
+            history[recordIndex].adviceData = {
+                card: {
+                    id: adviceCard.id,
+                    name: adviceCard.name,
+                    isReversed: adviceCard.isReversed,
+                    element: adviceCard.element
+                },
+                text: adviceText
+            };
+            localStorage.setItem('tarot_history_data', JSON.stringify(history));
+        }
+    },
+
+    getAll() {
+        return JSON.parse(localStorage.getItem('tarot_history_data') || '[]');
+    },
+
+    formatDate(isoString) {
+        const date = new Date(isoString);
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const mm = String(date.getMinutes()).padStart(2, '0');
+        return `${y}/${m}/${d} ${hh}:${mm}`;
+    }
+};
+
+
+// 開啟歷史記錄彈窗
+// 修正後的開啟歷史紀錄彈窗
+function openHistoryModal() {
+    const modal = document.getElementById('history-modal');
+    
+    // 確保狀態乾淨，先移除舊的監聽器防止重複綁定
+    modal.removeEventListener('keydown', trapFocus);
+    
+    modal.classList.add('active');
+    
+    // 聚焦第一個可交互元素
+    const firstFocusable = modal.querySelector('button, [tabindex="0"]');
+    if (firstFocusable) firstFocusable.focus();
+
+    // 監聽彈窗內的 Tab 鍵 (焦點陷阱)
+    modal.addEventListener('keydown', trapFocus);
+    
+    const listDiv = document.getElementById('history-list');
+    const records = HistoryManager.getAll();
+    
+    listDiv.innerHTML = records.length ? '' : '<p>尚無記錄</p>';
+    
+    records.forEach(rec => {
+        const item = document.createElement('button'); 
+        item.className = 'history-item-card';
+        item.setAttribute('type', 'button'); // 🌟 強制指定為普通按鈕，防止觸發任何表單預設重新整理行為
+        item.setAttribute('aria-label', `查看於 ${HistoryManager.formatDate(rec.timestamp)} 的占卜紀錄，問題為：${rec.query || '無'}`);
+        item.setAttribute('tabindex', '0');
+
+        // 🌟 點擊事件：先解除焦點鎖定，再還原畫面
+        item.onclick = (e) => {
+            e.preventDefault();
+            // 點擊瞬間立刻解鎖焦點，防止 trapFocus 卡死新畫面
+            const modalEl = document.getElementById('history-modal');
+            if (modalEl) modalEl.removeEventListener('keydown', trapFocus);
+            
+            restoreHistoryView(rec.id);
+        };
+
+        // 鍵盤 Enter 鍵事件
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const modalEl = document.getElementById('history-modal');
+                if (modalEl) modalEl.removeEventListener('keydown', trapFocus);
+                
+                restoreHistoryView(rec.id);
+            }
+        });
+        
+        let adviceBadge = '';
+        let adviceCardName = '';
+        if (rec.hasAdvice && rec.adviceData && rec.adviceData.card) {
+            adviceBadge = `<span class="badge-advice">✤ 建議</span>`;
+            adviceCardName = ` ➔ [建議：${rec.adviceData.card.name}${rec.adviceData.card.isReversed ? '↓':'↑'}]`;
+        }
+        
+        const modeLabel = rec.spreadMode === 'triple' ? '三牌陣' : '單牌指引';
+        const cardNames = rec.cards.map(c => `${c.name}${c.isReversed ? '↓':'↑'}`).join('、');
+
+        // 🌟 小技巧：將內部 div 改為 span 或加上 pointer-events: none，確保點擊目標絕對是外層 button
+        item.innerHTML = `
+            <div class="history-item-header" style="pointer-events: none;">
+                <span class="history-badge-cat">${rec.category}</span>
+                <span class="history-item-mode">${modeLabel}</span>
+            </div>
+            <div class="history-item-query" style="pointer-events: none;">${rec.query ? `「${rec.query}」` : '無填寫問題'}</div>
+            <div class="history-item-cards-line" style="pointer-events: none;">${cardNames}<span style="color: var(--gold-primary); font-size:0.9em;">${adviceCardName}</span> ${adviceBadge}</div>
+            <div class="history-item-footer-time" style="pointer-events: none;">🕒 ${HistoryManager.formatDate(rec.timestamp)}</div>
+        `;
+        listDiv.appendChild(item);
+    });
+
+modal.style.display = 'flex';
+    requestAnimationFrame(() => {
+        modal.classList.add('is-visible');
+        modal.classList.add('active');
+        
+        // 🌟 關鍵優化：彈窗動畫開始後，立刻抓取歷史面板內的第一筆資料或關閉按鈕並聚焦
+        setTimeout(() => {
+            const firstFocusable = modal.querySelector('.history-item-card, #history-close-btn');
+            if (firstFocusable) {
+                firstFocusable.focus();
+            }
+        }, 50); // 微調延遲，確保 DOM 完全渲染好
+    });
+}
+
+function restoreHistoryView(recordId) {
+    let history = HistoryManager.getAll();
+    let record = history.find(r => r.id === recordId);
+    if (!record) return;
+
+    // 1. 還原全局狀態
+    currentCategory = record.category;
+    spreadMode = record.spreadMode;
+    if (typeof isRelationship !== 'undefined') isRelationship = record.isRelationship;
+    
+    if (document.getElementById('q-input')) document.getElementById('q-input').value = record.query || '';
+    if (document.getElementById('is-relation')) document.getElementById('is-relation').checked = record.isRelationship;
+    
+    // 將 currentReadingSessionId 設為正在查看的歷史紀錄
+    currentReadingSessionId = record.id; 
+
+    // 2. 清空場上並重構 drawnCards 陣列
+    drawnCards = [];
+    const container = document.getElementById('cards-container');
+    container.innerHTML = ''; 
+
+    // 準備要還原的卡牌 (主牌 + 建議牌)
+    let cardsToRestore = [...record.cards];
+    if (record.hasAdvice && record.adviceData && record.adviceData.card) {
+        cardsToRestore.push({ 
+            ...record.adviceData.card, 
+            isAdvice: true,
+            adviceText: record.adviceData.text 
+        });
+    }
+
+    // 3. 實體化卡牌 DOM 并注入高級美學 CSS
+    cardsToRestore.forEach((savedData) => {
+        const fullCardData = tarotData.find(c => c.id === savedData.id);
+        if (!fullCardData) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = `card-wrap ready-to-glow element-${fullCardData.element.toLowerCase()}`;
+        
+        const rotation = savedData.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
+        const imgTag = `<img src="tarot-cards/${fullCardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">`;
+        
+        // 🌟 優化點：將 ready-to-glow 直接加在 card-inner 上，確保它的發光特效能直接被看見
+        wrapper.innerHTML = `
+            <div class="card-inner ready-to-glow" style="transform: ${rotation}; top: 0;">
+                <div class="card-face card-back"></div>
+                <div class="card-face card-front">
+                    ${imgTag}
+                    ${typeof liquidCocoonSVG !== 'undefined' ? liquidCocoonSVG : ''}
+                </div>
+            </div>
+        `;
+
+        const svg = wrapper.querySelector('.liquid-cocoon-svg');
+        if (svg) svg.classList.add('run-cocoon');
+
+        wrapper.style.opacity = '1';
+        wrapper.style.pointerEvents = 'auto'; 
+        
+        const finalCardObj = { 
+            ...fullCardData, 
+            isReversed: savedData.isReversed, 
+            elementDOM: wrapper, 
+            isAdvice: savedData.isAdvice, 
+            adviceText: savedData.adviceText 
+        };
+        drawnCards.push(finalCardObj);
+        container.appendChild(wrapper);
+    });
+
+// 4. 高級視覺流暢切換
+    const mainPage = document.getElementById('main-page');
+    const spreadView = document.getElementById('spread-view');
+    const homeTitle = document.getElementById('home-title') || document.querySelector('.home-title');
+    
+// 🌟【新加入】不召回儀式文字，直接抓取並徹底隱藏、清空
+    const ritualText = document.getElementById('spread-ritual-text');
+    if (ritualText) {
+        ritualText.style.display = 'none';
+        ritualText.innerHTML = ''; 
+    }
+
+    // 確保這些核心容器在 CSS 上具備絲滑漸變的基礎設定 (如果 CSS 沒有，我們用 JS 強制注入)
+    [mainPage, spreadView, homeTitle].forEach(el => {
+        if (el) el.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+    });
+
+    // 🌟 步驟 A：立刻優化關閉歷史清單彈窗（此時彈窗開始漸隱，主畫面開始淡出準備迎接牌陣）
+    closeHistoryModal();
+
+    // 🌟 步驟 B：首頁內容與標題同步進行「向上微移並優雅淡出」
+    if (homeTitle) {
+        homeTitle.style.opacity = '0';
+        homeTitle.style.transform = ''; // 優雅向上浮動消逝
+        // 注意：這裡千萬不要寫 display: none，否則會破壞之後 Back 回來的動畫基礎
+    }
+    
+    if (mainPage) {
+        mainPage.style.opacity = '0';
+        mainPage.style.transform = '';
+    }
+
+    // 🌟 步驟 C：延遲 400ms（等待首頁完全淡出），再讓牌陣與解牌結果像迷霧般散開顯現
+    setTimeout(() => {
+        if (mainPage) mainPage.style.display = 'none'; // 徹底淡出後才關閉佔位
+        
+        if (spreadView) {
+            spreadView.style.display = 'block';
+            spreadView.style.opacity = '0';
+            spreadView.style.transform = ''; // 從下方微微浮上
+            
+            // 強制瀏覽器重繪 (Reflow)，確保下一個 opacity 動態能流暢執行
+            spreadView.offsetHeight; 
+            
+            spreadView.style.opacity = '1';
+        }
+        
+        // 呼叫你的排版引擎，卡牌此時就位
+        relayoutCards(); 
+        
+        // 🌟 步驟 D：卡牌就位後，再溫柔地把解牌結果面板帶出來
+        setTimeout(() => {
+            generateReport(true); // 傳入 true，隱藏抽牌按鈕
+            
+            const resultPanel = document.querySelector('.result-panel');
+            if (resultPanel) {
+                resultPanel.style.display = 'block';
+                resultPanel.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                resultPanel.classList.add('active');
+                resultPanel.style.opacity = '1';
+                resultPanel.style.visibility = 'visible';
+                
+                // 平滑捲動到解牌區域
+                resultPanel.scrollIntoView({ behavior: 'smooth' }); 
+            }
+        }, 250);
+        
+    }, 400);
+}
+
+// 修正後的關閉歷史紀錄彈窗（確保將 active 和 is-visible 一併清除，並移除監聽）
+function closeHistoryModal() {
+    const modal = document.getElementById('history-modal');
+    if (!modal) return;
+    
+    // 🌟 徹底移除焦點陷阱監聽器，還給主頁面自由
+    modal.removeEventListener('keydown', trapFocus);
+    
+    modal.classList.remove('is-visible');
+    modal.classList.remove('active'); // 🌟 同步移除 active 類別！
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 400); 
+}
+
+function trapFocus(e) {
+    if (e.key !== 'Tab') return;
+
+    const modal = document.getElementById('history-modal');
+    if (!modal || !modal.classList.contains('is-visible')) return;
+
+    // 🌟 嚴格只抓取這個彈窗內部的可聚焦元素（排除主網頁的所有 tab 和輸入框）
+    const focusableElements = modal.querySelectorAll('button, [tabindex="0"], a, input, textarea');
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.shiftKey) { // 按住 Shift + Tab 往回走
+        if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus(); // 跑到最後一個（通常是關閉按鈕）
+        }
+    } else { // 單獨按 Tab 往前走
+        if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus(); // 回到第一個歷史記錄項目
+        }
+    }
+}
+
+// 🌟 全局監聽 ESC 鍵，優化商業產品的閉合體驗
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+        
+        // 1. 檢查占卜須知 Modal 是否開啟，若是則關閉
+        const noticeModal = document.getElementById('notice-modal');
+        if (noticeModal && noticeModal.style.display === 'block') {
+            if (typeof closeNotice === 'function') closeNotice();
+        }
+        
+        // 2. 檢查限額 Modal 是否開啟，若是則關閉
+        const limitModal = document.getElementById('limit-modal');
+        if (limitModal && limitModal.style.display === 'block') {
+            limitModal.style.display = 'none';
+        }
+
+        // 3. 檢查歷史紀錄 Modal 是否開啟，若是則關閉
+        const historyModal = document.getElementById('history-modal');
+        if (historyModal && historyModal.classList.contains('active')) {
+            if (typeof closeHistoryModal === 'function') closeHistoryModal();
+        }
+        
+        // 4. 檢查解牌結果面板是否開啟，若是則關閉
+        const resultPanel = document.getElementById('result-panel');
+        if (resultPanel && resultPanel.classList.contains('active')) {
+            resultPanel.classList.remove('active');
+        }
+    }
+});
+
+// 每次打開 limit-modal 時呼叫這個函數
+function openLimitModal() {
+    const modal = document.getElementById('limit-modal');
+    modal.style.display = 'flex'; // 或 'block'，取決於你的設計
+    spawnIllusionButtons();
+}
+
+function closeLimitModal() {
+    const modal = document.getElementById('limit-modal');
+    modal.style.display = 'none';
+    document.getElementById('unlock-input').value = ''; // 清空輸入框
+}
+
+function spawnIllusionButtons() {
+    const container = document.getElementById('limit-content');
+    
+    // 清除上一次生成的按鈕（如果有）
+    container.querySelectorAll('.illusion-close-btn').forEach(b => b.remove());
+
+    const totalButtons = 5;
+    // 隨機決定哪一個是真正的出口 (0 到 4)
+    const realIndex = Math.floor(Math.random() * totalButtons);
+
+    for (let i = 0; i < totalButtons; i++) {
+        let btn = document.createElement('button');
+        btn.className = 'illusion-close-btn';
+        btn.innerHTML = '✖'; // 你可以換成 '✦' 或其他特殊符號
+        
+        // 🌟 演算法：將按鈕散佈在邊緣，避開中央輸入框區域
+        let top, left;
+        if (Math.random() > 0.5) {
+            // 分佈在上下邊緣 (0~20% 或 80~100%)
+            top = Math.random() > 0.5 ? Math.random() * 20 : 80 + Math.random() * 15;
+            left = Math.random() * 90;
+        } else {
+            // 分佈在左右邊緣 (0~20% 或 80~100%)
+            top = Math.random() * 90;
+            left = Math.random() > 0.5 ? Math.random() * 20 : 80 + Math.random() * 15;
+        }
+
+        btn.style.top = `${top}%`;
+        btn.style.left = `${left}%`;
+
+        if (i === realIndex) {
+            // 🌟 真正的關閉按鈕
+            btn.onclick = closeLimitModal;
+            btn.setAttribute('aria-label', '真正的關閉按鈕'); 
+            btn.setAttribute('tabindex', '0'); // A11y: 讓鍵盤使用者可以按到
+        } else {
+            // 🌟 假按鈕（幻影）
+            btn.onclick = function() {
+                this.classList.add('shatter'); // 觸發消散動畫
+            };
+            btn.setAttribute('aria-hidden', 'true'); // A11y: 對視障閱讀器隱藏假按鈕，避免混淆
+            btn.setAttribute('tabindex', '-1'); // A11y: 防止鍵盤使用者一直按到假按鈕而生氣
+        }
+        
+        container.appendChild(btn);
     }
 }
 </script>
