@@ -145,6 +145,9 @@ html, body {
     top: 0;
     left: 0;
     touch-action: none; /* 禁用外層所有的原生觸控行為（包含雙指縮放） */
+    overscroll-behavior-y: none;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
 }
         body::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -315,7 +318,7 @@ padding-bottom: env(safe-area-inset-bottom);
     margin: 0 auto; 
     
     /* 🌟 3. 最外層全面禁止滾動！確保頂部 top: 10dvh 穩如泰山、絕不穿頂 */
-    overflow-y: hidden !important; 
+    overflow-y: none !important; 
     overflow-x: hidden !important; 
     box-sizing: border-box;
     touch-action: pan-y;
@@ -1812,7 +1815,7 @@ span.illusion-close-btn.shatter {
 }
 /* 🌟 日間模式照亮時恢復清晰 */
 :root:not([data-theme="night"]) .ambient-lantern-card.in-torch-range {
-    filter: sepia(0.1) contrast(1.1) brightness(0.65) grayscale(0);
+    filter: sepia(0.1) contrast(1.1) brightness(0.8) grayscale(0);
 }
 
 /* 🌟 點擊後沉下去隱形狀態 */
@@ -4570,10 +4573,10 @@ function initAmbientLanternEffect() {
 
     // 百分比佈局
     const positions = [
-        { top: '10%', left: '6%', rotate: '-10deg' },   
-        { top: '13%', right: '6%', rotate: '8deg' },    
+        { top: '14%', left: '6%', rotate: '-10deg' },   
+        { top: '17%', right: '6%', rotate: '8deg' },    
         { bottom: '25%', left: '8%', rotate: '12deg' }, 
-        { bottom: '11%', right: '8%', rotate: '-6deg' } 
+        { bottom: '5%', right: '8%', rotate: '-6deg' } 
     ];
 
     for (let i = 0; i < totalCards; i++) {
