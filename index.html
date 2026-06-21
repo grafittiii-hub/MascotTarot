@@ -3034,6 +3034,7 @@ function enterMainPage() {
 // 主控函式：負責指揮整個洗牌與發牌流程
 // ==========================================
 async function initSpreadView() {
+window.isLanternActive = false;
     const spreadView = document.getElementById('spread-view');
     spreadView.style.display = 'block';
     
@@ -4289,6 +4290,7 @@ const HistoryManager = {
 // 開啟歷史記錄彈窗
 // 修正後的開啟歷史紀錄彈窗
 function openHistoryModal() {
+window.isLanternActive = false;
     const modal = document.getElementById('history-modal');
     
     // 確保狀態乾淨，先移除舊的監聽器防止重複綁定
@@ -4375,6 +4377,7 @@ modal.style.display = 'flex';
 }
 
 function restoreHistoryView(recordId) {
+window.isLanternActive = false;
     let history = HistoryManager.getAll();
     let record = history.find(r => r.id === recordId);
     if (!record) return;
@@ -4516,6 +4519,7 @@ function restoreHistoryView(recordId) {
 
 // 修正後的關閉歷史紀錄彈窗（確保將 active 和 is-visible 一併清除，並移除監聽）
 function closeHistoryModal() {
+window.isLanternActive = true;
     const modal = document.getElementById('history-modal');
     if (!modal) return;
     
@@ -4553,6 +4557,8 @@ function trapFocus(e) {
         }
     }
 }
+
+window.isLanternActive = true; 
 
 function initAmbientLanternEffect() {
     const mainPage = document.getElementById('main-page');
@@ -4603,26 +4609,38 @@ function initAmbientLanternEffect() {
         lanternCards.push({ el: cardEl, rect: null });
     }
 
-    // 🌟 核心修正：火把跟隨與探照門禁控制
+    // 🌟 核心修正：火把跟隨與探照門禁控制（升級智慧防禦）
     function updateTorchLight(x, y) {
-        // 🚨 嚴格門禁檢查：如果首頁被隱藏 (display==none) 或 正在淡出 (opacity==0)，或者進入了牌陣檢視，
-        // 則立刻將所有卡牌移出探照範圍並隱形，絕不允許在其他頁面亮起！
+        const container = document.getElementById('ambient-lantern-container');
+        if (!container) return;
+
+        // 🚨 門禁升級：檢查全局效能開關 window.isLanternActive 與頁面狀態
         if (
+            !window.isLanternActive ||
             !mainPage || 
             mainPage.style.display === 'none' || 
             mainPage.style.opacity === '0' ||
             document.getElementById('spread-view')?.style.display === 'block'
         ) {
-            document.getElementById('ambient-lantern-container').style.opacity = '0';
-            lanternCards.forEach(c => c.el.classList.remove('in-torch-range'));
-            return;
+            // 💡 特例防禦：如果這個時候 container 被 Limit Modal 提到最上層（zIndex 是 2001），
+            // 說明使用者正處於額度滿了的解除結界狀態，此時允許卡牌維持顯示讓使用者點擊！
+            if (container.style.zIndex === '2001') {
+                container.style.display = 'block';
+                container.style.opacity = '1';
+            } else {
+                // 否則（只要在抽牌或看歷史紀錄中），一律用 display: none 物理蒸發，徹底釋放 100% GPU
+                container.style.display = 'none';
+                container.style.opacity = '0';
+                lanternCards.forEach(c => c.el.classList.remove('in-torch-range'));
+                return;
+            }
         } else {
-            // 重新回到首頁時，恢復容器可見度
-            document.getElementById('ambient-lantern-container').style.opacity = '1';
+            // 重新回到首頁，且開關開啟時，恢復容器與管線運作
+            container.style.display = 'block';
+            container.style.opacity = '1';
         }
 
         lanternCards.forEach(card => {
-            // 如果這張卡牌已經被點擊隱藏了，就不再計算它
             if (card.el.classList.contains('shattered-sink')) return;
 
             if (!card.rect || Math.random() < 0.02) {
@@ -4653,6 +4671,9 @@ function initAmbientLanternEffect() {
     // 監聽指針移動
     let ticking = false;
     function handleMove(clientX, clientY) {
+        // 🚨 核心防護：如果全局開關已被關閉，連 requestAnimationFrame 都不准啟動，節省處理器資源
+        if (!window.isLanternActive) return;
+
         if (!ticking) {
             window.requestAnimationFrame(() => {
                 updateTorchLight(clientX, clientY);
