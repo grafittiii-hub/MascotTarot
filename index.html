@@ -3882,18 +3882,12 @@ function drawAdvice() {
     let stateData = isReversed ? advCard.reversed : advCard.upright;
     if (!stateData) stateData = advCard.upright; 
 
-    // ==========================================
-    // 👑 階段 1：建立真實的立體卡牌，準備從右側飛入
-    // ==========================================
     const container = document.getElementById('cards-container');
     const wrapper = document.createElement('div');
     
-    // 🌟 初始化先不加上 ready-to-glow，直到滑入動畫停穩
     wrapper.className = 'card-wrap'; 
-    
     if (advCard.element) wrapper.classList.add(`element-${advCard.element.toLowerCase()}`);
     
-    // 初始狀態設於螢幕右側外面，準備優雅滑入
     wrapper.style.left = '120%';
     wrapper.style.top = window.innerWidth < 768 ? '8%' : '12%';
     wrapper.style.transform = 'translate(-50%, 0) scale(0.5)';
@@ -3901,47 +3895,45 @@ function drawAdvice() {
     
     const imgTag = `<img src="tarot-cards/${advCard.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">`;
     
+    // 🌟 完美救出：將 liquidCocoonSVG 移出 card-front，放到 card-inner 根層級，防止溢出被裁剪
     wrapper.innerHTML = `
         <div class="card-inner" style="transform: ${isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)'}">
             <div class="card-face card-back"></div>
             <div class="card-face card-front">
                 ${imgTag}
-                ${typeof liquidCocoonSVG !== 'undefined' ? liquidCocoonSVG : ''}
             </div>
+            ${typeof liquidCocoonSVG !== 'undefined' ? liquidCocoonSVG : ''}
         </div>
     `;
     
     container.appendChild(wrapper);
 
-    // 👑 將新卡牌推入全局狀態
-    drawnCards.push({ ...advCard, isReversed, elementDOM: wrapper, 
+    drawnCards.push({ 
+        ...advCard, 
+        isReversed, 
+        elementDOM: wrapper, 
         isAdvice: true, 
-        adviceText: stateData.advice });
+        adviceText: stateData.advice 
+    });
 
-// 🌟 呼叫剛才寫好的合併儲存功能
     HistoryManager.saveAdviceToCurrentRecord(advCard, stateData.advice);
 
-    // 🌟 核心修正：在呼叫排版引擎之前，暫時將前三張牌的 ready-to-glow 拔除！
-    // 這樣它們在重排時就不會受到任何 CSS 的 !important 強行綁定，確保能完美觸發 transition 橫移！
     const olderCards = drawnCards.slice(0, -1);
     olderCards.forEach(c => c.elementDOM.classList.remove('ready-to-glow'));
 
-    // 延遲一點點，讓瀏覽器渲染 DOM，然後啟動飛入動畫與排版
     setTimeout(() => {
+        // 🌟 點火時機：在滑入動畫開始時為 SVG 注入 cocoon
         const svg = wrapper.querySelector('.liquid-cocoon-svg');
         if (svg) svg.classList.add('run-cocoon');
         
         wrapper.style.opacity = '1';
-        
-        // 呼叫排版引擎：此時原本的牌沒有 ready-to-glow 束縛，會非常平滑、跟隨動畫一起向左讓位！
         relayoutCards();
         
-        // 🌟 當 0.8 秒重排與飛入動畫完全結束、卡牌全數在終點完美停穩時：
         setTimeout(() => {
-            // 集體重新加回 ready-to-glow，無縫解鎖最終狀態與手勢放大系統
             drawnCards.forEach(c => c.elementDOM.classList.add('ready-to-glow'));
         }, 800);
     }, 50);
+}
 
     // ==========================================
     // 👑 階段 2：寫入面板的解說文字
@@ -4590,12 +4582,11 @@ modal.style.display = 'flex';
 }
 
 function restoreHistoryView(recordId) {
-window.isLanternActive = false;
+    window.isLanternActive = false;
     let history = HistoryManager.getAll();
     let record = history.find(r => r.id === recordId);
     if (!record) return;
 
-    // 1. 還原全局狀態
     currentCategory = record.category;
     spreadMode = record.spreadMode;
     if (typeof isRelationship !== 'undefined') isRelationship = record.isRelationship;
@@ -4603,15 +4594,12 @@ window.isLanternActive = false;
     if (document.getElementById('q-input')) document.getElementById('q-input').value = record.query || '';
     if (document.getElementById('is-relation')) document.getElementById('is-relation').checked = record.isRelationship;
     
-    // 將 currentReadingSessionId 設為正在查看的歷史紀錄
     currentReadingSessionId = record.id; 
 
-    // 2. 清空場上並重構 drawnCards 陣列
     drawnCards = [];
     const container = document.getElementById('cards-container');
     container.innerHTML = ''; 
 
-    // 準備要還原的卡牌 (主牌 + 建議牌)
     let cardsToRestore = [...record.cards];
     if (record.hasAdvice && record.adviceData && record.adviceData.card) {
         cardsToRestore.push({ 
@@ -4621,7 +4609,6 @@ window.isLanternActive = false;
         });
     }
 
-    // 3. 實體化卡牌 DOM 并注入高級美學 CSS
     cardsToRestore.forEach((savedData) => {
         const fullCardData = tarotData.find(c => c.id === savedData.id);
         if (!fullCardData) return;
@@ -4632,19 +4619,16 @@ window.isLanternActive = false;
         const rotation = savedData.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
         const imgTag = `<img src="tarot-cards/${fullCardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">`;
         
-        // 🌟 優化點：將 ready-to-glow 直接加在 card-inner 上，確保它的發光特效能直接被看見
+        // 🌟 完美救出：移出 card-front，且修復你之前在內層重複添加 ready-to-glow 類別導致的 CSS 重疊混亂
         wrapper.innerHTML = `
-            <div class="card-inner ready-to-glow" style="transform: ${rotation}; top: 0;">
+            <div class="card-inner" style="transform: ${rotation}; top: 0;">
                 <div class="card-face card-back"></div>
                 <div class="card-face card-front">
                     ${imgTag}
-                    ${typeof liquidCocoonSVG !== 'undefined' ? liquidCocoonSVG : ''}
                 </div>
+                ${typeof liquidCocoonSVG !== 'undefined' ? liquidCocoonSVG : ''}
             </div>
         `;
-
-        const svg = wrapper.querySelector('.liquid-cocoon-svg');
-        if (svg) svg.classList.add('run-cocoon');
 
         wrapper.style.opacity = '1';
         wrapper.style.pointerEvents = 'auto'; 
@@ -4658,62 +4642,47 @@ window.isLanternActive = false;
         };
         drawnCards.push(finalCardObj);
         container.appendChild(wrapper);
+
+        // 🌟 關鍵修正：使用 requestAnimationFrame 確保 DOM 已經被瀏覽器註冊後，再於下一幀點燃動畫
+        requestAnimationFrame(() => {
+            const svg = wrapper.querySelector('.liquid-cocoon-svg');
+            if (svg) svg.classList.add('run-cocoon');
+        });
     });
 
-// 4. 高級視覺流暢切換
     const mainPage = document.getElementById('main-page');
     const spreadView = document.getElementById('spread-view');
     const homeTitle = document.getElementById('home-title') || document.querySelector('.home-title');
     
-// 🌟【新加入】不召回儀式文字，直接抓取並徹底隱藏、清空
     const ritualText = document.getElementById('spread-ritual-text');
     if (ritualText) {
         ritualText.style.display = 'none';
         ritualText.innerHTML = ''; 
     }
 
-    // 確保這些核心容器在 CSS 上具備絲滑漸變的基礎設定 (如果 CSS 沒有，我們用 JS 強制注入)
     [mainPage, spreadView, homeTitle].forEach(el => {
         if (el) el.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
     });
 
-    // 🌟 步驟 A：立刻優化關閉歷史清單彈窗（此時彈窗開始漸隱，主畫面開始淡出準備迎接牌陣）
     closeHistoryModal();
 
-    // 🌟 步驟 B：首頁內容與標題同步進行「向上微移並優雅淡出」
-    if (homeTitle) {
-        homeTitle.style.opacity = '0';
-        homeTitle.style.transform = ''; // 優雅向上浮動消逝
-        // 注意：這裡千萬不要寫 display: none，否則會破壞之後 Back 回來的動畫基礎
-    }
-    
-    if (mainPage) {
-        mainPage.style.opacity = '0';
-        mainPage.style.transform = '';
-    }
+    if (homeTitle) homeTitle.style.opacity = '0';
+    if (mainPage) mainPage.style.opacity = '0';
 
-    // 🌟 步驟 C：延遲 400ms（等待首頁完全淡出），再讓牌陣與解牌結果像迷霧般散開顯現
     setTimeout(() => {
-        if (mainPage) mainPage.style.display = 'none'; // 徹底淡出後才關閉佔位
+        if (mainPage) mainPage.style.display = 'none'; 
         
         if (spreadView) {
             spreadView.style.display = 'block';
             spreadView.style.opacity = '0';
-            spreadView.style.transform = ''; // 從下方微微浮上
-            
-            // 強制瀏覽器重繪 (Reflow)，確保下一個 opacity 動態能流暢執行
-            spreadView.offsetHeight; 
-            
+            spreadView.offsetHeight; // Force Reflow
             spreadView.style.opacity = '1';
         }
         
-        // 呼叫你的排版引擎，卡牌此時就位
         relayoutCards(); 
         
-        // 🌟 步驟 D：卡牌就位後，再溫柔地把解牌結果面板帶出來
         setTimeout(() => {
-            generateReport(true); // 傳入 true，隱藏抽牌按鈕
-            
+            generateReport(true); 
             const resultPanel = document.querySelector('.result-panel');
             if (resultPanel) {
                 resultPanel.style.display = 'block';
@@ -4721,8 +4690,6 @@ window.isLanternActive = false;
                 resultPanel.classList.add('active');
                 resultPanel.style.opacity = '1';
                 resultPanel.style.visibility = 'visible';
-                
-                // 平滑捲動到解牌區域
                 resultPanel.scrollIntoView({ behavior: 'smooth' }); 
             }
         }, 250);
