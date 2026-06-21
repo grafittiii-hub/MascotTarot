@@ -1396,12 +1396,14 @@ html[data-theme="dark"] #result-actions.expanded .btn-cart:hover .cart-star {
     box-shadow: 0 0 15px rgba(219, 186, 24, 0.4);
     transform: translateX(100px); /* 初始隱藏 */
     opacity: 0; pointer-events: none;
-    transition: opacity 0.6s ease, all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: opacity 0.6s ease, all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), visibility 0.6s;;
+visibility: hidden;
 }
 
 #bubble-orbit-trigger.ready {
     transform: translateX(0);
     opacity: 1;
+ visibility: visible;
 }
 
 /* 金點的核心微光 */
@@ -1428,15 +1430,17 @@ html[data-theme="dark"] #result-actions.expanded .btn-cart:hover .cart-star {
     z-index: 9600;
 opacity: 0;             /* 預設完全透明 */
 pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
-    transition: right 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: right 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease, visibility 0.6s;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
+visibility: hidden;
 }
 
 /* 展開狀態 */
 #interaction-bubble.show {
     opacity: 1;
     pointer-events: auto;   /* 恢復面板內按鈕與關閉鍵的點擊功能 */
+visibility: visible;
 }
 
 /* 右上角優雅的收納小按鈕 */
@@ -2819,48 +2823,6 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// ==========================================
-// 🌟 手機版：全方位手指滑動掃描選牌功能 (不限方向)
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('cards-container');
-    if (!container) return;
-
-    let isScanning = false;
-
-    // 手指壓下時，檢查是否在選牌畫面中
-    container.addEventListener('touchstart', (e) => {
-        const spreadView = document.getElementById('spread-view');
-        if (spreadView && window.getComputedStyle(spreadView).opacity === '1') {
-            isScanning = true;
-        }
-    }, { passive: true });
-
-    // 手指不論上下左右移動，皆實時追蹤位置並觸發預覽
-    container.addEventListener('touchmove', (e) => {
-        if (!isScanning) return;
-        
-        const touch = e.touches[0];
-        // 透過觸控的即時 X, Y 座標，抓取當前手指正下方的 DOM 元素
-        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (!targetEl) return;
-
-        // 向上尋找最近的卡牌節點
-        const wrapper = targetEl.closest('.card-wrap');
-        
-        // 排除已確認或正在洗牌的卡牌
-        if (wrapper && !wrapper.classList.contains('confirmed') && !wrapper.classList.contains('shuffling')) {
-            if (poppedCardEl !== wrapper) {
-                handleCardClick(e, wrapper); // 自動觸發浮起並亮出按鈕
-            }
-        }
-    }, { passive: true });
-
-    // 手指放開時結束掃描
-    container.addEventListener('touchend', () => {
-        isScanning = false;
-    }, { passive: true });
-});
 
 function prebuildDeckDOM() {
     const container = document.getElementById('cards-container');
@@ -3308,6 +3270,49 @@ function playSpreadAnimation(cards, isMobile, total) {
                 cards.forEach((wrapper, index) => {
                     const duration = isMobile ? '1.2s' : '0.8s'; 
                     
+// ==========================================
+// 🌟 手機版：全方位手指滑動掃描選牌功能 (不限方向)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('cards-container');
+    if (!container) return;
+
+    let isScanning = false;
+
+    // 手指壓下時，檢查是否在選牌畫面中
+    container.addEventListener('touchstart', (e) => {
+        const spreadView = document.getElementById('spread-view');
+        if (spreadView && window.getComputedStyle(spreadView).opacity === '1') {
+            isScanning = true;
+        }
+    }, { passive: true });
+
+    // 手指不論上下左右移動，皆實時追蹤位置並觸發預覽
+    container.addEventListener('touchmove', (e) => {
+        if (!isScanning) return;
+        
+        const touch = e.touches[0];
+        // 透過觸控的即時 X, Y 座標，抓取當前手指正下方的 DOM 元素
+        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (!targetEl) return;
+
+        // 向上尋找最近的卡牌節點
+        const wrapper = targetEl.closest('.card-wrap');
+        
+        // 排除已確認或正在洗牌的卡牌
+        if (wrapper && !wrapper.classList.contains('confirmed') && !wrapper.classList.contains('shuffling')) {
+            if (poppedCardEl !== wrapper) {
+                handleCardClick(e, wrapper); // 自動觸發浮起並亮出按鈕
+            }
+        }
+    }, { passive: true });
+
+    // 手指放開時結束掃描
+    container.addEventListener('touchend', () => {
+        isScanning = false;
+    }, { passive: true });
+});
+
                     // ==========================================
                     // 🌟 核心升級：動態注入無障礙 Tab 與滑鼠/鍵盤選牌事件
                     // ==========================================
@@ -3410,6 +3415,18 @@ function playSpreadAnimation(cards, isMobile, total) {
 }
 
 function handleCardClick(e, wrapper) {
+    // 🌟 核心防禦線：檢查結果面板是否已經打開
+    const resultPanel = document.getElementById('result-panel');
+    const isPanelActive = resultPanel && resultPanel.classList.contains('active');
+
+    // 🛑 只要滿足以下任一條件，絕對不觸發「彈起卡牌」與「顯示確認按鈕」：
+    // 1. 已經進入結束選牌狀態 (window.isSelectionFinalized)
+    // 2. 結果面板已經在畫面上 (isPanelActive) -> 完美解決歷史紀錄點擊問題
+    // 3. 卡牌本身已經帶有發光類別 (ready-to-glow)
+    if (window.isSelectionFinalized || isPanelActive || wrapper.classList.contains('ready-to-glow')) {
+        return;
+    }
+
     e.stopPropagation();
     if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
 
@@ -3420,7 +3437,6 @@ function handleCardClick(e, wrapper) {
     if (poppedCardEl) { poppedCardEl.classList.remove('popped'); }
 
     wrapper.classList.add('popped');
-
     poppedCardEl = wrapper;
 
     btn.style.display = 'block';
@@ -3525,7 +3541,8 @@ document.addEventListener('keydown', function(e) {
 function finalizeSelection() {
     const totalCards = drawnCards.length;
     const isMobile = window.innerWidth < 768;
-    
+    window.isSelectionFinalized = true;
+
     // --- 階段 0：隱藏多餘 UI (T = 0ms) ---
     const counter = document.getElementById('draw-counter');
     if (counter) counter.style.display = 'none';
@@ -3533,8 +3550,15 @@ function finalizeSelection() {
     if (confirmBtn) {
         confirmBtn.style.opacity = '0';
         confirmBtn.style.pointerEvents = 'none'; 
+confirmBtn.classList.remove('show');
         setTimeout(() => confirmBtn.style.display = 'none', 400); 
     }
+
+// 🌟 清除當前的 Tab 焦點，並移除場上卡牌的 Tab 索引，防止外框殘留
+    if (document.activeElement) {
+        document.activeElement.blur(); 
+    }
+
 // 🌟 核心修正 1：瞬間封印所有「已選卡牌」的點擊神經！
     // 確保在整個過場動畫期間，使用者無論怎麼戳螢幕，都不會喚醒任何多餘的按鈕或反應
     drawnCards.forEach(drawn => {
@@ -3951,6 +3975,8 @@ function restartApp() {
         resultPanel.style.transform = ''; 
     }
 
+window.isSelectionFinalized = false;
+
     // 移除按鈕的 3 秒擴展排版類別
     const resultActions = document.querySelector('.result-actions');
     if (resultActions) {
@@ -3974,7 +4000,7 @@ function restartApp() {
         confirmBtn.style.display = 'none';
         confirmBtn.style.pointerEvents = 'none'; 
     }
-    
+    window.isLanternActive = true;
     setTimeout(() => {
         document.getElementById('spread-view').style.display = 'none';
         document.getElementById('cards-container').innerHTML = '';
