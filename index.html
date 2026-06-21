@@ -805,9 +805,8 @@ body.is-initializing #result-panel {
 }
 
         .card-wrap {
-            position: absolute; width: 75px; height: 112.5px;
-            cursor: pointer; z-index: 10;will-change: transform, opacity, left, top;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease;
-    backface-visibility: hidden; 
+            position: absolute; width: 75px; height: 120px;
+            cursor: pointer; z-index: 10;will-change: transform, opacity, left, top;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease; 
     -webkit-backface-visibility: hidden; /* 專為 iOS Safari 準備 */
         }
         @media (min-width: 768px) {
@@ -842,23 +841,20 @@ width: 120px; height: 180px; will-change: transform, opacity;}
             height: 100%;
             object-fit: cover; 
             border-radius: 8px; background-position: center;
-            border: var(--border-thin); box-shadow: 0 5px 15px var(--card-shadow); background-clip: padding-box;
+            border: var(--border-thin); box-shadow: 0 5px 15px var(--card-shadow); background-clip: padding-box; 
+
         }
-        .card-back { background-color: var(--gold-light); background-image: linear-gradient(135deg, var(--gold-primary) 25.5%, transparent 26%); background-repeat: no-of-repeat;overflow: hidden; }
+        .card-back { background-color: var(--gold-light); background-image: linear-gradient(135deg, var(--gold-primary) 25.5%, transparent 26%); background-repeat: no-repeat;overflow: hidden; }
         .card-front { transform: rotateY(180deg); background-color: #c7a243; border-radius: 8px;overflow: hidden;-webkit-mask-image: -webkit-radial-gradient(white, black); }
 
 /* 專門針對正面圖片的放大處理 */
 .card-front img {
     width: 100%;
     height: 100%;
-    object-fit: cover;object-position: 52% 50%;
+    object-fit: cover; object-position: 52% 50%;
     /* 核心修改：透過 scale 放大圖片約 5%，這會直接裁切掉原本素材周圍的空白 */
-    transform: scale(1.05); 
-    transition: transform 0.3s ease;
-    transform-style: preserve-3d;
-    -webkit-transform-style: preserve-3d;
-    image-rendering: -webkit-optimize-contrast; /* 逼 Safari 用最高清晰度演算法 */
-    image-rendering: auto;
+    transform: scale(1.05) translateZ(0); 
+    transition: transform 0.3s ease; -webkit-transform: scale(1.05) translateZ(0); image-rendering: -webkit-optimize-contrast;
 }
 
         .card-wrap.popped { z-index: 100 !important; }
@@ -1539,8 +1535,6 @@ pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
 }
 .history-fab:hover {
     background: var(--text-color); 
-    border: 2px;
-    border-color: var(--gold-primary);
     box-shadow: 0 0 12px var(--gold-primary);
 }
 
@@ -2892,22 +2886,20 @@ function prebuildDeckDOM() {
         
         // 這裡完全保留你提供的 HTML 結構，包含 img 的樣式
         wrapper.innerHTML = `
-    <div class="card-inner">
-        <div class="card-face card-back">
-            <img src="tarot-cards/photo-output.png" 
-                 style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
+	<div class="card-inner">
+    		<div class="card-face card-back">
+           	 <img src="tarot-cards/photo-output.png" 
+                 style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
                  onload="this.parentElement.style.backgroundImage='none';" 
                  onerror="this.style.display='none';" 
                  draggable="false">
         </div>
-        <div class="card-face card-front">
-            <img src="" 
-                 style="width:100%; height:100%; object-fit:cover; transform: scale(1.05) translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
-                 draggable="false">
-            ${liquidCocoonSVG}
-        </div>
+    <div class="card-face card-front">
+        <img src="" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">
+	${liquidCocoonSVG}
     </div>
-`;
+</div>
+        `;
         wrapper.onclick = (e) => handleCardClick(e, wrapper);
         container.appendChild(wrapper);
     }
@@ -3175,23 +3167,23 @@ window.isLanternActive = false;
         // ==========================================
         shuffledDeck.forEach((cardData, index) => {
             const wrapper = document.createElement('div');
-            wrapper.className = 'card-wrap';
+            wrapper.className = 'card-wrap'; // 移除 shuffling 類別
             wrapper.dataset.index = index;
 
-            const imgTag = `<img src="tarot-cards/${cardData.img}" srcset="tarot-cards/${cardData.img} 3x" style="width:100%; height:100%; object-fit:cover; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
 
-wrapper.innerHTML = `
-            <div class="card-inner">
-                <div class="card-face card-back">
-                    <img src="tarot-cards/photo-output.png" 
-                         style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
-                         onload="this.parentElement.style.backgroundImage='none';" 
-                         onerror="this.style.display='none';" 
-                         draggable="false">
+            wrapper.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-face card-back">
+                        <img src="tarot-cards/photo-output.png" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+                             onload="this.parentElement.style.backgroundImage='none';" 
+                             onerror="this.style.display='none';" 
+                             draggable="false">
+                    </div>
+                    <div class="card-face card-front">${imgTag}</div>
                 </div>
-                <div class="card-face card-front">${imgTag}</div>
-            </div>
-        `;
+            `;
 
             // 🌟 關鍵優化：加上 transition: none 確保一開始切換頁面時，牌組不會因為任何 class 變動而產生滑動位移
             wrapper.style.transition = 'none'; 
@@ -3245,13 +3237,13 @@ function playShuffleAnimation(isMobile) {
             wrapper.dataset.index = index;
             wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
 
-            const imgTag = `<img src="tarot-cards/${cardData.img}" srcset="tarot-cards/${cardData.img} 3x" style="width:100%; height:100%; object-fit:cover; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.opacity='0';" draggable="false">`;
 
-wrapper.innerHTML = `
+            wrapper.innerHTML = `
                 <div class="card-inner">
                     <div class="card-face card-back">
                         <img src="tarot-cards/photo-output.png" 
-                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
                              onload="this.parentElement.style.backgroundImage='none';" 
                              onerror="this.style.display='none';" 
                              draggable="false">
@@ -3883,7 +3875,7 @@ function drawAdvice() {
     wrapper.style.transform = 'translate(-50%, 0) scale(0.5)';
     wrapper.style.opacity = '0';
     
-    const imgTag = `<img src="tarot-cards/${advCard.img}" srcset="tarot-cards/${advCard.img} 3x" style="width:100%; height:100%; object-fit:cover; transform: scale(1.05) translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" draggable="false">`;
+    const imgTag = `<img src="tarot-cards/${advCard.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">`;
     
     wrapper.innerHTML = `
         <div class="card-inner" style="transform: ${isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)'}">
@@ -4612,7 +4604,7 @@ window.isLanternActive = false;
         wrapper.className = `card-wrap ready-to-glow element-${fullCardData.element.toLowerCase()}`;
         
         const rotation = savedData.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
-        const imgTag = `<img src="tarot-cards/${fullCardData.img}" srcset="tarot-cards/${fullCardData.img} 3x" style="width:100%; height:100%; object-fit:cover; transform: scale(1.05) translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" draggable="false">`;
+        const imgTag = `<img src="tarot-cards/${fullCardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">`;
         
         // 🌟 優化點：將 ready-to-glow 直接加在 card-inner 上，確保它的發光特效能直接被看見
         wrapper.innerHTML = `
