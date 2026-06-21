@@ -1838,47 +1838,39 @@ span.illusion-close-btn.shatter {
 }
 
 /* 🌟 撲克牌符號的並排容器 */
+/* 🌟 強制重設容器，消除任何舊代碼的干擾 */
 #limit-cards-container {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    gap: 20px !important;
-    margin: 25px auto !important;
+    gap: 25px !important;
+    margin: 30px auto !important;
     width: 100% !important;
-    min-height: 60px !important;
+    min-height: 70px !important;
 }
 
-/* 🌟 撲克牌符號實體樣式（純代碼渲染，免圖源） */
+/* 🌟 GSAP 互動符號基礎樣式 */
 .limit-modal-symbol {
     display: inline-flex !important;
     justify-content: center !important;
     align-items: center !important;
-    font-size: 2.2rem !important;        /* 大氣好看的圖示尺寸 */
+    font-size: 2.5rem !important;
     cursor: pointer !important;
     user-select: none !important;
-    
-    /* 核心要求：維持神祕感，預設透明度不為 1 */
-    opacity: 0.5 !important;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease !important;
+    perspective: 1000px;
 }
 
-/* 黑桃、梅花呈暗金/灰色；紅心、方塊呈紅金或有色 */
-.limit-modal-symbol.suit-black { color: #aaa !important; }
-.limit-modal-symbol.suit-red { color: #d9534f !important; }
+/* 色彩氛圍 */
+.limit-modal-symbol.suit-black { color: var(--text-color) !important; opacity: 0.5; }
+.limit-modal-symbol.suit-red { color: #d9534f !important; opacity: 0.6; }
 
-/* 懸停放大並稍微亮起 */
-.limit-modal-symbol:hover {
-    opacity: 0.95 !important;
-    transform: scale(1.25) !important;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
-}
-
-/* 🌀 點選錯誤或解鎖後的優雅 fade out / ease out 縮小消失動畫 */
-.limit-modal-symbol.shattered-sink {
-    transform: scale(0.1) translateY(20px) !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease !important;
+/* 懸停時純粹放大，不與 GSAP 衝突 */
+@media (hover: hover) {
+    .limit-modal-symbol:hover {
+        opacity: 1 !important;
+        transform: scale(1.3) !important;
+        text-shadow: 0 0 15px var(--gold-primary);
+    }
 }
 </style>
 </head>
@@ -4934,70 +4926,27 @@ document.addEventListener('keydown', function(e) {
 let limitModalFocusHandler = null;
 window.isLanternActive = false;
 
+// 🌟 核心修正：打開彈窗並立刻激活 GSAP 符號
 function openLimitModal() {
     const modal = document.getElementById('limit-modal');
     if (!modal) return;
     
-    // 1. 顯示彈窗並觸發優雅的淡入動畫
-    modal.style.display = 'flex'; 
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            modal.classList.add('is-visible');
-        });
-    });
-
-    // 2. 🌟 設為激活狀態，並在剛建立的容器中畫出 4 張並排牌
+    modal.style.display = 'flex'; // 確保用 flex 居中
+    modal.classList.add('is-visible');
     window.isLanternActive = true;
-    activateLanternExits(); 
     
-    // 3. 將游標焦點注入到密鑰輸入框內
-    setTimeout(() => {
-        const unlockInput = document.getElementById('unlock-input');
-        if (unlockInput) unlockInput.focus();
-    }, 50);
-
-    // 4. 建立專屬限制面板的 Focus Trap 機制（已包含可點擊的真卡牌）
-    if (limitModalFocusHandler) window.removeEventListener('keydown', limitModalFocusHandler);
-    
-    limitModalFocusHandler = function(e) {
-        if (e.key !== 'Tab') return;
-        
-        const content = document.getElementById('limit-content');
-        if (!content) return;
-
-        const focusableElements = Array.from(content.querySelectorAll('textarea, button, input, [role="button"]'))
-            .filter(el => el.getAttribute('tabindex') !== '-1');
-            
-        if (focusableElements.length === 0) return;
-
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (e.shiftKey) { 
-            if (document.activeElement === firstElement) {
-                e.preventDefault();
-                lastElement.focus();
-            }
-        } else { 
-            if (document.activeElement === lastElement) {
-                e.preventDefault();
-                firstElement.focus();
-            }
-        }
-    };
-
-    window.addEventListener('keydown', limitModalFocusHandler);
+    // 🎯 致命修正：在這裡立刻呼叫生成函數！
+    activateLanternExits();
 }
 
-// 🌟【花色結界】動態生成 4 個撲克牌符號，並派發真假命運
+// 🌟4個命運符號
 function activateLanternExits() {
     const cardContainer = document.getElementById('limit-cards-container');
     if (!cardContainer) return;
 
-    // 清空容器
+    // 清空舊容器，防止重疊
     cardContainer.innerHTML = '';
 
-    // 定義 4 個純文字符號與它們對應的黑紅色彩類別
     const suits = [
         { char: '♠', class: 'suit-black', name: '命運黑桃' },
         { char: '♥', class: 'suit-red', name: '真實紅心' },
@@ -5005,63 +4954,69 @@ function activateLanternExits() {
         { char: '♦', class: 'suit-red', name: '預言方塊' }
     ];
 
-    // 打亂花色順序，讓每一次彈窗打開時，四個符號的左右位置都隨機變換
+    // 打亂花色順序，創造隨機命運
     const shuffledSuits = suits.sort(() => 0.5 - Math.random());
-
-    // 隨機指定 0 ~ 3 之間的某一個索引為「真正的解鎖之鑰」
     const realIndex = Math.floor(Math.random() * 4);
 
-    // 開始繪製
     shuffledSuits.forEach((suit, index) => {
         const symbolEl = document.createElement('div');
         symbolEl.className = `limit-modal-symbol ${suit.class}`;
         symbolEl.innerHTML = suit.char;
+        symbolEl.style.opacity = '0'; // 初始隱形，交給 GSAP 展開
 
         if (index === realIndex) {
-            // 👑 【真正的出口】：點擊後直接解除彈窗並回到首頁
+            // 👑 真正的出口 (特定愛心或隨機命運花色)
             symbolEl.onclick = function(e) {
                 if (!window.isLanternActive) return;
                 e.stopPropagation();
 
-                // 播放優雅 fade out 縮小消失
-                symbolEl.classList.add('shattered-sink');
-
                 const unlockInput = document.getElementById('unlock-input');
                 if (unlockInput) unlockInput.value = "星辰指引";
 
-                setTimeout(() => {
-                    alert(`✨ 結界共鳴！你選中了正確的命運符號【${suit.name}】，即將返回主頁！`);
-                    
-                    closeLimitModal();
+                // ✨ 正確的符號放大吸入、其餘淡出
+                gsap.to(symbolEl, { scale: 2, opacity: 0, duration: 0.5, ease: "power2.out" });
+                gsap.to(document.querySelectorAll('.limit-modal-symbol:not(:hover)'), { scale: 0, opacity: 0, duration: 0.3 });
 
-                    // 🌟 安全返回主頁，絕對不進入占卜
+                setTimeout(() => {
+                    alert(`✨ 你選中了關閉按鈕【${suit.name}】，返回主頁`);
+                    closeLimitModal();
+                    
                     const main = document.getElementById('main-page');
                     if (main) {
                         main.style.opacity = '1';
                         main.style.display = 'block';
                     }
-                }, 350);
+                }, 500);
             };
-
             symbolEl.setAttribute('role', 'button');
             symbolEl.setAttribute('aria-label', '命運之鑰');
-            symbolEl.setAttribute('tabindex', '0');
         } else {
-            // 🌀 【錯誤的幻影】：點擊後觸發 fade out / ease out 縮小消失，但無法關閉彈窗
+            // 🌀 幻影：點擊後優雅地 Ease-Out 縮小消失
             symbolEl.onclick = function(e) {
                 if (!window.isLanternActive) return;
                 e.stopPropagation();
                 
-                // 觸發 fade out 消失機制
-                symbolEl.classList.add('shattered-sink');
+                // ✨ 下沉淡出消失特效
+                gsap.to(symbolEl, {
+                    y: 30,
+                    scale: 0.1,
+                    opacity: 0,
+                    duration: 0.6,
+                    ease: "power3.inOut",
+                    onComplete: () => symbolEl.style.pointerEvents = 'none'
+                });
             };
-
             symbolEl.setAttribute('aria-hidden', 'true');
-            symbolEl.setAttribute('tabindex', '-1');
         }
 
         cardContainer.appendChild(symbolEl);
     });
+
+    // 🚀 GSAP 入場動畫：四個符號像星光一樣逐個由小變大彈出 (Stagger 特效)
+    gsap.fromTo(".limit-modal-symbol", 
+        { scale: 0, opacity: 0, y: -10 },
+        { scale: 1, opacity: 0.6, y: 0, duration: 0.6, stagger: 0.15, ease: "back.out(1.7)" }
+    );
 }
 
 function closeLimitModal() {
@@ -5073,17 +5028,11 @@ function closeLimitModal() {
     
     const unlockInput = document.getElementById('unlock-input');
     if (unlockInput) unlockInput.value = ''; 
-    
     window.isLanternActive = false;
     
-    // 關閉時清空容器
+    // 清空，以便下次重新播放 GSAP
     const cardContainer = document.getElementById('limit-cards-container');
     if (cardContainer) cardContainer.innerHTML = '';
-    
-    if (limitModalFocusHandler) {
-        window.removeEventListener('keydown', limitModalFocusHandler);
-        limitModalFocusHandler = null;
-    }
 }
 
 </script>
