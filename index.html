@@ -2946,7 +2946,10 @@ function startPreloading() {
 
 function updateProgress() {
     loadedCount++;
-    const progressPercent = (loadedCount / totalImages) * 100;
+    
+    // 🌟 修正1：使用 Math.min 確保百分比絕對不超過 100%
+    let progressPercent = (loadedCount / totalImages) * 100;
+    if (progressPercent > 100) progressPercent = 100;
 
     console.log(`Progress: ${loadedCount}/${totalImages} (${Math.round(progressPercent)}%)`);
 
@@ -2955,9 +2958,8 @@ function updateProgress() {
         progressBar.style.width = `${progressPercent}%`;
     }
 
-    // 達到 80% 門檻就進入主頁面
-    if (loadedCount >= totalImages * threshold) {
-        // 防止多次觸發
+    // 達到門檻就進入主頁面
+    if (progressPercent >= threshold * 100) { // 修改判斷邏輯更安全
         if (loadingScreen.dataset.loadingComplete) return;
         loadingScreen.dataset.loadingComplete = "true";
 
@@ -4986,30 +4988,50 @@ function openLimitModal() {
     window.addEventListener('keydown', limitModalFocusHandler);
 }
 
-// 🌟【精準繪製】在 limit-cards-container 內部建立 4 張真假卡牌
 function activateLanternExits() {
     const cardContainer = document.getElementById('limit-cards-container');
-    if (!cardContainer || typeof tarotData === 'undefined') return;
+    if (!cardContainer) return;
 
     // 清空舊的牌組
     cardContainer.innerHTML = '';
 
     const totalCards = 4;
-    // 從全域隨機挑選 4 張不同的塔羅牌
-    let shuffledPool = [...tarotData].sort(() => 0.5 - Math.random());
-    // 隨機選出 0~3 之間的某一張作為「真鑰匙」
-    const realIndex = Math.floor(Math.random() * totalCards);
+    
+    // 🌟 修正2：如果全域有 tarotData 就用它，沒有就拿 imageUrls 當作備用安全圖源！
+    let sourcePool = [];
+    if (typeof tarotData !== 'undefined' && tarotData.length > 0) {
+        sourcePool = [...tarotData].sort(() => 0.5 - Math.random());
+    } else if (typeof imageUrls !== 'undefined' && imageUrls.length > 0) {
+        // 如果只有純圖片網址陣列，轉換成相容格式
+        sourcePool = imageUrls.map(url => ({
+            img: url.replace('tarot-cards/', ''), // 移除前綴，因為下面會統一補
+            name: "神祕星辰"
+        })).sort(() => 0.5 - Math.random());
+    }
 
-    // 微笑曲線或錯落感的小角度，讓並排看起來更精緻生動
+    // 如果真的連備用圖源都沒有，列印錯誤，避免直接死機
+    if (sourcePool.length === 0) {
+        console.error("❌ 無法取得任何塔羅牌數據源！請檢查 tarotData 或 imageUrls 是否存在。");
+        return;
+    }
+
+    // 隨機選出 0~3 之間的某一張作為「真鑰匙」
+    const realIndex = Math.floor(Math.random() * Math.min(totalCards, sourcePool.length));
     const rotations = ['-4deg', '-1deg', '2deg', '5deg'];
 
     for (let i = 0; i < totalCards; i++) {
-        const assignedCardData = shuffledPool[i];
+        const assignedCardData = sourcePool[i];
         if (!assignedCardData) break;
 
         const cardEl = document.createElement('div');
         cardEl.className = 'limit-modal-card';
-        cardEl.style.backgroundImage = `url('tarot-cards/${assignedCardData.img}')`;
+        
+        // 🌟 處理圖片路徑相容性
+        const imgPath = assignedCardData.img.startsWith('http') || assignedCardData.img.startsWith('tarot-cards/') 
+                        ? assignedCardData.img 
+                        : `tarot-cards/${assignedCardData.img}`;
+                        
+        cardEl.style.backgroundImage = `url('${imgPath}')`;
         cardEl.style.transform = `rotate(${rotations[i]})`;
 
         if (i === realIndex) {
@@ -5018,18 +5040,16 @@ function activateLanternExits() {
                 if (!window.isLanternActive) return;
                 e.stopPropagation();
 
-                // 播放縮小下沉淡出效果
                 cardEl.classList.add('shattered-sink');
 
                 const unlockInput = document.getElementById('unlock-input');
                 if (unlockInput) unlockInput.value = "星辰指引";
 
                 setTimeout(() => {
-                    alert(`✨ 星辰共鳴！你憑直覺選中了真實的解鎖之牌【${assignedCardData.name}】，結界已解開！`);
+                    alert(`✨ 星辰共鳴！你憑直覺選中了真實的解鎖之牌【${assignedCardData.name || '命運之鑰'}】，結界已解開！`);
                     
                     closeLimitModal();
 
-                    // 🌟 僅讓主頁恢復顯示，絕不自動執行占卜
                     const main = document.getElementById('main-page');
                     if (main) {
                         main.style.opacity = '1';
@@ -5039,22 +5059,15 @@ function activateLanternExits() {
             };
             
             cardEl.setAttribute('role', 'button');
-            cardEl.setAttribute('aria-label', `解鎖鑰匙：${assignedCardData.name}`);
+            cardEl.setAttribute('aria-label', `解鎖鑰匙`);
             cardEl.setAttribute('tabindex', '0'); 
-            
-            cardEl.onkeydown = function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    cardEl.click();
-                }
-            };
         } else {
-            // 🌀 幻影假牌：點擊後僅原地下沉縮小不見，無法解除結界
+            // 🌀 幻影假牌：點擊後僅原地下沉縮小不見
             cardEl.onclick = function(e) {
                 if (!window.isLanternActive) return;
                 e.stopPropagation();
                 cardEl.classList.add('shattered-sink');
             };
-            
             cardEl.setAttribute('aria-hidden', 'true');
             cardEl.setAttribute('tabindex', '-1');
         }
