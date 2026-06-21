@@ -3172,7 +3172,7 @@ window.isLanternActive = false;
             wrapper.className = 'card-wrap'; // 移除 shuffling 類別
             wrapper.dataset.index = index;
 
-            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; min-width:240px; min-height:240px; max-width:100%; max-height:100%; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
 
             wrapper.innerHTML = `
                 <div class="card-inner">
@@ -3239,7 +3239,7 @@ function playShuffleAnimation(isMobile) {
             wrapper.dataset.index = index;
             wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
 
-            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; min-width:240px; min-height:240px; max-width:100%; max-height:100%; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
 
             wrapper.innerHTML = `
                 <div class="card-inner">
@@ -3877,7 +3877,7 @@ function drawAdvice() {
     wrapper.style.transform = 'translate(-50%, 0) scale(0.5)';
     wrapper.style.opacity = '0';
     
-    const imgTag = `<img src="tarot-cards/${advCard.img}" style="width:100%; height:100%; object-fit:cover; min-width:240px; min-height:240px; max-width:100%; max-height:100%; transform:scale(1.05); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" draggable="false">`;
+    const imgTag = `<img src="tarot-cards/${advCard.img}" style="width:100%; height:100%; object-fit:cover; transform: scale(1.05) translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" draggable="false">`;
     
     wrapper.innerHTML = `
         <div class="card-inner" style="transform: ${isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)'}">
@@ -4606,7 +4606,7 @@ window.isLanternActive = false;
         wrapper.className = `card-wrap ready-to-glow element-${fullCardData.element.toLowerCase()}`;
         
         const rotation = savedData.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
-        const imgTag = `<img src="tarot-cards/${fullCardData.img}" style="width:100%; height:100%; object-fit:cover; min-width:240px; min-height:240px; max-width:100%; max-height:100%; transform:scale(1.05); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" draggable="false">`;
+        const imgTag = `<img src="tarot-cards/${fullCardData.img}" style="width:100%; height:100%; object-fit:cover; transform: scale(1.05) translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" draggable="false">`;
         
         // 🌟 優化點：將 ready-to-glow 直接加在 card-inner 上，確保它的發光特效能直接被看見
         wrapper.innerHTML = `
