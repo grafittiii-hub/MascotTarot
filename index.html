@@ -1837,37 +1837,50 @@ span.illusion-close-btn.shatter {
     filter: sepia(0.1) contrast(1.1) brightness(0.8) grayscale(0);
 }
 
-/* 🌟 限制彈窗專屬的星辰鑰匙卡牌 */
+/* 🌟 彈窗內部卡牌並排容器 */
+#limit-cards-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 20px 0;
+    width: 100%;
+}
+
+/* 🌟 彈窗專屬星辰解鎖牌 */
 .limit-modal-card {
-    position: absolute;
-    width: 65px;               /* 縮小尺寸，完美契合彈窗四周 */
+    width: 65px;                /* 精緻小巧的並排尺寸 */
     aspect-ratio: 1 / 1.6;
     border-radius: 6px;
     background-size: cover;
     background-position: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 10px rgba(219, 186, 24, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
     cursor: pointer;
-    z-index: 20;               /* 確保在 textarea 之上 */
-    opacity: 0.75;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+    
+    /* 🌟 核心要求：透明度不要為 1，維持神秘感 */
+    opacity: 0.6; 
+    filter: sepia(0.1) contrast(1.1) brightness(0.6) grayscale(0.1);
+    
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, filter 0.4s ease;
+    will-change: transform, opacity;
 }
 
-/* 日間模式微調 */
+/* 🌟 日間模式優化：正片疊底與柔和亮度 */
 :root:not([data-theme="night"]) .limit-modal-card {
-    opacity: 0.85;
+    opacity: 0.6;
     mix-blend-mode: multiply;
+    filter: sepia(0.2) contrast(1.0) brightness(0.8) grayscale(0.2);
 }
 
-/* 懸停放大反饋 */
+/* 懸停時稍微亮起放大，但依然不滿 1 */
 .limit-modal-card:hover {
-    opacity: 1;
-    transform: scale(1.1) !important;
-    box-shadow: 0 4px 15px rgba(219, 186, 24, 0.5);
+    opacity: 0.8;
+    transform: scale(1.08) translateY(-4px);
+    box-shadow: 0 6px 15px rgba(219, 186, 24, 0.3);
 }
 
-/* 🌀 點擊假牌或真牌後的下沉縮小漸出動畫 */
+/* 🌀 點擊後的縮小、下沉、漸出（淡出）消失特效 */
 .limit-modal-card.shattered-sink {
-    transform: scale(0.2) translateY(40px) !important;
+    transform: scale(0.3) translateY(35px) !important;
     opacity: 0 !important;
     pointer-events: none !important;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease !important;
@@ -2023,14 +2036,16 @@ span.illusion-close-btn.shatter {
 </div>
 
 <div id="limit-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
-    <div class="modal-content" style="position: relative; min-height: 280px; width: 90%; max-width: 400px; display: flex; flex-direction: column; justify-content: center;">
+    <div class="modal-content" style="position: relative; min-height: 280px; width: 90%; max-width: 420px; display: flex; flex-direction: column; justify-content: center;">
         
         <div id="limit-content" style="position: relative; z-index: 10; text-align: center; padding: 20px 10px; width: 100%; height: 100%;">
             <h2 style="color: var(--gold-primary, #dbba18); margin-top: 10px;">今日額度已滿</h2>
-            <p style="margin-bottom: 20px; font-size: 0.95em; line-height: 1.6;">
+            <p style="margin-bottom: 15px; font-size: 0.95em; line-height: 1.6;">
                 每日提供 2 次免費占卜。<br>
-                <span style="font-size: 0.85em; opacity: 0.8; color: var(--gold-secondary, #b69a68);">輸入密鑰，或點擊周圍的卡牌退出頁面。</span>
+                <span style="font-size: 0.85em; opacity: 0.8; color: var(--gold-secondary, #b69a68);">輸入密鑰，或憑直覺點擊下方的星辰卡牌返回主頁。</span>
             </p>
+            
+            <div id="limit-cards-container"></div>
             
             <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--gold-primary, #dbba18); color: #fff; border-radius: 4px; resize: none;"></textarea>
             
@@ -2038,7 +2053,7 @@ span.illusion-close-btn.shatter {
                 <button onclick="handleUnlock()">驗證密鑰</button>
             </div>
             
-            </div>
+        </div>
         
     </div>
 </div>
@@ -3960,7 +3975,7 @@ function drawAdvice() {
         setTimeout(() => {
             drawnCards.forEach(c => c.elementDOM.classList.add('ready-to-glow'));
         }, 800);
-    }, 50);
+    }, 500);
 
 
     // ==========================================
@@ -4937,8 +4952,6 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-
-// 全域宣告監聽器與鑰匙狀態
 let limitModalFocusHandler = null;
 window.isLanternActive = false;
 
@@ -4954,7 +4967,7 @@ function openLimitModal() {
         });
     });
 
-    // 2. 🌟 核心調整：設為激活狀態，並在彈窗 limit-content 內部真正「畫出」4張牌
+    // 2. 🌟 設為激活狀態，並在剛建立的容器中畫出 4 張並排牌
     window.isLanternActive = true;
     activateLanternExits(); 
     
@@ -4964,7 +4977,7 @@ function openLimitModal() {
         if (unlockInput) unlockInput.focus();
     }, 50);
 
-    // 4. 🌟 建立專屬限制面板的 Focus Trap 機制（已修正：納入可以點擊的「真卡牌」）
+    // 4. 建立專屬限制面板的 Focus Trap 機制（已包含可點擊的真卡牌）
     if (limitModalFocusHandler) window.removeEventListener('keydown', limitModalFocusHandler);
     
     limitModalFocusHandler = function(e) {
@@ -4973,7 +4986,6 @@ function openLimitModal() {
         const content = document.getElementById('limit-content');
         if (!content) return;
 
-        // 💡 修正點：Focus Trap 除了抓 textarea、button、input，還要抓具備 role="button" 的真鑰匙卡牌！
         const focusableElements = Array.from(content.querySelectorAll('textarea, button, input, [role="button"]'))
             .filter(el => el.getAttribute('tabindex') !== '-1');
             
@@ -4982,12 +4994,12 @@ function openLimitModal() {
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 
-        if (e.shiftKey) { // Shift + Tab 往回走
+        if (e.shiftKey) { 
             if (document.activeElement === firstElement) {
                 e.preventDefault();
                 lastElement.focus();
             }
-        } else { // Tab 往前走
+        } else { 
             if (document.activeElement === lastElement) {
                 e.preventDefault();
                 firstElement.focus();
@@ -4998,25 +5010,22 @@ function openLimitModal() {
     window.addEventListener('keydown', limitModalFocusHandler);
 }
 
-// 🌟【全新重構】專門在 limit modal 內畫出 4 張關閉卡牌的函式
+// 🌟【精準繪製】在 limit-cards-container 內部建立 4 張真假卡牌
 function activateLanternExits() {
-    const container = document.getElementById('limit-content');
-    if (!container || typeof tarotData === 'undefined') return;
+    const cardContainer = document.getElementById('limit-cards-container');
+    if (!cardContainer || typeof tarotData === 'undefined') return;
 
-    // 清除可能殘留的舊卡牌
-    container.querySelectorAll('.limit-modal-card').forEach(el => el.remove());
+    // 清空舊的牌組
+    cardContainer.innerHTML = '';
 
     const totalCards = 4;
+    // 從全域隨機挑選 4 張不同的塔羅牌
     let shuffledPool = [...tarotData].sort(() => 0.5 - Math.random());
+    // 隨機選出 0~3 之間的某一張作為「真鑰匙」
     const realIndex = Math.floor(Math.random() * totalCards);
 
-    // 精準分佈在彈窗 limit-content 盒子外的四個角落
-    const positions = [
-        { top: '-25px', left: '-35px', rotate: '-12deg' },   // 左上角
-        { top: '-25px', right: '-35px', rotate: '12deg' },   // 右上角
-        { bottom: '-25px', left: '-35px', rotate: '8deg' },  // 左下角
-        { bottom: '-25px', right: '-35px', rotate: '-8deg' } // 右下角
-    ];
+    // 微笑曲線或錯落感的小角度，讓並排看起來更精緻生動
+    const rotations = ['-4deg', '-1deg', '2deg', '5deg'];
 
     for (let i = 0; i < totalCards; i++) {
         const assignedCardData = shuffledPool[i];
@@ -5025,21 +5034,15 @@ function activateLanternExits() {
         const cardEl = document.createElement('div');
         cardEl.className = 'limit-modal-card';
         cardEl.style.backgroundImage = `url('tarot-cards/${assignedCardData.img}')`;
-        
-        const pos = positions[i];
-        if (pos.top) cardEl.style.top = pos.top;
-        if (pos.bottom) cardEl.style.bottom = pos.bottom;
-        if (pos.left) cardEl.style.left = pos.left;
-        if (pos.right) cardEl.style.right = pos.right;
-        
-        cardEl.style.transform = `rotate(${pos.rotate})`;
+        cardEl.style.transform = `rotate(${rotations[i]})`;
 
         if (i === realIndex) {
-            // 👑 真正的出口牌：點擊後回到主頁（不占卜）
+            // 👑 唯一的真實鑰匙：關閉彈窗並回到主頁
             cardEl.onclick = function(e) {
                 if (!window.isLanternActive) return;
                 e.stopPropagation();
 
+                // 播放縮小下沉淡出效果
                 cardEl.classList.add('shattered-sink');
 
                 const unlockInput = document.getElementById('unlock-input');
@@ -5050,7 +5053,7 @@ function activateLanternExits() {
                     
                     closeLimitModal();
 
-                    // 🌟 僅讓主頁恢復顯示，不觸發任何占卜
+                    // 🌟 僅讓主頁恢復顯示，絕不自動執行占卜
                     const main = document.getElementById('main-page');
                     if (main) {
                         main.style.opacity = '1';
@@ -5059,19 +5062,17 @@ function activateLanternExits() {
                 }, 300);
             };
             
-            // 給予可聚焦、可操作的無障礙身分
             cardEl.setAttribute('role', 'button');
             cardEl.setAttribute('aria-label', `解鎖鑰匙：${assignedCardData.name}`);
             cardEl.setAttribute('tabindex', '0'); 
             
-            // 讓鍵盤使用者按 Enter 也能點擊這張真牌解鎖
             cardEl.onkeydown = function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     cardEl.click();
                 }
             };
         } else {
-            // 🌀 幻影假牌：點擊只會下沉消失，無法回到主頁
+            // 🌀 幻影假牌：點擊後僅原地下沉縮小不見，無法解除結界
             cardEl.onclick = function(e) {
                 if (!window.isLanternActive) return;
                 e.stopPropagation();
@@ -5079,10 +5080,10 @@ function activateLanternExits() {
             };
             
             cardEl.setAttribute('aria-hidden', 'true');
-            cardEl.setAttribute('tabindex', '-1'); // 假牌不參與 Tab 鍵序
+            cardEl.setAttribute('tabindex', '-1');
         }
 
-        container.appendChild(cardEl);
+        cardContainer.appendChild(cardEl);
     }
 }
 
@@ -5098,17 +5099,16 @@ function closeLimitModal() {
     
     window.isLanternActive = false;
     
-    // 🌟 關閉時徹底卸載這 4 張專屬生成的卡牌
-    const container = document.getElementById('limit-content');
-    if (container) {
-        container.querySelectorAll('.limit-modal-card').forEach(el => el.remove());
-    }
+    // 🌟 關閉時清空彈窗內的卡牌容器，維持乾淨
+    const cardContainer = document.getElementById('limit-cards-container');
+    if (cardContainer) cardContainer.innerHTML = '';
     
     if (limitModalFocusHandler) {
         window.removeEventListener('keydown', limitModalFocusHandler);
         limitModalFocusHandler = null;
     }
 }
+
 </script>
 </body>
 </html>
