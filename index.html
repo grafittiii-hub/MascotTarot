@@ -2040,7 +2040,7 @@ span.illusion-close-btn.shatter {
             
             <div id="limit-cards-container"></div>
             
-            <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--gold-primary, #dbba18); color: #fff; border-radius: 4px; resize: none;"></textarea>
+            <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: var(--text-color); border: 1px solid var(--gold-primary, #dbba18); color: #fff; border-radius: 4px; resize: none;"></textarea>
             <div>
                 <button onclick="handleUnlock()">驗證密鑰</button>
             </div>
@@ -4996,22 +4996,13 @@ function activateLanternExits() {
     cardContainer.innerHTML = '';
 
     const totalCards = 4;
-    
-    // 🌟 修正2：如果全域有 tarotData 就用它，沒有就拿 imageUrls 當作備用安全圖源！
     let sourcePool = [];
+
+    // 🌟 核心修正：精準檢查並確保讀取到你的全域 tarotData
     if (typeof tarotData !== 'undefined' && tarotData.length > 0) {
         sourcePool = [...tarotData].sort(() => 0.5 - Math.random());
-    } else if (typeof imageUrls !== 'undefined' && imageUrls.length > 0) {
-        // 如果只有純圖片網址陣列，轉換成相容格式
-        sourcePool = imageUrls.map(url => ({
-            img: url.replace('tarot-cards/', ''), // 移除前綴，因為下面會統一補
-            name: "神祕星辰"
-        })).sort(() => 0.5 - Math.random());
-    }
-
-    // 如果真的連備用圖源都沒有，列印錯誤，避免直接死機
-    if (sourcePool.length === 0) {
-        console.error("❌ 無法取得任何塔羅牌數據源！請檢查 tarotData 或 imageUrls 是否存在。");
+    } else {
+        console.error("❌ 警告：依然找不到全域變數 tarotData，請確認其宣告位置未被閉包鎖定！");
         return;
     }
 
@@ -5026,12 +5017,9 @@ function activateLanternExits() {
         const cardEl = document.createElement('div');
         cardEl.className = 'limit-modal-card';
         
-        // 🌟 處理圖片路徑相容性
-        const imgPath = assignedCardData.img.startsWith('http') || assignedCardData.img.startsWith('tarot-cards/') 
-                        ? assignedCardData.img 
-                        : `tarot-cards/${assignedCardData.img}`;
-                        
-        cardEl.style.backgroundImage = `url('${imgPath}')`;
+        // 🌟 關鍵校正點：將你的 "card0.png" 自動且精準地補上 "tarot-cards/" 前綴
+        const finalImgSrc = `tarot-cards/${assignedCardData.img}`;
+        cardEl.style.backgroundImage = `url('${finalImgSrc}')`;
         cardEl.style.transform = `rotate(${rotations[i]})`;
 
         if (i === realIndex) {
@@ -5046,10 +5034,11 @@ function activateLanternExits() {
                 if (unlockInput) unlockInput.value = "星辰指引";
 
                 setTimeout(() => {
-                    alert(`✨ 星辰共鳴！你憑直覺選中了真實的解鎖之牌【${assignedCardData.name || '命運之鑰'}】，結界已解開！`);
+                    alert(`✨ 星辰共鳴！你憑直覺選中了真實的解鎖之牌【${assignedCardData.name}】，結界已解開！`);
                     
                     closeLimitModal();
 
+                    // 🌟 僅讓主頁恢復顯示，絕不自動執行占卜
                     const main = document.getElementById('main-page');
                     if (main) {
                         main.style.opacity = '1';
@@ -5059,7 +5048,7 @@ function activateLanternExits() {
             };
             
             cardEl.setAttribute('role', 'button');
-            cardEl.setAttribute('aria-label', `解鎖鑰匙`);
+            cardEl.setAttribute('aria-label', `解鎖鑰匙：${assignedCardData.name}`);
             cardEl.setAttribute('tabindex', '0'); 
         } else {
             // 🌀 幻影假牌：點擊後僅原地下沉縮小不見
