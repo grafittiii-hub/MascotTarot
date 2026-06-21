@@ -3114,7 +3114,7 @@ function enterMainPage() {
             incrementReading();
 
             isRelationship = document.getElementById('is-relation').checked;
-            window.isLanternActive = false;
+            
             const main = document.getElementById('main-page');
             main.style.opacity = '0';
             setTimeout(() => {
@@ -3128,6 +3128,7 @@ function enterMainPage() {
 // 主控函式：負責指揮整個洗牌與發牌流程
 // ==========================================
 async function initSpreadView() {
+window.isLanternActive = false;
     const spreadView = document.getElementById('spread-view');
     spreadView.style.display = 'block';
     
@@ -3835,12 +3836,6 @@ function relayoutCards(transitionStyle = 'transform 0.8s cubic-bezier(0.25, 1, 0
         el.style.top = isMobile ? '8%' : '12%';
         el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${metrics.scale})`;
 
-    if (confirmBtn) {
-        confirmBtn.style.opacity = '0';
-        confirmBtn.style.pointerEvents = 'none'; 
-        setTimeout(() => confirmBtn.style.display = 'none', 400); 
-    }
-
         setTimeout(() => {
             el.style.transition = '';
         }, parseFloat(transitionStyle.match(/[\d.]+s/)[0]) * 1000 + 50);
@@ -4350,12 +4345,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             hasTriggeredCartAnimation = true; // 鎖定防線，避免後續上下滑動面板重複觸發
             
-    if (confirmBtn) {
-        confirmBtn.style.opacity = '0';
-        confirmBtn.style.pointerEvents = 'none'; 
-        setTimeout(() => confirmBtn.style.display = 'none', 400); 
-    }
-
             // ⏳ 精準倒數 3000 毫秒（3 秒）
             setTimeout(() => {
                 // 為父容器注入 .expanded 類別，全面啟動 CSS 3:4:3 華麗推移
@@ -4780,7 +4769,7 @@ function initAmbientLanternEffect() {
         { top: '14%', left: '6%', rotate: '-10deg' },   
         { top: '17%', right: '6%', rotate: '8deg' },    
         { bottom: '25%', left: '8%', rotate: '12deg' }, 
-        { bottom: '7%', right: '8%', rotate: '-6deg' } 
+        { bottom: '5%', right: '8%', rotate: '-6deg' } 
     ];
 
     for (let i = 0; i < totalCards; i++) {
