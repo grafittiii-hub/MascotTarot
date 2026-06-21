@@ -1777,7 +1777,6 @@ span.illusion-close-btn.shatter {
 }
 
 /* 🌟 專屬背景卡牌底層容器 - 確保絕對不阻擋任何主頁按鈕 */
-/* 🌟 專屬背景卡牌底層容器 - 增加漸隱動畫支援 */
 #ambient-lantern-container {
     position: fixed;
     top: 0;
@@ -1840,9 +1839,35 @@ span.illusion-close-btn.shatter {
 
 /* 🌟 點擊後沉下去隱形狀態 */
 .ambient-lantern-card.shattered-sink {
-    transform: scale(0.6) translateY(30px) !important; 
+    transform: scale(0.3) translateY(60px) !important; 
     opacity: 0 !important;
     pointer-events: none !important; 
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease !important;
+}
+
+/* 🌟 鑰匙激活狀態：解除火把滑鼠遮罩，並控制透明度小於 1 */
+.ambient-lantern-card.key-active {
+    opacity: 0.55 !important;
+    filter: sepia(0.1) contrast(1.1) brightness(0.65) grayscale(0) !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); /* 淡淡的金黃結界邊框 */
+    transform: scale(1.03);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 🌟 日間模式激活狀態（不要為 1，正片疊底） */
+:root:not([data-theme="night"]) .ambient-lantern-card.key-active {
+    opacity: 0.48 !important;
+    mix-blend-mode: multiply !important;
+    filter: sepia(0.2) contrast(1.05) brightness(0.85) grayscale(0) !important;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+}
+
+/* 🌟 滑鼠懸停鑰匙時的微光反饋 */
+.ambient-lantern-card.key-active:hover {
+    opacity: 0.85 !important;
+    transform: scale(1.08) translateY(-5px);
 }
 </style>
 </head>
@@ -3934,6 +3959,7 @@ function drawAdvice() {
         }, 800);
     }, 50);
 
+
     // ==========================================
     // 👑 階段 2：寫入面板的解說文字
     // ==========================================
@@ -4908,84 +4934,34 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-function spawnIllusionButtons() {
-    const container = document.getElementById('limit-content');
-    if (!container) return;
-    
-    // 清除舊星辰
-    container.querySelectorAll('.illusion-close-btn').forEach(b => b.remove());
-
-    const totalButtons = 4; 
-    const realIndex = Math.floor(Math.random() * totalButtons);
-
-    for (let i = 0; i < totalButtons; i++) {
-        // 🌟 關鍵修正：改用 span 標籤，完美避開全局 button CSS 污染
-        let btn = document.createElement('span');
-        btn.className = 'illusion-close-btn';
-        btn.innerHTML = '✦'; 
-        
-        // 🌟 演算法優化：精準分佈在邊緣，絕對避開正中央的 textarea 區塊
-        let top, left;
-        if (Math.random() > 0.5) {
-            // 分佈在極靠上或極靠下的安全區
-            top = Math.random() > 0.5 ? (2 + Math.random() * 8) : (82 + Math.random() * 8);
-            left = 5 + Math.random() * 90;
-        } else {
-            // 分佈在極靠左或極靠右的安全區
-            top = 5 + Math.random() * 80;
-            left = Math.random() > 0.5 ? (2 + Math.random() * 8) : (88 + Math.random() * 8);
-        }
-
-        btn.style.top = `${top}%`;
-        btn.style.left = `${left}%`;
-
-        if (i === realIndex) {
-            // 真正的出口
-            btn.onclick = function(e) {
-                e.stopPropagation();
-                closeLimitModal();
-            };
-            btn.setAttribute('role', 'button');
-            btn.setAttribute('aria-label', '解除結界'); 
-            btn.setAttribute('tabindex', '0'); 
-            
-            // 讓鍵盤使用者按 Enter 也能觸發
-            btn.onkeydown = function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    closeLimitModal();
-                }
-            };
-        } else {
-            // 假的幻影星辰
-            btn.onclick = function(e) {
-                e.stopPropagation();
-                this.classList.add('shatter'); 
-            };
-            btn.setAttribute('aria-hidden', 'true'); 
-            btn.setAttribute('tabindex', '-1'); 
-        }
-        
-        container.appendChild(btn);
-    }
-}
 
 // 全域宣告一個監聽器變數，方便註冊與卸載
 let limitModalFocusHandler = null;
+window.isLanternActive = false;
 
 function openLimitModal() {
     const modal = document.getElementById('limit-modal');
     if (!modal) return;
     
+    // 1. 顯示彈窗並觸發優雅的淡入動畫
     modal.style.display = 'flex'; 
-    spawnIllusionButtons(); // 生成星辰
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modal.classList.add('is-visible');
+        });
+    });
+
+    // 2. 🌟 激活背景 4 張卡牌作為臨時結界鑰匙
+    window.isLanternActive = true;
+    activateLanternExits(); 
     
-    // 🌟 關鍵：立刻將游標焦點注入到密鑰輸入框內
+    // 3. 將游標焦點注入到密鑰輸入框內
     setTimeout(() => {
         const unlockInput = document.getElementById('unlock-input');
         if (unlockInput) unlockInput.focus();
     }, 50);
 
-    // 🌟 建立專屬限制面板的 Focus Trap 機制
+    // 4. 建立專屬限制面板的 Focus Trap 機制
     if (limitModalFocusHandler) window.removeEventListener('keydown', limitModalFocusHandler);
     
     limitModalFocusHandler = function(e) {
@@ -4994,8 +4970,7 @@ function openLimitModal() {
         const content = document.getElementById('limit-content');
         if (!content) return;
 
-        // 撈出當前結界內「真正」可以被聚焦的元素 (排除 tabindex="-1" 的假按鈕)
-        const focusableElements = Array.from(content.querySelectorAll('textarea, button'))
+        const focusableElements = Array.from(content.querySelectorAll('textarea, button, input'))
             .filter(el => el.getAttribute('tabindex') !== '-1');
             
         if (focusableElements.length === 0) return;
@@ -5003,12 +4978,12 @@ function openLimitModal() {
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 
-        if (e.shiftKey) { // Shift + Tab 往回走
+        if (e.shiftKey) { 
             if (document.activeElement === firstElement) {
                 e.preventDefault();
                 lastElement.focus();
             }
-        } else { // Tab 往前走
+        } else { 
             if (document.activeElement === lastElement) {
                 e.preventDefault();
                 firstElement.focus();
@@ -5019,14 +4994,99 @@ function openLimitModal() {
     window.addEventListener('keydown', limitModalFocusHandler);
 }
 
+// 🌟【全新修改核心函式】賦予 4 張背景牌真假身份：隨機 1 張返回/解鎖，其餘 3 張只下沉消失
+function activateLanternExits() {
+    const lanternCards = document.querySelectorAll('.ambient-lantern-card');
+    if (lanternCards.length === 0) return;
+
+    // 1. 從全域的 tarotData 中隨機挑選 4 張不同的牌做為這次的鑰匙外觀
+    let shuffledPool = [...tarotData].sort(() => 0.5 - Math.random());
+    
+    // 2. 核心演算法：隨機決定 0 ~ 3 之中，哪一個索引值才是「真正的出口」
+    const totalCards = lanternCards.length; // 4
+    const realIndex = Math.floor(Math.random() * totalCards);
+
+    // 3. 依次對場上的 4 張卡牌進行「附身與賦予命運」
+    lanternCards.forEach((card, index) => {
+        const assignedCardData = shuffledPool[index];
+        
+        if (assignedCardData) {
+            // 更換為隨機挑選的全新卡面圖片
+            card.style.backgroundImage = `url('tarot-cards/${assignedCardData.img}')`;
+        }
+
+        // 移除先前的遺留類別（防止連續出發時疊加），並加上鑰匙激活類別
+        card.classList.remove('shattered-sink');
+        card.classList.add('key-active');
+
+        // 4. 根據是否為 realIndex 派發不同的點擊命運
+        if (index === realIndex) {
+            // 👑 【真正的命運鑰匙】：點擊解鎖並進入主頁/占卜頁面
+            card.onclick = function(e) {
+                if (!window.isLanternActive) return;
+                e.stopPropagation();
+
+                // 觸發真實解鎖的下沉消逝效果（也可以不加，因為馬上就要關閉彈窗了）
+                card.classList.add('shattered-sink');
+
+                // 自動填入密鑰框作為彩蛋反饋
+                const unlockInput = document.getElementById('unlock-input');
+                if (unlockInput) unlockInput.value = "星辰指引"; 
+
+                setTimeout(() => {
+                    alert(`✨ 命運的真理！你觸碰了真正的結界裂縫【${assignedCardData ? assignedCardData.name : '隱藏鑰匙'}】，限制已解除。`);
+                    
+                    // 執行關閉限制彈窗並解鎖進入占卜
+                    closeLimitModal();
+                    
+                    // 直接幫使用者啟動占卜流程
+                    isRelationship = document.getElementById('is-relation').checked;
+                    const main = document.getElementById('main-page');
+                    if (main) main.style.opacity = '0';
+                    setTimeout(() => {
+                        if (main) main.style.display = 'none';
+                        initSpreadView();
+                    }, 800);
+                }, 300);
+            };
+
+            // 增強無障礙 accessibility 屬性
+            card.setAttribute('role', 'button');
+            card.setAttribute('aria-label', '真正的結界出口');
+        } else {
+            // 🌀 【幻影假牌】：點擊後只會優雅地下沉、縮小、淡出消失，但無法離開彈窗
+            card.onclick = function(e) {
+                if (!window.isLanternActive) return;
+                e.stopPropagation();
+
+                // 僅觸發下沉、縮小、漸出消失特效
+                card.classList.add('shattered-sink');
+            };
+
+            card.setAttribute('aria-hidden', 'true');
+        }
+    });
+}
+
 function closeLimitModal() {
     const modal = document.getElementById('limit-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.classList.remove('is-visible');
+        setTimeout(() => { modal.style.display = 'none'; }, 400);
+    }
     
     const unlockInput = document.getElementById('unlock-input');
-    if (unlockInput) unlockInput.value = ''; // 清空輸入框
+    if (unlockInput) unlockInput.value = ''; 
     
-    // 🌟 完美解除結界，移除 Tab 鎖定監聽器
+    // 🌟 還原背景卡牌：關閉狀態、清除事件、並移除下沉消失狀態，讓它們下次還能亮起！
+    window.isLanternActive = false;
+    const lanternCards = document.querySelectorAll('.ambient-lantern-card');
+    lanternCards.forEach(card => {
+        card.classList.remove('key-active');
+        card.classList.remove('shattered-sink'); // 👈 關鍵：重置下沉狀態，使其回到壁畫中
+        card.onclick = null; 
+    });
+    
     if (limitModalFocusHandler) {
         window.removeEventListener('keydown', limitModalFocusHandler);
         limitModalFocusHandler = null;
