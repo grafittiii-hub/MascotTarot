@@ -1837,8 +1837,7 @@ span.illusion-close-btn.shatter {
     filter: sepia(0.1) contrast(1.1) brightness(0.8) grayscale(0);
 }
 
-/* 🌟 撲克牌符號的並排容器 */
-/* 🌟 強制重設容器，消除任何舊代碼的干擾 */
+
 #limit-cards-container {
     display: flex !important;
     justify-content: center !important;
@@ -1858,6 +1857,10 @@ span.illusion-close-btn.shatter {
     user-select: none !important;
     perspective: 1000px;
 }
+
+/* 為了讓日夜模式更好看，微調基礎透明度 */
+.limit-static-btn.suit-black { color: var(--text-color, #aaa) !important; opacity: 0.6; }
+.limit-static-btn.suit-red { color: #d9534f !important; opacity: 0.7; }
 
 .limit-static-btn:hover {
     opacity: 1 !important;
@@ -2028,17 +2031,10 @@ span.illusion-close-btn.shatter {
             <h2 style="color: var(--gold-primary, #dbba18); margin-top: 10px;">今日額度已滿</h2>
             <p style="margin-bottom: 15px; font-size: 0.95em; line-height: 1.6;">
                 每日提供 2 次免費占卜。<br>
-                <span style="font-size: 0.85em; opacity: 0.8; color: var(--gold-secondary, #b69a68);">憑直覺點擊下方的一個花色命運符號即可返回主頁。</span>
+                <span style="font-size: 0.85em; opacity: 0.8; color: var(--gold-secondary, #b69a68);">憑直覺點擊下方的一個命運符號即可返回主頁。</span>
             </p>
             
-            <div id="limit-static-symbols" style="display: flex !important; justify-content: center !important; gap: 25px !important; margin: 25px auto !important; width: 100% !important; min-height: 50px !important;">
-                <div class="limit-static-btn suit-black" onclick="clickWrongSymbol(this)" style="font-size: 2.5rem; cursor: pointer; user-select: none; opacity: 0.6; color: var(--text-color, #aaa); transition: all 0.3s ease;">♠</div>
-                
-                <div class="limit-static-btn suit-red" onclick="clickCorrectHeart(this)" style="font-size: 2.5rem; cursor: pointer; user-select: none; opacity: 0.7; color: #d9534f; transition: all 0.3s ease; font-weight: bold;">♥</div>
-                
-                <div class="limit-static-btn suit-black" onclick="clickWrongSymbol(this)" style="font-size: 2.5rem; cursor: pointer; user-select: none; opacity: 0.6; color: var(--text-color, #aaa); transition: all 0.3s ease;">♣</div>
-                <div class="limit-static-btn suit-red" onclick="clickWrongSymbol(this)" style="font-size: 2.5rem; cursor: pointer; user-select: none; opacity: 0.6; color: #d9534f; transition: all 0.3s ease;">♦</div>
-            </div>
+            <div id="limit-cards-container"></div>
             
             <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--gold-primary, #dbba18); color: #fff; border-radius: 4px; resize: none;"></textarea>
             <div>
@@ -4930,47 +4926,95 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// 👑 點擊特定的愛心（正確的關閉按鈕）
-function clickCorrectHeart(element) {
-    // 播放消失動效
-    element.classList.add('fade-out-clicked');
-    
-    const unlockInput = document.getElementById('unlock-input');
-    if (unlockInput) unlockInput.value = "星辰指引";
+let limitModalFocusHandler = null;
 
-    setTimeout(() => {
-        alert("✨ 結界共鳴！你選中了正確的命運符號【真實紅心】，即將返回主頁！");
-        
-        // 呼叫原本檔案中的關閉彈窗函式
-        closeLimitModal();
-
-        // 🌟 僅讓主頁恢復顯示，絕不自動執行占卜
-        const main = document.getElementById('main-page');
-        if (main) {
-            main.style.opacity = '1';
-            main.style.display = 'block';
-        }
-    }, 300);
-}
-
-// 🌀 點擊其他錯誤的符號
-function clickWrongSymbol(element) {
-    // 讓該花色直接 fade out 縮小消失
-    element.classList.add('fade-out-clicked');
-}
-
-// 確保你原本的 openLimitModal 只需要單純顯示即可
+// 🌟 打開彈窗：每次都重新生成洗牌後的符號
 function openLimitModal() {
     const modal = document.getElementById('limit-modal');
     if (!modal) return;
     
-    // 讓所有符號重置顯示狀態（如果上次有點過的話）
-    document.querySelectorAll('.limit-static-btn').forEach(btn => {
-        btn.classList.remove('fade-out-clicked');
-    });
-
     modal.style.display = 'flex'; 
     modal.classList.add('is-visible');
+    window.isLanternActive = true;
+    
+    // 🎯 核心修正：每次打開都強制重新渲染，確保上次消失的符號全部復活
+    generateRandomSymbols();
+}
+
+// 🎲 隨機生成花色符號邏輯 (文字渲染，100% 顯現)
+function generateRandomSymbols() {
+    const cardContainer = document.getElementById('limit-cards-container');
+    if (!cardContainer) return;
+
+    cardContainer.innerHTML = ''; // 徹底清空
+
+    const suits = [
+        { char: '♠', class: 'suit-black', name: '命運黑桃' },
+        { char: '♥', class: 'suit-red', name: '真實紅心' },
+        { char: '♣', class: 'suit-black', name: '神祕梅花' },
+        { char: '♦', class: 'suit-red', name: '預言方塊' }
+    ];
+
+    // 洗牌打亂順序
+    const shuffledSuits = suits.sort(() => 0.5 - Math.random());
+    // 隨機指定一個索引為「真正的解鎖鑰匙」
+    const realIndex = Math.floor(Math.random() * 4);
+
+    shuffledSuits.forEach((suit, index) => {
+        const btn = document.createElement('div');
+        btn.className = `limit-static-btn ${suit.class}`;
+        btn.innerHTML = suit.char;
+        btn.style.transition = "all 0.3s ease";
+
+        if (index === realIndex) {
+            // 👑 真正的關閉出口
+            btn.onclick = function(e) {
+                if (!window.isLanternActive) return;
+                e.stopPropagation();
+
+                // GSAP 特效：正確的符號放大淡出
+                gsap.to(btn, { scale: 1.8, opacity: 0, duration: 0.4, ease: "power2.out" });
+                
+                const unlockInput = document.getElementById('unlock-input');
+                if (unlockInput) unlockInput.value = "星辰指引";
+
+                setTimeout(() => {
+                    alert(`✨ 結界共鳴！你選中了正確的命運符號【${suit.name}】，即將返回主頁！`);
+                    closeLimitModal();
+
+                    const main = document.getElementById('main-page');
+                    if (main) {
+                        main.style.opacity = '1';
+                        main.style.display = 'block';
+                    }
+                }, 400);
+            };
+        } else {
+            // 🌀 錯誤的幻影符號
+            btn.onclick = function(e) {
+                if (!window.isLanternActive) return;
+                e.stopPropagation();
+                
+                // GSAP 特效：點錯的符號往下沉並縮小消失 (Ease-out)
+                gsap.to(btn, { 
+                    y: 20, 
+                    scale: 0.1, 
+                    opacity: 0, 
+                    duration: 0.4, 
+                    ease: "power2.inOut",
+                    onComplete: () => btn.style.pointerEvents = 'none'
+                });
+            };
+        }
+
+        cardContainer.appendChild(btn);
+    });
+
+    // 🚀 GSAP 華麗增強：打開彈窗時，4 個純文字符號會像星光一樣逐個彈出
+    gsap.fromTo(".limit-static-btn", 
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, stagger: 0.1, ease: "back.out(1.5)" }
+    );
 }
 
 function closeLimitModal() {
@@ -4983,17 +5027,15 @@ function closeLimitModal() {
     const unlockInput = document.getElementById('unlock-input');
     if (unlockInput) unlockInput.value = ''; 
     
-    // 🌟 核心調整 1：將燈籠/符號激活狀態設為 false，防止關閉後還能隔空點擊
     window.isLanternActive = false;
     
-    // 清空容器，以便下次重新打開彈窗時，GSAP 入場動畫 (.fromTo) 可以重新完美播放
+    // 關閉時清空容器，維持結構乾淨
     const cardContainer = document.getElementById('limit-cards-container');
     if (cardContainer) cardContainer.innerHTML = '';
 
-    // 🌟 核心調整 2：完美解除可能殘留的鍵盤焦點鎖定監聽器 (Focus Trap)
     if (limitModalFocusHandler) {
         window.removeEventListener('keydown', limitModalFocusHandler);
-        limitModalFocusHandler = null; // 徹底釋放變數記憶體
+        limitModalFocusHandler = null;
     }
 }
 </script>
