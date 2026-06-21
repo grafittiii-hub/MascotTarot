@@ -1847,20 +1847,20 @@ span.illusion-close-btn.shatter {
 
 /* 🌟 鑰匙激活狀態：解除火把滑鼠遮罩，並控制透明度小於 1 */
 .ambient-lantern-card.key-active {
-    opacity: 0.55 !important;
+    opacity: 0.5 !important;
     filter: sepia(0.1) contrast(1.1) brightness(0.65) grayscale(0) !important;
     -webkit-mask-image: none !important;
     mask-image: none !important;
     box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); /* 淡淡的金黃結界邊框 */
-    transform: scale(1.03);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: scale(1.03); z-index: 9; pointer-events: auto !important;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, filter 0.4s ease !important;
 }
 
 /* 🌟 日間模式激活狀態（不要為 1，正片疊底） */
 :root:not([data-theme="night"]) .ambient-lantern-card.key-active {
-    opacity: 0.48 !important;
+    opacity: 0.4 !important;
     mix-blend-mode: multiply !important;
-    filter: sepia(0.2) contrast(1.05) brightness(0.85) grayscale(0) !important;
+    filter: sepia(0.2) contrast(1.05) brightness(0.85) grayscale(0) !important;z-index: 9;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
 }
 
@@ -5034,19 +5034,16 @@ function activateLanternExits() {
                 if (unlockInput) unlockInput.value = "星辰指引"; 
 
                 setTimeout(() => {
-                    alert(`✨ 命運的真理！你觸碰了真正的結界裂縫【${assignedCardData ? assignedCardData.name : '隱藏鑰匙'}】，限制已解除。`);
+                    alert(`【${assignedCardData ? assignedCardData.name : '關閉頁面'}】。`);
                     
                     // 執行關閉限制彈窗並解鎖進入占卜
                     closeLimitModal();
                     
-                    // 直接幫使用者啟動占卜流程
-                    isRelationship = document.getElementById('is-relation').checked;
                     const main = document.getElementById('main-page');
-                    if (main) main.style.opacity = '0';
-                    setTimeout(() => {
-                        if (main) main.style.display = 'none';
-                        initSpreadView();
-                    }, 800);
+                    if (main) 
+                    main.style.opacity = '1';
+                    main.style.display = 'block';
+
                 }, 300);
             };
 
