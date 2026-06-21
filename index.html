@@ -805,7 +805,7 @@ body.is-initializing #result-panel {
 }
 
         .card-wrap {
-            position: absolute; width: 75px; height: 120px;
+            position: absolute; width: 75px; height: 112.5px;
             cursor: pointer; z-index: 10;will-change: transform, opacity, left, top;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease;
     backface-visibility: hidden; 
     -webkit-backface-visibility: hidden; /* 專為 iOS Safari 準備 */
@@ -2888,20 +2888,22 @@ function prebuildDeckDOM() {
         
         // 這裡完全保留你提供的 HTML 結構，包含 img 的樣式
         wrapper.innerHTML = `
-	<div class="card-inner">
-    		<div class="card-face card-back">
-           	 <img src="tarot-cards/photo-output.png" 
-                 style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+    <div class="card-inner">
+        <div class="card-face card-back">
+            <img src="tarot-cards/photo-output.png" 
+                 style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
                  onload="this.parentElement.style.backgroundImage='none';" 
                  onerror="this.style.display='none';" 
                  draggable="false">
         </div>
-    <div class="card-face card-front">
-        <img src="" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">
-	${liquidCocoonSVG}
+        <div class="card-face card-front">
+            <img src="" 
+                 style="width:100%; height:100%; object-fit:cover; transform: scale(1.05) translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
+                 draggable="false">
+            ${liquidCocoonSVG}
+        </div>
     </div>
-</div>
-        `;
+`;
         wrapper.onclick = (e) => handleCardClick(e, wrapper);
         container.appendChild(wrapper);
     }
@@ -3169,23 +3171,23 @@ window.isLanternActive = false;
         // ==========================================
         shuffledDeck.forEach((cardData, index) => {
             const wrapper = document.createElement('div');
-            wrapper.className = 'card-wrap'; // 移除 shuffling 類別
+            wrapper.className = 'card-wrap';
             wrapper.dataset.index = index;
 
             const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
 
-            wrapper.innerHTML = `
-                <div class="card-inner">
-                    <div class="card-face card-back">
-                        <img src="tarot-cards/photo-output.png" 
-                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
-                             onload="this.parentElement.style.backgroundImage='none';" 
-                             onerror="this.style.display='none';" 
-                             draggable="false">
-                    </div>
-                    <div class="card-face card-front">${imgTag}</div>
+wrapper.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-back">
+                    <img src="tarot-cards/photo-output.png" 
+                         style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
+                         onload="this.parentElement.style.backgroundImage='none';" 
+                         onerror="this.style.display='none';" 
+                         draggable="false">
                 </div>
-            `;
+                <div class="card-face card-front">${imgTag}</div>
+            </div>
+        `;
 
             // 🌟 關鍵優化：加上 transition: none 確保一開始切換頁面時，牌組不會因為任何 class 變動而產生滑動位移
             wrapper.style.transition = 'none'; 
@@ -3241,11 +3243,11 @@ function playShuffleAnimation(isMobile) {
 
             const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
 
-            wrapper.innerHTML = `
+wrapper.innerHTML = `
                 <div class="card-inner">
                     <div class="card-face card-back">
                         <img src="tarot-cards/photo-output.png" 
-                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
                              onload="this.parentElement.style.backgroundImage='none';" 
                              onerror="this.style.display='none';" 
                              draggable="false">
