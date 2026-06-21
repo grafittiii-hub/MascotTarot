@@ -1837,50 +1837,44 @@ span.illusion-close-btn.shatter {
     filter: sepia(0.1) contrast(1.1) brightness(0.8) grayscale(0);
 }
 
-/* 🌟 彈窗內部卡牌並排容器 */
+/* 🌟 彈窗內部並排卡牌的外部框架 */
 #limit-cards-container {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin: 20px 0;
-    width: 100%;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 14px !important;
+    margin: 20px auto !important;
+    width: 100% !important;
+    min-height: 110px !important; /* 確保父盒子有撐開固定高度，不被壓縮 */
 }
 
-/* 🌟 彈窗專屬星辰解鎖牌 */
+/* 🌟 彈窗卡牌實體樣式 */
 .limit-modal-card {
-    width: 65px;                /* 精緻小巧的並排尺寸 */
-    aspect-ratio: 1 / 1.6;
-    border-radius: 6px;
-    background-size: cover;
-    background-position: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    cursor: pointer;
+    display: block !important;
+    width: 65px !important;          /* 寬度 */
+    height: 104px !important;        /* 高度 (符合 1:1.6 塔羅比例) */
+    border-radius: 6px !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+    cursor: pointer !important;
     
-    /* 🌟 核心要求：透明度不要為 1，維持神秘感 */
-    opacity: 0.6; 
-    filter: sepia(0.1) contrast(1.1) brightness(0.6) grayscale(0.1);
-    
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, filter 0.4s ease;
-    will-change: transform, opacity;
+    /* 神祕感半透明設定 */
+    opacity: 0.65 !important;
+    filter: sepia(0.1) contrast(1.1) brightness(0.7) !important;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease !important;
 }
 
-/* 🌟 日間模式優化：正片疊底與柔和亮度 */
-:root:not([data-theme="night"]) .limit-modal-card {
-    opacity: 0.6;
-    mix-blend-mode: multiply;
-    filter: sepia(0.2) contrast(1.0) brightness(0.8) grayscale(0.2);
-}
-
-/* 懸停時稍微亮起放大，但依然不滿 1 */
+/* 懸停動效 */
 .limit-modal-card:hover {
-    opacity: 0.8;
-    transform: scale(1.08) translateY(-4px);
-    box-shadow: 0 6px 15px rgba(219, 186, 24, 0.3);
+    opacity: 0.95 !important;
+    transform: scale(1.1) translateY(-5px) !important;
 }
 
-/* 🌀 點擊後的縮小、下沉、漸出（淡出）消失特效 */
+/* 🌀 點擊下沉消失 */
 .limit-modal-card.shattered-sink {
-    transform: scale(0.3) translateY(35px) !important;
+    transform: scale(0.2) translateY(45px) !important;
     opacity: 0 !important;
     pointer-events: none !important;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease !important;
@@ -2037,8 +2031,7 @@ span.illusion-close-btn.shatter {
 
 <div id="limit-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
     <div class="modal-content" style="position: relative; min-height: 280px; width: 90%; max-width: 420px; display: flex; flex-direction: column; justify-content: center;">
-        
-        <div id="limit-content" style="position: relative; z-index: 10; text-align: center; padding: 20px 10px; width: 100%; height: 100%;">
+        <div id="limit-content" style="position: relative; z-index: 10; text-align: center; padding: 20px 10px; width: 100%;">
             <h2 style="color: var(--gold-primary, #dbba18); margin-top: 10px;">今日額度已滿</h2>
             <p style="margin-bottom: 15px; font-size: 0.95em; line-height: 1.6;">
                 每日提供 2 次免費占卜。<br>
@@ -2048,13 +2041,10 @@ span.illusion-close-btn.shatter {
             <div id="limit-cards-container"></div>
             
             <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--gold-primary, #dbba18); color: #fff; border-radius: 4px; resize: none;"></textarea>
-            
             <div>
                 <button onclick="handleUnlock()">驗證密鑰</button>
             </div>
-            
         </div>
-        
     </div>
 </div>
 
@@ -2289,7 +2279,7 @@ function getLayoutMetrics(totalCards, progress) {
             baseScale = 1.1; targetScale = 1.3; baseGap = 0;
         } 
         else if (totalCards === 2) {
-            baseScale = 1.05; targetScale = 1.3; baseGap = 32; gapCompensationRatio = 0;
+            baseScale = 1.1; targetScale = 1.3; baseGap = 32; gapCompensationRatio = 0;
         } 
         else if (totalCards === 3) {
             baseScale = 1.0; targetScale = 1.3; baseGap = 28; gapCompensationRatio = -0.03;
@@ -2319,7 +2309,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let startY = 0;          
     let pullDistance = 0;    
-    const MAX_PULL_DIST = 30; // 允許下拉的最大視覺極限（像素）
+    const MAX_PULL_DIST = 50; // 允許下拉的最大視覺極限（像素）
 
     // 👑 簡化後的動態手勢跟手核心引擎
     function updatePullPosition(currentY) {
@@ -2794,22 +2784,8 @@ function preloadTarotDeck() {
 }
 
 window.onload = () => {
-    // 1. 趁著 Loading 畫面，立刻在背景偷偷下載所有圖片
     preloadTarotDeck();
-
-    // 2. 確保字體載入完畢，才開始跑進度條 (防止首頁標題字體閃爍)
-    document.fonts.ready.then(() => {
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 15;
-            document.getElementById('progress-bar').style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                clearInterval(interval);
-                setTimeout(enterMainPage, 600);
-            }
-        }, 100);
-    });
+    startPreloading();
 };
 
 // === 1. 提取所有需要載入的圖片路徑 ===
@@ -3311,7 +3287,7 @@ function playSpreadAnimation(cards, isMobile, total) {
                 
                 // 🌟 第三階段：套用展開動畫
                 cards.forEach((wrapper, index) => {
-                    const duration = isMobile ? '1.2s' : '0.8s'; 
+                    const duration = isMobile ? '1.5s' : '1s'; 
                     
 // ==========================================
 // 🌟 手機版：全方位手指滑動掃描選牌功能 (不限方向)
@@ -3974,8 +3950,8 @@ function drawAdvice() {
         
         setTimeout(() => {
             drawnCards.forEach(c => c.elementDOM.classList.add('ready-to-glow'));
-        }, 800);
-    }, 500);
+        }, 900);
+    }, 50);
 
 
     // ==========================================
