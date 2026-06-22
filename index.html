@@ -944,8 +944,8 @@ body.is-initializing #result-panel {
 
 /* 🌟 精準分配三句話的出场時間軸，各自錯開 2.5 秒 */
 .ritual-text-container .phrase.p1 { animation-delay: 0s; }
-.ritual-text-container .phrase.p2 { animation-delay: 2s; }
-.ritual-text-container .phrase.p3 { animation-delay: 4s; }
+.ritual-text-container .phrase.p2 { animation-delay: 1.5s; }
+.ritual-text-container .phrase.p3 { animation-delay: 3s; }
 
 /* 完美計算的呼吸權重：淡入 ➔ 停頓觀看 ➔ 淡出 */
 @keyframes cssPhraseCycle {
@@ -4487,7 +4487,7 @@ function closeLimitModal() {
     const unlockInput = document.getElementById('unlock-input');
     if (unlockInput) unlockInput.value = ''; 
     
-    window.isLanternActive = false;
+    window.isLanternActive = true;
 
     if (limitModalFocusHandler) {
         window.removeEventListener('keydown', limitModalFocusHandler);
