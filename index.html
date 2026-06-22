@@ -1845,7 +1845,11 @@ span.illusion-close-btn.shatter {
     font-size: 2.5rem !important;
     cursor: pointer !important;
     user-select: none !important;
-    perspective: 1000px; pointer-events: auto !important;
+    perspective: 1000px;
+    
+    /* 🌟 核心修正：給予明確的預設大小與位置，當移除消失類別時，才會流暢彈回原本大小 */
+    transform: scale(1) translateY(0) !important;
+    pointer-events: auto !important;
 }
 
 .limit-static-btn:hover {
@@ -4941,46 +4945,57 @@ function clickWrongSymbol(element) {
     element.classList.add('fade-out-clicked');
 }
 
-// 🌟 打開彈窗：滿血復活所有符號
+// 檢查並回復符號按鈕的專屬核心函式
+function checkAndResetLimitSymbols() {
+    console.log("🔍 正在檢查符號復活...");
+    const symbols = document.querySelectorAll('.limit-static-btn');
+    
+    symbols.forEach(btn => {
+        // 移除消失類別
+        btn.classList.remove('fade-out-clicked');
+        // 強制恢復點擊權限
+        btn.style.pointerEvents = 'auto';
+        
+        // 再次打印確認是否成功回復
+        if(btn.classList.contains('fade-out-clicked')) {
+            console.error("❌ 警告：符號重置失敗，類別依舊殘留！");
+        }
+    });
+}
+
 function openLimitModal() {
     const modal = document.getElementById('limit-modal');
     if (!modal) return;
     
-    // 🎯 核心回復修正：撈出所有靜態按鈕，徹底清除消失類別，恢復點擊權限
-    document.querySelectorAll('.limit-static-btn').forEach(btn => {
-        btn.classList.remove('fade-out-clicked');
-        btn.style.pointerEvents = 'auto'; // 強制恢復可點擊狀態
-    });
+    // 🎯 打開的瞬間，立刻強行復活所有符號
+    checkAndResetLimitSymbols();
 
     modal.style.display = 'flex'; 
     modal.classList.add('is-visible');
-    
-    // 🎯 致命修正：必須強行開啟這個全域變數，行內 onclick 點擊才不會被系統攔截！
     window.isLanternActive = true; 
 }
 
-// 🌟 關閉彈窗
+// 🌟 3. 關閉彈窗：多做回復點擊權限的功夫
 function closeLimitModal() {
     const modal = document.getElementById('limit-modal');
     if (modal) {
         modal.classList.remove('is-visible');
-        setTimeout(() => { modal.style.display = 'none'; }, 400);
+        setTimeout(() => { 
+            modal.style.display = 'none'; 
+            // 🎯 核心優化：在動畫完全隱藏後，在後台再次執行復活檢查，確保下次萬無一失！
+            checkAndResetLimitSymbols();
+        }, 400);
     }
     
     const unlockInput = document.getElementById('unlock-input');
     if (unlockInput) unlockInput.value = ''; 
     
-    // 關閉時將變數鎖定
     window.isLanternActive = false;
 
     if (limitModalFocusHandler) {
         window.removeEventListener('keydown', limitModalFocusHandler);
         limitModalFocusHandler = null;
     }
-    // 🎯撈出所有靜態按鈕，徹底清除消失類別，恢復點擊權限
-    document.querySelectorAll('.limit-static-btn').forEach(btn => {
-        btn.classList.remove('fade-out-clicked');
-        btn.style.pointerEvents = 'auto';
 }
 </script>
 </body>
