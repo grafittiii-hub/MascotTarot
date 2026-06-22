@@ -3080,38 +3080,60 @@ function enterMainPage() {
                 counter.style.display = 'none';
             }
         }
+// ==========================================
+// 全域狀態鎖：防止用戶心急快速連點
+// ==========================================
+let isDivinationLocked = false; 
+let isUnlockProcessing = false;
+		
+// ==========================================
+// 1. 加工後的「開始占卜」函式（加裝防連點安全鎖）
+// ==========================================
+function startDivination() {
+    // 🛡️ 安全鎖防禦：如果系統正在處理切換或已鎖定，直接攔截，不允許重複觸發次數計算
+    if (isDivinationLocked) {
+        console.warn("⚠️ 系統正在啟動占卜，請勿重複快速點擊！");
+        return;
+    }
 
-        function startDivination() {
-            if (!currentCategory) {
-                alert("請先選擇占卜範疇。");
-                return;
-            }
+    if (!currentCategory) {
+        alert("請先選擇占卜範疇。");
+        return;
+    }
 
-	// 🌟 核心修正：在這裡接上次數限制的檢查開關！
-            if (!canPerformReading()) {
-                const limitModal = document.getElementById('limit-modal');
-                limitModal.style.display = 'flex';
-                // 觸發優雅的淡入動畫
+    // 🌟 核心檢查：如果次數滿了或未解鎖，彈出模態視窗
+    if (!canPerformReading()) {
+        const limitModal = document.getElementById('limit-modal');
+        if (limitModal) {
+            limitModal.style.display = 'flex';
+            requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        limitModal.classList.add('is-visible');
-                    });
+                    limitModal.classList.add('is-visible');
                 });
-                return; // 🚨 次數超過，直接終止後續占卜流程
-            }
-
-            // 檢查通過，扣除一次額度
-            incrementReading();
-
-            isRelationship = document.getElementById('is-relation').checked;
-            
-            const main = document.getElementById('main-page');
-            main.style.opacity = '0';
-            setTimeout(() => {
-                main.style.display = 'none';
-                initSpreadView();
-            }, 800);
+            });
         }
+        return; // 次數超過，終止流程，且不鎖定狀態（允許用戶選別的或等一下再點）
+    }
+
+    // 🔒 檢查通過，立刻上鎖！防止用戶在畫面淡出的 0.8 秒內再次點擊
+    isDivinationLocked = true;
+
+    // 扣除一次額度
+    incrementReading();
+    isRelationship = document.getElementById('is-relation').checked;
+
+    const main = document.getElementById('main-page');
+    if (main) {
+        main.style.opacity = '0';
+        setTimeout(() => {
+            main.style.display = 'none';
+            initSpreadView();
+            
+            // 🔓 進入選牌畫面後，解開主頁按鈕鎖，確保下次返回主頁時能正常運作
+            isDivinationLocked = false; 
+        }, 800);
+    }
+}
 
 
 // ==========================================
@@ -4275,28 +4297,35 @@ async function exportImage() {
 // ==========================================
 // 🌟 核心修正：加入 async，這樣才能配合 await 等待雲端資料庫回傳結果！
 async function handleUnlock() {
+    // 🛡️ 安全鎖防禦：如果正在等待 Supabase 回傳，禁止重複提交
+    if (isUnlockProcessing) return;
+
     const inputInputEl = document.getElementById('unlock-input');
     if (!inputInputEl) return;
 
-    const input = inputInputEl.value.trim(); // 去除前後空白
+    const input = inputInputEl.value.trim();
     if (!input) {
         alert("請輸入密鑰");
         return;
     }
 
-    // 🌟 核心修正：加上 await，老老實實等待 Supabase 查完資料
+    // 🔒 立刻上鎖，並改變按鈕提示文字（如果有按鈕元素的話，這裡用 console 記錄或提示）
+    isUnlockProcessing = true;
+    console.log("⏳ 正在驗證金鑰，請稍候...");
+
+    // 等待 Supabase 查完資料
     const isSuccess = await checkUnlockKey(input); 
+
+    // 🔓 收到回傳結果，立刻解鎖狀態鎖
+    isUnlockProcessing = false;
 
     if (isSuccess) {
         const limitModal = document.getElementById('limit-modal');
         if (limitModal) {
-            // 解鎖成功後，同樣播放優雅的關閉動畫
             limitModal.classList.remove('is-visible');
             setTimeout(() => {
                 limitModal.style.display = 'none';
-                // 清空輸入框準備下次使用
-                inputInputEl.value = ''; 
-                // 復活符號（因為關閉了）
+                inputInputEl.value = ''; // 清空輸入框
                 checkAndResetLimitSymbols();
             }, 400);
         }
@@ -4312,7 +4341,7 @@ function canPerformReading() {
         return true; 
     }
 
-    // 若未解鎖或已過期，則執行原有的「每日 2 次限制」邏輯
+    // 若未解鎖或已過期，執行原本的限制邏輯
     const today = new Date().toISOString().split('T')[0];
     let dailyData = JSON.parse(localStorage.getItem('readingData')) || { date: today, count: 0 };
 
