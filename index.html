@@ -3120,9 +3120,11 @@ async function initSpreadView() {
         ritualTextContainer.classList.remove('fade-out');
     }
 
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '';
+
     if (tarotData.length === 0) return;
 
-    // 隨機打亂資料
     shuffledDeck = [...tarotData].sort(() => Math.random() - 0.5);
     drawnCards = [];
     updateCounterUI();
@@ -3130,52 +3132,60 @@ async function initSpreadView() {
     const isMobile = window.innerWidth < 768;
     const total = shuffledDeck.length;
 
-    // 🌟 核心優化：獲取已存在的 78 張牌，直接進行資料更新與重置
-    const cards = document.querySelectorAll('.card-wrap');
-    
-    cards.forEach((wrapper, index) => {
-        wrapper.dataset.index = index;
-        wrapper.style.display = 'block'; // 顯示卡牌
-        wrapper.className = 'card-wrap'; // 清除舊有的 status 類別
-        
-        // 洗牌與初始化階段：關閉所有點擊與焦點，防止阻礙效能
-        wrapper.style.pointerEvents = 'none';
-        wrapper.setAttribute('tabindex', '-1');
-        wrapper.onclick = null;
-        wrapper.onmouseenter = null;
-        wrapper.onfocus = null;
-        wrapper.onkeydown = null;
+    if (isMobile) {
+        document.body.classList.add('is-initializing');
+        requestAnimationFrame(() => {
+            document.body.classList.remove('is-initializing');
+        });
+    }
 
-        // 注入正面圖片
-        const frontImg = wrapper.querySelector('.card-front img');
-        if (frontImg) {
-            frontImg.src = `tarot-cards/${shuffledDeck[index].img}`;
-        }
-
-        // 初始化基本位置（中央堆疊），並加上 3D 渲染鎖定
-        wrapper.style.transition = 'none'; 
-        wrapper.style.left = "50%";
-        wrapper.style.top = "50%";
-        wrapper.style.bottom = "auto";
-        wrapper.style.transformOrigin = "center center"; 
-        wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`;
-        wrapper.style.opacity = '1';
-    });
+    let cards;
 
     if (isMobile) {
-        // 📱 手機版優化：既然是固定展示在中央，不加入 shuffling 動畫類別
-        // 使用 requestAnimationFrame 讓瀏覽器喘口氣，確保渲染同步後直接進入展開
-        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 100)));
-    } else {
-        // 💻 電腦版：為需要執行動畫的卡牌加上 shuffling
-        cards.forEach((wrapper, index) => {
-            if (index < 7) { // 限制只有部分卡牌播洗牌動畫，大幅減少效能開銷
-                wrapper.classList.add('shuffling');
-                wrapper.style.animationDelay = `${Math.random() * 0.3}s`;
-            }
+        // ==========================================
+        // 📱 手機版：瞬間生成 DOM 節點，靜態堆疊在中央
+        // ==========================================
+        shuffledDeck.forEach((cardData, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card-wrap'; 
+            wrapper.dataset.index = index;
+
+            // 🌟 高清核心修正 1：正面圖片注入完整的 3D 加速與平滑抗鋸齒
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0); -webkit-transform:scale(1.05) translate3d(0,0,0); image-rendering: -webkit-optimize-contrast; crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
+
+            // 🌟 高清核心修正 2：卡背圖片（300x300）同樣必須強制綁定 translate3d(0,0,0) 防模糊
+            wrapper.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-face card-back">
+                        <img src="tarot-cards/photo-output.png" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform:translate3d(0,0,0); -webkit-transform:translate3d(0,0,0); image-rendering: -webkit-optimize-contrast;" 
+                             onload="this.parentElement.style.backgroundImage='none';" 
+                             onerror="this.style.display='none';" 
+                             draggable="false">
+                    </div>
+                    <div class="card-face card-front">${imgTag}</div>
+                </div>
+            `;
+
+            wrapper.style.transition = 'none'; 
+            wrapper.style.left = "50%";
+            wrapper.style.top = "50%";
+            wrapper.style.transformOrigin = "center center"; 
+            wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`; // 加上外層基底加速
+            wrapper.style.opacity = '1'; 
+
+            wrapper.onclick = (e) => handleCardClick(e, wrapper);
+            container.appendChild(wrapper);
         });
-        // 等待電腦版洗牌動畫結束 (2.2秒)
-        await new Promise(resolve => setTimeout(resolve, 2200));
+
+        cards = document.querySelectorAll('.card-wrap');
+        await new Promise(resolve => setTimeout(resolve, 950));
+
+    } else {
+        // ==========================================
+        // 💻 電腦版：維持原本的洗牌動畫流程
+        // ==========================================
+        cards = await playShuffleAnimation(isMobile);
     }
 
     // 展開成扇形牌陣
@@ -3240,33 +3250,40 @@ function playShuffleAnimation(isMobile) {
 function playSpreadAnimation(cards, isMobile, total) {
     return new Promise((resolve) => {
         
-        // 先清除洗牌動畫類別，準備展開
         cards.forEach((wrapper) => {
             wrapper.classList.remove('shuffling');
             wrapper.style.transition = 'none'; 
+
+            if (isMobile) {
+                // 🌟 高清核心修正 4：為初始堆疊狀態補上 translateZ(0)，確保像素完美對齊
+                wrapper.style.transform = "translate(-50%, -50%) translateZ(0)"; 
+            } else {
+                wrapper.style.left = "50%";
+                wrapper.style.top = "50%";
+                wrapper.style.bottom = "auto";
+                wrapper.style.transformOrigin = "center center";
+                wrapper.style.transform = "translate(-50%, -50%) rotate(0deg) translateZ(0)";
+            }
         });
 
+        document.body.classList.remove('show-home-title');
         const ritualTextContainer = document.getElementById('spread-ritual-text');
         if (ritualTextContainer) {
             ritualTextContainer.classList.add('fade-out');
         }
 
-        // 運用雙重 requestAnimationFrame 確保瀏覽器能平滑地從「堆疊狀態」過渡到「展開動畫」
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 
                 cards.forEach((wrapper, index) => {
-                    const duration = isMobile ? '1.2s' : '1s'; 
+                    const duration = isMobile ? '1.5s' : '1s'; 
                     
-                    // 🌟 展開時才賦予無障礙選取功能與點擊事件
                     wrapper.setAttribute('tabindex', '0');
+                    wrapper.setAttribute('role', 'button');
                     wrapper.setAttribute('aria-label', `第 ${index + 1} 張塔羅牌`);
-                    wrapper.style.pointerEvents = 'auto'; // 恢復滑鼠/手指事件
-
-                    wrapper.onclick = (e) => handleCardClick(e, wrapper);
 
                     wrapper.onfocus = (e) => {
-                        if (wrapper.classList.contains('confirmed')) return;
+                        if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
                         handleCardClick(e, wrapper);
                     };
 
@@ -3282,23 +3299,27 @@ function playSpreadAnimation(cards, isMobile, total) {
                     };
 
                     wrapper.onmouseenter = (e) => {
-                        if (isMobile || wrapper.classList.contains('confirmed')) return;
+                        if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
                         handleCardClick(e, wrapper);
                     };
                     
-                    // 計算扇形展開
                     if (isMobile) {
-                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.25, 1, 0.25, 1), opacity 0.6s ease-out`;
-                        wrapper.style.transitionDelay = `${index * 0.012}s`; // 微調延遲，避免手機 CPU 瞬間載入過重
+                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), opacity 0.8s ease-out`;
+                        wrapper.style.transitionDelay = `${index * 0.02}s, 0s`; 
                         
+                        wrapper.style.opacity = '1'; 
+                        wrapper.style.pointerEvents = 'auto'; 
+
                         const angle = -45 + (index * (90 / total)); 
+                        
+                        // 🌟 高清核心修正 5：在最終扇形展開的 Transform 結尾，強制烙印 translateZ(0)
                         wrapper.style.transform = `translate(-50%, -50%) translateX(-50vw) rotate(${angle}deg) translateX(calc(38vw + 50%)) translateZ(0)`;
                         
                         wrapper.style.setProperty('--pop-x', '30px');
                         wrapper.style.setProperty('--pop-y', '0px');
                     } else {
-                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.25, 1, 0.25, 1), left ${duration}, top ${duration}, bottom ${duration}`;
-                        wrapper.style.transitionDelay = `${index * 0.015}s`;
+                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), left ${duration}, top ${duration}, bottom ${duration}`;
+                        wrapper.style.transitionDelay = `${index * 0.02}s`;
                         
                         const angle = -60 + (index * (120 / total));
                         wrapper.style.transformOrigin = "center bottom";
@@ -3311,7 +3332,9 @@ function playSpreadAnimation(cards, isMobile, total) {
                     }
                 });
                 
-                // 手指滑動掃描選牌功能（僅在手機版且展開後生效）
+                // ==========================================
+                // 📱 手機版：手指滑動掃描選牌功能 (修正 DOMContentLoaded 邏輯錯誤)
+                // ==========================================
                 const container = document.getElementById('cards-container');
                 if (container && isMobile) {
                     let isScanning = false;
@@ -3330,7 +3353,7 @@ function playSpreadAnimation(cards, isMobile, total) {
                         if (!targetEl) return;
 
                         const wrapper = targetEl.closest('.card-wrap');
-                        if (wrapper && !wrapper.classList.contains('confirmed')) {
+                        if (wrapper && !wrapper.classList.contains('confirmed') && !wrapper.classList.contains('shuffling')) {
                             if (poppedCardEl !== wrapper) {
                                 handleCardClick(e, wrapper);
                             }
@@ -3341,7 +3364,6 @@ function playSpreadAnimation(cards, isMobile, total) {
                     container.ontouchcancel = () => { isScanning = false; };
                 }
 
-                // 動畫結束後 resolve
                 setTimeout(resolve, 1500);
             }); 
         }); 
