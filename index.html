@@ -4927,68 +4927,48 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-let limitModalFocusHandler = null;
+// 👑 點擊特定的愛心（正確的關閉按鈕）
+function clickCorrectHeart(element) {
+    // 播放消失動效
+    element.classList.add('fade-out-clicked');
+    
+    const unlockInput = document.getElementById('unlock-input');
+    if (unlockInput) unlockInput.value = "星辰指引";
 
-// 🌟 打開彈窗：重置狀態，並隨機分派誰是真正的解鎖出口
+    setTimeout(() => {
+        alert("✨ 你選中了正確的符號【真實紅心】，即將返回主頁！");
+        
+        // 呼叫原本檔案中的關閉彈窗函式
+        closeLimitModal();
+
+        // 🌟 僅讓主頁恢復顯示，絕不自動執行占卜
+        const main = document.getElementById('main-page');
+        if (main) {
+            main.style.opacity = '1';
+            main.style.display = 'block';
+        }
+    }, 300);
+}
+
+// 🌀 點擊其他錯誤的符號
+function clickWrongSymbol(element) {
+    // 讓該花色直接 fade out 縮小消失
+    element.classList.add('fade-out-clicked');
+}
+
+// 確保你原本的 openLimitModal 只需要單純顯示即可
 function openLimitModal() {
     const modal = document.getElementById('limit-modal');
     if (!modal) return;
     
+    // 讓所有符號重置顯示狀態（如果上次有點過的話）
+    document.querySelectorAll('.limit-static-btn').forEach(btn => {
+        btn.classList.remove('fade-out-clicked');
+    });
+
     modal.style.display = 'flex'; 
     modal.classList.add('is-visible');
-    window.isLanternActive = true;
-    
-    // 1. 撈出 HTML 裡寫死的 4 個符號按鈕
-    const buttons = document.querySelectorAll('.limit-static-btn');
-    
-    // 2. 核心修正：立刻重置所有符號的顯示狀態
-    buttons.forEach(btn => {
-        btn.classList.remove('fade-out-clicked');
-        btn.style.pointerEvents = 'auto';
-        // 重設基礎透明度
-        btn.style.opacity = btn.classList.contains('suit-red') ? '0.7' : '0.6';
-    });
-
-    // 3. 命運洗牌：隨機抽出 0~3 之間的一個整數作為真正的解鎖按鈕
-    const realIndex = Math.floor(Math.random() * buttons.length);
-
-    // 4. 重新動態綁定點擊命運
-    buttons.forEach((btn, index) => {
-        const suitName = btn.getAttribute('data-name') || "出口符號";
-
-        if (index === realIndex) {
-            // 👑 這次被抽中的真實解鎖出口
-            btn.onclick = function(e) {
-                if (!window.isLanternActive) return;
-                e.stopPropagation();
-
-                btn.classList.add('fade-out-clicked');
-                
-                const unlockInput = document.getElementById('unlock-input');
-                if (unlockInput) unlockInput.value = "成功找到出口";
-
-                setTimeout(() => {
-                    alert(`✨ 你選中了正確的符號【${suitName}】，即將返回主頁！`);
-                    closeLimitModal();
-
-                    const main = document.getElementById('main-page');
-                    if (main) {
-                        main.style.opacity = '1';
-                        main.style.display = 'block';
-                    }
-                }, 350);
-            };
-        } else {
-            // 🌀 這次是幻影假符號
-            btn.onclick = function(e) {
-                if (!window.isLanternActive) return;
-                e.stopPropagation();
-                
-                // 點擊後僅原地下沉淡出消失
-                btn.classList.add('fade-out-clicked');
-            };
-        }
-    });
+window.isLanternActive = true;
 }
 
 function closeLimitModal() {
@@ -5001,9 +4981,10 @@ function closeLimitModal() {
     const unlockInput = document.getElementById('unlock-input');
     if (unlockInput) unlockInput.value = ''; 
     
+    // 🌟 核心調整 1：將燈籠/符號激活狀態設為 false，防止關閉後還能隔空點擊
     window.isLanternActive = false;
-
-    if (limitModalFocusHandler) {
+    
+if (limitModalFocusHandler) {
         window.removeEventListener('keydown', limitModalFocusHandler);
         limitModalFocusHandler = null;
     }
