@@ -907,7 +907,7 @@ body.is-initializing #result-panel {
             animation: fadeIn 0.5s ease;
         }
 /* ==========================================================================
-   LVMH 副標題美學：洗牌呼吸文字系統
+  呼吸文字系統
    ========================================================================== */
 
 /* 👑 獨立於 JS 之外的奢華呼吸輪播系統 */
@@ -2049,7 +2049,7 @@ span.illusion-close-btn.shatter {
                 <div class="limit-static-btn suit-red" onclick="clickWrongSymbol(this)" style="font-size: 2.5rem; cursor: pointer; user-select: none; opacity: 0.6; color: #d9534f; transition: all 0.3s ease;">♦</div>
             </div>
             
-            <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgb(219,186,24,0.15); border: 1px solid var(--gold-primary, #dbba18); color: #fff; border-radius: 4px; resize: none;"></textarea>
+            <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgb(219,186,24,0.15); border: 1px solid var(--gold-primary, #dbba18); color: var(--text-color); border-radius: 4px; resize: none;"></textarea>
             <div>
                 <button onclick="handleUnlock()">驗證密鑰</button>
             </div>
@@ -2115,8 +2115,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderCursor() {
         // 加上一點點延遲緩動效果 (0.2)，讓滑鼠看起來有靈動的漂浮感
-        cursorX += (mouseX - cursorX) * 0.85;
-        cursorY += (mouseY - cursorY) * 0.95;
+        cursorX += (mouseX - cursorX) * 0.95;
+        cursorY += (mouseY - cursorY) * 0.9;
         
         magicCursor.style.left = `${cursorX}px`;
         magicCursor.style.top = `${cursorY}px`;
@@ -2260,7 +2260,7 @@ function getLayoutMetrics(totalCards, progress) {
     if (isMobile) {
         // 📱 手機與平板版面 (< 768px)
         if (totalCards === 1) {
-            baseScale = 1.1; targetScale = 1.3; baseGap = 0; gapCompensationRatio = 0;
+            baseScale = 1; targetScale = 1.3; baseGap = 0; gapCompensationRatio = 0;
         } 
         else if (totalCards === 2) {
             // 🎯 您的要求：2張牌不論平時或下拉都希望隔開、均分寬度
@@ -2270,16 +2270,16 @@ function getLayoutMetrics(totalCards, progress) {
             gapCompensationRatio = -0.06;                // 🌟 核心修正：下拉時不縮窄，反而微調「更開一點點」，絕不重疊
         } 
         else if (totalCards === 3) {
-            baseScale = isUltraSmall ? 0.8 : 0.85;
+            baseScale = isUltraSmall ? 0.8 : 0.9;
             targetScale = isUltraSmall ? 1.02 : 1.15;
-            baseGap = isUltraSmall ? 20 : 23;
+            baseGap = isUltraSmall ? 26 : 28;
             gapCompensationRatio = -0.03;
         } 
         else if (totalCards >= 4) {
             // 🎯 您的要求：<=400px預留多點空間、320px下拉防重疊
             baseScale = isUltraSmall ? 0.65 : 0.72;
-            targetScale = isUltraSmall ? 0.80 : 1;   // 🌟 320px螢幕極限控制在 0.80 倍，精緻防炸
-            baseGap = isUltraSmall ? 17 : 20;           // 🌟 未下拉時從24提高到27，幫卡牌預留呼吸空間
+            targetScale = isUltraSmall ? 0.80 : 0.90;   // 🌟 320px螢幕極限控制在 0.80 倍，精緻防炸
+            baseGap = isUltraSmall ? 22 : 24;           // 🌟 未下拉時從24提高到27，幫卡牌預留呼吸空間
             gapCompensationRatio = 0;                // 🌟 將原本 0.20 的過度擠壓放鬆到 0.06，維持展開間距
         }
     } else {
@@ -3187,7 +3187,7 @@ async function initSpreadView() {
         container.appendChild(fragment);
         
         cards = document.querySelectorAll('.card-wrap');
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 3800));
 
     } else {
         // ==========================================
@@ -3279,7 +3279,8 @@ function playSpreadAnimation(cards, isMobile, total) {
         if (ritualTextContainer) {
             ritualTextContainer.classList.add('fade-out');
         }
-requestAnimationFrame(() => {
+
+        requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 
                 cards.forEach((wrapper, index) => {
@@ -4262,47 +4263,65 @@ async function exportImage() {
 }
 
 
-// 預設密鑰 (你可以設定一個固定的密鑰)
-const UNLOCK_KEY = "SUN26"; 
+// ==========================================
+// 核心：進階版密鑰與有效期管理
+// ==========================================
+
+// 定義不同密鑰的有效期 (單位：毫秒)
+const KEY_CONFIG = {
+    "sun26": 24 * 60 * 60 * 1000,       // 1 天
+    "jaideeJD26": 7 * 24 * 60 * 60 * 1000,  // 1 週
+    "GMMascot": 30 * 24 * 60 * 60 * 1000,// 1 個月
+    "unlockedGift": 3650 * 24 * 60 * 60 * 1000 // 10 年 (視為永久)
+};
 
 function canPerformReading() {
-    // 1. 檢查是否已使用密鑰解鎖
-    if (localStorage.getItem('isUnlocked') === 'true') return true;
+    // 檢查是否有過期時間記錄
+    const expiry = localStorage.getItem('unlockExpiry');
+    
+    // 如果存在過期時間且當前時間小於過期時間，則為已解鎖狀態
+    if (expiry && new Date().getTime() < parseInt(expiry)) {
+        return true; 
+    }
 
+    // 若未解鎖或已過期，則執行原有的「每日 2 次限制」邏輯
     const today = new Date().toISOString().split('T')[0];
     let dailyData = JSON.parse(localStorage.getItem('readingData')) || { date: today, count: 0 };
 
-    // 2. 如果日期變了，重置計數
     if (dailyData.date !== today) {
         dailyData = { date: today, count: 0 };
     }
 
-    // 3. 檢查次數
-    if (dailyData.count >= 2) {
-        return false;
-    }
+    return dailyData.count < 2;
+}
 
-    return true;
+function checkUnlockKey(inputKey) {
+    // 檢查輸入的密鑰是否在我們的設定檔中
+    if (KEY_CONFIG[inputKey]) {
+        const duration = KEY_CONFIG[inputKey];
+        const expiry = new Date().getTime() + duration;
+        
+        localStorage.setItem('unlockExpiry', expiry);
+        
+        // 顯示解鎖訊息
+        const days = duration / (24 * 60 * 60 * 1000);
+        alert(`解鎖成功！已獲得 ${days >= 365 ? '永久' : days + ' 天'} 通行權限。`);
+        return true;
+    }
+    
+    alert("密鑰錯誤或已失效");
+    return false;
 }
 
 function incrementReading() {
-    if (localStorage.getItem('isUnlocked') === 'true') return;
+    // 只有在未解鎖狀態下才計算次數
+    const expiry = localStorage.getItem('unlockExpiry');
+    if (expiry && new Date().getTime() < parseInt(expiry)) return;
 
     const today = new Date().toISOString().split('T')[0];
     let dailyData = JSON.parse(localStorage.getItem('readingData')) || { date: today, count: 0 };
     dailyData.count++;
     localStorage.setItem('readingData', JSON.stringify(dailyData));
-}
-
-// 解鎖功能
-function checkUnlockKey(inputKey) {
-    if (inputKey === UNLOCK_KEY) {
-        localStorage.setItem('isUnlocked', 'true');
-        alert("已解鎖今日無限次數！");
-        return true;
-    }
-    alert("密鑰錯誤");
-    return false;
 }
 
 // ==========================================
