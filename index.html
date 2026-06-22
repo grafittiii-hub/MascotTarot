@@ -930,8 +930,8 @@ body.is-initializing #result-panel {
     text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
     pointer-events: none;
     
-    /* 核心：三句話總共花 7.5 秒無限輪播 */
-    animation: cssPhraseCycle 7.5s infinite linear;
+    /* 核心：三句話總共花 5.5 秒無限輪播 */
+    animation: cssPhraseCycle 5.5s infinite linear;
 }
 
 /* 🌟 精準分配三句話的出场時間軸，各自錯開 2.5 秒 */
@@ -941,10 +941,10 @@ body.is-initializing #result-panel {
 
 /* 完美計算的呼吸權重：淡入 ➔ 停頓觀看 ➔ 淡出 */
 @keyframes cssPhraseCycle {
-    0% { opacity: 0; transform: translateY(10px) scale(0.98); filter: blur(3px); }
-    4% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-    29% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-    33.33% { opacity: 0; transform: translateY(-10px) scale(0.98); filter: blur(2px); }
+    0% { opacity: 0; transform: translateY(10px) scale(0.98);}
+    4% { opacity: 1; transform: translateY(0) scale(1); }
+    29% { opacity: 1; transform: translateY(0) scale(1); }
+    33.33% { opacity: 0; transform: translateY(-10px) scale(0.98); }
     100% { opacity: 0; }
 }
 
@@ -3120,7 +3120,8 @@ async function initSpreadView() {
         ritualTextContainer.classList.remove('fade-out');
     }
 
-    // 🚨 刪除重疊：這裡拿掉了 container.innerHTML = ''; 避免毀滅已建好的 78 個外框
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '';
 
     if (tarotData.length === 0) return;
 
@@ -3131,54 +3132,74 @@ async function initSpreadView() {
     const isMobile = window.innerWidth < 768;
     const total = shuffledDeck.length;
 
-    // 🌟 核心優化：直接抓取畫面上既有的 78 張卡牌外框來「替換內容」，避免手機卡頓
-    const cards = document.querySelectorAll('#cards-container .card-wrap');
-
-    cards.forEach((wrapper, index) => {
-        const cardData = shuffledDeck[index];
-        wrapper.dataset.index = index;
-        wrapper.className = 'card-wrap'; // 清除洗牌等舊類別
-        wrapper.style.display = 'block';
-        wrapper.style.opacity = '0';     // 先隱藏，交由後續流程控制顯示
-        wrapper.style.pointerEvents = 'none';
-
-        // 🌟 完整保留你的心血：原封不動的高清 imgTag 與卡背設定！
-        // （微調了 crisp-edges 的正確 CSS 語法，確保瀏覽器能正確讀取）
-        const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0); -webkit-transform:scale(1.05) translate3d(0,0,0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
-
-        wrapper.innerHTML = `
-            <div class="card-inner">
-                <div class="card-face card-back">
-                    <img src="tarot-cards/photo-output.png" 
-                         style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform:translate3d(0,0,0); -webkit-transform:translate3d(0,0,0); image-rendering: -webkit-optimize-contrast;" 
-                         onload="this.parentElement.style.backgroundImage='none';" 
-                         onerror="this.style.display='none';" 
-                         draggable="false">
-                </div>
-                <div class="card-face card-front">${imgTag}</div>
-            </div>
-        `;
-
-        // 統一初始化回到螢幕正中央
-        wrapper.style.transition = 'none'; 
-        wrapper.style.left = "50%";
-        wrapper.style.top = "50%";
-        wrapper.style.bottom = "auto";
-        wrapper.style.transformOrigin = "center center"; 
-        wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`;
-
-        wrapper.onclick = (e) => handleCardClick(e, wrapper);
-    });
-
     if (isMobile) {
-        // 📱 手機版：不播洗牌動畫，直接瞬間疊好現身
-        cards.forEach(wrapper => wrapper.style.opacity = '1');
+        document.body.classList.add('is-initializing');
+        requestAnimationFrame(() => {
+            document.body.classList.remove('is-initializing');
+        });
+    }
+
+    let cards;
+
+   if (isMobile) {
+        // ==========================================
+        // 📱 手機版：瞬間生成 DOM 節點，靜態堆疊在中央
+        // ==========================================
         
-        // 🌟 保留 2.5 秒的「冥想時間」，這樣文字轉換動畫 (p1 -> p2 -> p3) 才能完美播完不閃退！
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        // 🌟 效能救星 1：使用 DocumentFragment 收集節點，最後一次性貼上，避免網頁被強迫重繪 78 次
+        const fragment = document.createDocumentFragment();
+
+        shuffledDeck.forEach((cardData, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card-wrap'; 
+            wrapper.dataset.index = index;
+
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0); -webkit-transform:scale(1.05) translate3d(0,0,0); image-rendering: -webkit-optimize-contrast; crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
+
+            wrapper.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-face card-back">
+                        <img src="tarot-cards/photo-output.png" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform:translate3d(0,0,0); -webkit-transform:translate3d(0,0,0); image-rendering: -webkit-optimize-contrast;" 
+                             onload="this.parentElement.style.backgroundImage='none';" 
+                             onerror="this.style.display='none';" 
+                             draggable="false">
+                    </div>
+                    <div class="card-face card-front">${imgTag}</div>
+                </div>
+            `;
+
+            wrapper.style.transition = 'none'; 
+            wrapper.style.left = "50%";
+            wrapper.style.top = "50%";
+            wrapper.style.transformOrigin = "center center"; 
+            wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`; 
+            
+            // 🌟 效能救星 2：智能隱形 (GPU 釋放)
+            // 由於牌此時是整齊疊在中央的，使用者根本看不到下面 70 張牌。
+            // 我們只讓最上面 7 張顯示，其餘的設為透明，徹底釋放手機 GPU 壓力！
+            if (index < 7) {
+                wrapper.style.opacity = '1'; 
+            } else {
+                wrapper.style.opacity = '0';
+                wrapper.style.pointerEvents = 'none';
+            }
+
+            wrapper.onclick = (e) => handleCardClick(e, wrapper);
+            fragment.appendChild(wrapper);
+        });
+
+        // 將 78 張牌一次性塞入容器
+        container.appendChild(fragment);
+        
+        cards = document.querySelectorAll('.card-wrap');
+        await new Promise(resolve => setTimeout(resolve, 950));
+
     } else {
+        // ==========================================
         // 💻 電腦版：維持原本的洗牌動畫流程
-        await playShuffleAnimation(cards);
+        // ==========================================
+        cards = await playShuffleAnimation(isMobile);
     }
 
     // 展開成扇形牌陣
@@ -3188,21 +3209,50 @@ async function initSpreadView() {
 // ==========================================
 // 模組 1：洗牌階段
 // ==========================================
-function playShuffleAnimation(cards) {
+function playShuffleAnimation(isMobile) {
     return new Promise((resolve) => {
-        cards.forEach((wrapper, index) => {
-            // 只讓前 7 張卡牌擁有動畫類別
-            if (index < 7) {
-                wrapper.classList.add('shuffling');
-                wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
-                wrapper.style.opacity = '1';
-            } else {
+        const container = document.getElementById('cards-container');
+
+        shuffledDeck.forEach((cardData, index) => {
+            const wrapper = document.createElement('div');
+            const isShuffleTarget = !isMobile || index < 7;
+            wrapper.className = isShuffleTarget ? 'card-wrap shuffling' : 'card-wrap';
+            
+            if (!isShuffleTarget) {
                 wrapper.style.opacity = '0';
+                wrapper.style.pointerEvents = 'none'; 
             }
+            
+            wrapper.dataset.index = index;
+            wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
+
+            // 🌟 高清核心修正 3：電腦版與洗牌階段的行內樣式同步最高規格 3D 渲染
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0); -webkit-transform:scale(1.05) translate3d(0,0,0); image-rendering: -webkit-optimize-contrast; crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
+
+            wrapper.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-face card-back">
+                        <img src="tarot-cards/photo-output.png" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform:translate3d(0,0,0); -webkit-transform:translate3d(0,0,0); image-rendering: -webkit-optimize-contrast;" 
+                             onload="this.parentElement.style.backgroundImage='none';" 
+                             onerror="this.style.display='none';" 
+                             draggable="false">
+                    </div>
+                    <div class="card-face card-front">${imgTag}</div>
+                </div>
+            `;
+
+            wrapper.style.left = "50%";
+            wrapper.style.top = "50%";
+            wrapper.style.transformOrigin = "center center"; 
+            wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`;
+
+            wrapper.onclick = (e) => handleCardClick(e, wrapper);
+            container.appendChild(wrapper);
         });
 
-        // 電腦版洗牌維持 2.2 秒
         setTimeout(() => {
+            const cards = document.querySelectorAll('.card-wrap');
             resolve(cards);
         }, 2200);
     });
