@@ -936,8 +936,8 @@ body.is-initializing #result-panel {
 
 /* 🌟 精準分配三句話的出场時間軸，各自錯開 2.5 秒 */
 .ritual-text-container .phrase.p1 { animation-delay: 0s; }
-.ritual-text-container .phrase.p2 { animation-delay: 2.5s; }
-.ritual-text-container .phrase.p3 { animation-delay: 5s; }
+.ritual-text-container .phrase.p2 { animation-delay: 2s; }
+.ritual-text-container .phrase.p3 { animation-delay: 4s; }
 
 /* 完美計算的呼吸權重：淡入 ➔ 停頓觀看 ➔ 淡出 */
 @keyframes cssPhraseCycle {
@@ -3146,7 +3146,7 @@ async function initSpreadView() {
         // 📱 手機版：瞬間生成 DOM 節點，靜態堆疊在中央
         // ==========================================
         
-        // 🌟 效能救星 1：使用 DocumentFragment 收集節點，最後一次性貼上，避免網頁被強迫重繪 78 次
+        //使用 DocumentFragment 收集節點，最後一次性貼上，避免網頁被強迫重繪 78 次
         const fragment = document.createDocumentFragment();
 
         shuffledDeck.forEach((cardData, index) => {
@@ -3175,15 +3175,9 @@ async function initSpreadView() {
             wrapper.style.transformOrigin = "center center"; 
             wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`; 
             
-            // 🌟 效能救星 2：智能隱形 (GPU 釋放)
-            // 由於牌此時是整齊疊在中央的，使用者根本看不到下面 70 張牌。
-            // 我們只讓最上面 7 張顯示，其餘的設為透明，徹底釋放手機 GPU 壓力！
-            if (index < 7) {
                 wrapper.style.opacity = '1'; 
-            } else {
-                wrapper.style.opacity = '0';
                 wrapper.style.pointerEvents = 'none';
-            }
+
 
             wrapper.onclick = (e) => handleCardClick(e, wrapper);
             fragment.appendChild(wrapper);
@@ -3193,7 +3187,7 @@ async function initSpreadView() {
         container.appendChild(fragment);
         
         cards = document.querySelectorAll('.card-wrap');
-        await new Promise(resolve => setTimeout(resolve, 950));
+        await new Promise(resolve => setTimeout(resolve, 3800));
 
     } else {
         // ==========================================
@@ -3318,10 +3312,9 @@ function playSpreadAnimation(cards, isMobile, total) {
                     };
                     
                     if (isMobile) {
-                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), opacity 0.8s ease-out`;
+                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1)`;
                         wrapper.style.transitionDelay = `${index * 0.02}s, 0s`; 
                         
-                        wrapper.style.opacity = '1'; 
                         wrapper.style.pointerEvents = 'auto'; 
 
                         const angle = -45 + (index * (90 / total)); 
@@ -3378,7 +3371,7 @@ function playSpreadAnimation(cards, isMobile, total) {
                     container.ontouchcancel = () => { isScanning = false; };
                 }
 
-                setTimeout(resolve, 1500);
+                setTimeout(resolve, 3200);
             }); 
         }); 
     });
