@@ -7,10 +7,10 @@
 
 <script>
   // 初始化連線（把你在步驟 2 複製的資料貼到這裡）
-  const SUPABASE_URL = "https://djmlplzwudowcxzgbemw.supabase.co/"; 
+  const SUPABASE_URL = "https://djmlplzwudowcxzgbemw.supabase.co"; 
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqbWxwbHp3dWRvd2N4emdiZW13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzY1NDQsImV4cCI6MjA5NzcxMjU0NH0.vlvOjucxlhxHuoUlNh95ZjIvoDG9fAV_ym4AwTuYnHg";
 
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
  // 💡 核心函式：偵測並設定主體顏色
  function initSystemTheme() {
