@@ -4922,7 +4922,7 @@ function clickCorrectHeart(element) {
     element.classList.add('fade-out-clicked');
     
     const unlockInput = document.getElementById('unlock-input');
-    if (unlockInput) unlockInput.value = "點按成功";
+    if (unlockInput) unlockInput.value = "✦";
 
     setTimeout(() => {
         alert("✨ 你選中了正確的符號，即將返回主頁！");
@@ -4977,6 +4977,10 @@ function closeLimitModal() {
         window.removeEventListener('keydown', limitModalFocusHandler);
         limitModalFocusHandler = null;
     }
+    // 🎯撈出所有靜態按鈕，徹底清除消失類別，恢復點擊權限
+    document.querySelectorAll('.limit-static-btn').forEach(btn => {
+        btn.classList.remove('fade-out-clicked');
+        btn.style.pointerEvents = 'auto';
 }
 </script>
 </body>
