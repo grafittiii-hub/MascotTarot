@@ -3279,7 +3279,7 @@ function playSpreadAnimation(cards, isMobile, total) {
         if (ritualTextContainer) {
             ritualTextContainer.classList.add('fade-out');
         }
-
+requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 
                 cards.forEach((wrapper, index) => {
