@@ -1,3 +1,3111 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<script>
+    // 💡 核心函式：偵測並設定主體顏色
+    function initSystemTheme() {
+        // 1. 檢查使用者先前有沒有手動切換過並記錄在 LocalStorage (如果你的專案有做這個功能的話)
+        const savedTheme = localStorage.getItem('user-tarot-theme');
+        
+        if (savedTheme) {
+            // 如果有手動紀錄，優先使用手動紀錄
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        } else {
+            // 2. 🌟 沒有紀錄時，精準偵測系統是否為夜間模式 (Dark Mode)
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (prefersDark) {
+                document.documentElement.setAttribute('data-theme', 'night');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'day');
+            }
+        }
+    }
+
+    // 立即執行，防止畫面閃爍
+    initSystemTheme();
+
+    // 🌟 加分功能：當使用者在手機設定裡「當場切換」日夜模式時，網頁會即時跟著變色！
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        // 只有在使用者沒有手動鎖定過主題的情況下，才跟隨系統即時連動
+        if (!localStorage.getItem('user-tarot-theme')) {
+            document.documentElement.setAttribute('data-theme', e.matches ? 'night' : 'day');
+            
+            // 💡 如果你有手動更新 Theme Toggle 按鈕文字或圖示的函式，可以在這裡一併呼叫
+            // 例如：updateThemeButtonUI(e.matches ? 'night' : 'day');
+        }
+    });
+</script>
+    <title>孫孫暉日塔羅 Mascot Tarot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<link rel="preload" as="image" href="tarot-cards/photo-output.png">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+    <style>
+/* 1. 隱藏原本笨重的瀏覽器內建鼠標 (僅在電腦版生效) */
+@media (pointer: fine) {
+    body, button, a, .card-wrap, #bubble-orbit-trigger {
+        cursor: none !important;
+    }
+}
+
+/* 2. 虛擬鼠標主體設定 */
+#custom-magic-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 32px;
+    pointer-events: none; /* 關鍵：滑鼠穿透，不干擾點擊 */
+    z-index: 99999;       /* 確保在所有面板之上 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Times New Roman', serif;
+    font-size: 20px;
+    color: var(--gold-primary, #dbba18);
+    text-shadow: 0 0 8px rgba(219, 186, 24, 0.4);
+    transform: translate(-50%, -50%); /* 讓中心點對準鼠標坐標 */
+    
+    /* 讓符號切換、縮放與顏色改變時有絲滑的過渡 */
+    transition: transform 0.2s ease, color 0.3s ease, font-size 0.2s ease;
+    opacity: 0; /* 初始隱形，等滑鼠移動時再出現，避免閃爍 */
+}
+
+/* 預設狀態：四角星芒 */
+#custom-magic-cursor::before {
+    content: "✦";
+    display: block;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 3. 當滑過普通按鈕或連結時，稍微放大 */
+#custom-magic-cursor.hover-link {
+    transform: translate(-50%, -50%) scale(1.4);
+    color: #fff;
+    text-shadow: 0 0 10px var(--gold-primary);
+}
+
+/* 4. 觸碰特定元素卡牌時，平滑變形成對應神祕學幾何圖騰 */
+#custom-magic-cursor.el-air::before { content: "⧋"; transform: scale(1.2); }
+#custom-magic-cursor.el-air { color: rgba(168, 216, 234, 1); text-shadow: 0 0 12px rgba(168, 216, 234, 0.8); }
+
+#custom-magic-cursor.el-water::before { content: "▼"; transform: scale(1.2); }
+#custom-magic-cursor.el-water { color: rgba(75, 123, 236, 1); text-shadow: 0 0 12px rgba(75, 123, 236, 0.8); }
+
+#custom-magic-cursor.el-earth::before { content: "⧊"; transform: scale(1.2); }
+#custom-magic-cursor.el-earth { color: rgba(32, 191, 107, 1); text-shadow: 0 0 12px rgba(32, 191, 107, 0.8); }
+
+#custom-magic-cursor.el-fire::before { content: "▲"; transform: scale(1.2); }
+#custom-magic-cursor.el-fire { color: rgba(235, 59, 90, 1); text-shadow: 0 0 12px rgba(235, 59, 90, 0.8); }
+        /* ==========================================
+           1. 高階視覺美學與色彩系統
+           ========================================== */
+        :root {
+            --bg-color: #fffef7;
+            --text-color: #4f401b;
+            --gold-primary: #dbba18;
+            --gold-light: #faf6cf;
+            --panel-bg: linear-gradient(135deg, rgba(255, 250, 240, 0.97), rgba(248, 245, 240, 0.9));
+            --border-thin: 1px solid rgba(182, 154, 104, 0.3);
+            --glass-shadow: 0 -10px 40px rgba(0,0,0,0.03);
+            --input-bg: rgba(0,0,0,0.02);
+            --card-shadow: rgba(182, 154, 104, 0.25);
+            --card-shadow-hover: rgba(182, 154, 104, 0.45);
+        }
+
+        [data-theme="night"] {
+            --bg-color: #121212;
+            --text-color: #EAE6DF;
+            --gold-primary: #dbba18;
+            --gold-light: #ad9417;
+            --panel-bg: rgba(22, 22, 22, 0.95);
+            --border-thin: 1px solid rgba(212, 175, 55, 0.3);
+            --glass-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            --input-bg: linear-gradient(135deg, #1a1a1a, #252525);
+            --card-shadow: rgba(212, 175, 55, 0.15);
+            --card-shadow-hover: rgba(212, 175, 55, 0.35);
+        }
+* {
+    box-sizing: border-box !important;
+}
+
+/* ==========================================
+   1. 基礎與環境設定 (已整合重複的 html, body)
+   ========================================== */
+html, body {
+    width: 100%;
+    height: 100dvh; /* 使用現代動態 RWD 高度，完美適應手機瀏覽器工具列 */
+    margin: 0;
+    padding: 0;
+    overflow: hidden !important; /* 鎖死全域滾動，由各區塊自己決定 */
+    top: 0;
+    left: 0;
+    touch-action: none; /* 禁用外層所有的原生觸控行為（包含雙指縮放），保障動態滑動抽牌 */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
+}
+
+body {
+    display: flex;
+    background-color: var(--bg-color); 
+    color: var(--text-color);
+    transition: background-color 0.8s ease, color 0.8s ease;
+    padding-bottom: env(safe-area-inset-bottom); /* 手機底部安全區域防護 */
+}
+
+/* 背景噪點織物濾鏡 */
+body::before {
+    content: ""; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    background-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.05"/%3E%3C/svg%3E');
+    pointer-events: none; 
+    z-index: -1;
+}
+
+/* ==========================================
+   2. 全域安全防護 (包含文字反白與 iOS 長按防護)
+   ========================================== */
+* {
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box;
+    font-family: 'Georgia', 'Noto Serif TC', serif;
+    
+    /* 🌟 這三行放在 * 萬用選擇器，就代表全網頁所有元素（包含卡牌）都已經被完美保護 */
+    -webkit-user-select: none; 
+    user-select: none;
+    -webkit-touch-callout: none; /* 完美禁用 iOS 長按跳出儲存圖片/拷貝選單 */
+    
+    -webkit-tap-highlight-color: transparent; /* 移除點擊卡牌時手機產生的預設灰色陰影 */
+}
+
+        img, .card-face { pointer-events: none; -webkit-user-drag: none; user-select: none; filter: blur(0.4px) contrast(105%); -webkit-touch-callout: none;}
+        ::-webkit-scrollbar { display: none; }
+
+#qr-code img, .no-protect {
+    filter: none !important;
+    pointer-events: auto !important;
+}
+        .nav-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 0px 20px;
+	height: 10dvh; display: block;
+            align-items: center;
+            z-index: 9999; background: transparent; pointer-events: none;
+        }
+
+
+        .watermark {
+            font-size: clamp(0.35rem, 1.3vw, 2.3rem); position: absolute;
+    left: 3vw; top: 50%;
+    transform: translateY(-50%);
+            color: var(--gold-primary); opacity: 0.5; letter-spacing: 1px;
+            pointer-events: none; z-index: -1; font-style: italic;
+        }
+
+        .home-title {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%); white-space: nowrap;pointer-events: none;
+            font-size: clamp(0.4rem, 8dvh, 1rem); 
+            letter-spacing: 3px;
+            font-weight: 300;
+            color: var(--gold-primary);
+            text-transform: uppercase;
+            opacity: 0; 
+            visibility: hidden;
+            transition: opacity 1.2s ease, visibility 1.2s ease;
+            animation: pureGlow 7s infinite ease-in-out;
+        }
+@keyframes pureGlow {
+    0%, 100% { 
+        text-shadow: 0 0 5px rgba(224, 197, 63, 0.2);
+        letter-spacing: 3px;
+    }
+    50% { 
+        text-shadow: 0 0 20px rgba(224, 197, 63, 0.6), 0 0 30px rgba(224, 197, 63, 0.2);
+        letter-spacing: 3.5px; /* 輕微的字距擴張也很有高級感 */
+    }
+}
+        #main-page[style*="opacity: 1"] ~ .nav-header .home-title,
+        .show-home-title .home-title { 
+            opacity: 1 ;
+            visibility: visible; 
+        }
+
+        .theme-toggle {
+            background: transparent; position: absolute;
+    right: 3vw; top: 50%;
+    transform: translateY(-50%);width: 33px;height: 30px;
+            border: var(--border-thin); color: var(--gold-primary);
+            padding: 0; font-size: 0.65rem; display: flex;
+    align-items: center; justify-content: center; cursor: pointer; z-index: 9999; text-transform: uppercase;
+            transition: 0.4s ease; pointer-events: auto;
+        }
+        .theme-toggle:hover { background: var(--gold-primary); color: var(--bg-color); }
+
+        @media (max-width: 480px) {
+            .home-title { font-size: 0.8rem; letter-spacing: 1px; }
+            .nav-header { padding: 10px 15px; }
+            .btn-solid {font-size: 0.7rem;}
+            .btn-outline {padding:9px 0;}
+            .btn-solid, #result-actions button, #result-actions .btn-cart, #result-actions .btn-save, #result-actions .btn-return {text-indent: 0px !important;}
+        }
+
+        /* ==========================================
+           3. 載入與預熱機制
+           ========================================== */
+        #loading-screen {
+            position: fixed; inset: 0; background: var(--bg-color); z-index: 9000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 1s ease;
+        }
+        .loading-title {
+            display: flex;
+    flex-direction: column;  /* 🌟 核心：讓裡面的內容由上往下像直列一樣排隊 */
+    align-items: center;      /* 🌟 核心：水平方向絕對居中 */
+    justify-content: center;   /* 🌟 核心：垂直方向絕對居中 */
+    text-align: center;
+    gap: 10px; color: var(--gold-primary); margin-bottom: 50px; padding: 0 10px;
+            animation: auraBreathing 3s infinite ease-in-out; flex-direction: column;
+        }
+        @keyframes auraBreathing {
+            0%, 100% { text-shadow: 0 0 10px rgba(182, 154, 104, 0); transform: scale(1); }
+            50% { text-shadow: 0 0 25px rgba(182, 154, 104, 0.4); transform: scale(1.02); }
+        }
+.loading-title .title-zh {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 4px;      /* 稍微拉開中文字距，增加高級感 */
+}
+
+/* 針對英文字的精緻微調 */
+.loading-title .title-en {
+    font-size: 0.9rem;
+    font-weight: 300;
+    letter-spacing: 4px;
+    opacity: 0.85;
+    text-transform: uppercase;/* 視需求看要不要自動轉大寫 */
+}
+        .progress-track { width: 150px; height: 1px; background: var(--gold-light); position: relative; }
+        #progress-bar { width: 0%; height: 100%; background: var(--gold-primary); transition: width 0.3s ease; }
+
+        /* ==========================================
+           4. 主頁 UI 佈局
+           ========================================== */
+#main-page {
+    width: 100%; 
+    max-width: 650px;
+    
+    /* 🌟 1. 絕對定位：死死釘在 10dvh，絕對不允許向上挪動一步 */
+    position: absolute; 
+    top: 0; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    
+    /* 🌟 2. 嚴格限定最大高度與實際高度：剛好填滿剩下的 90dvh */
+    height: 100dvh;
+    max-height: 100dvh; 
+    
+    display: flex; 
+    flex-direction: column; 
+    justify-content: flex-start; 
+    
+    /* 調整內距：上下給 10px 固定呼吸空間，避免 padding 把高度撐爆 */
+    padding: calc(10dvh + 10px) 10% 10px 10%; 
+    
+    opacity: 0; 
+    visibility: hidden; 
+    transition: opacity 1.2s ease;
+    margin: 0 auto; 
+    
+    /* 🌟 3. 最外層全面禁止滾動！確保頂部 top: 10dvh 穩如泰山、絕不穿頂 */
+    overflow-y: hidden !important; 
+    overflow-x: hidden !important; 
+    box-sizing: border-box;
+    touch-action: pan-y;
+}
+
+/* 🌟 4. 中間主內容容器：接管滾動條 */
+#main-page > .main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    
+    /* 🌟 核心：當手機畫面太矮時，只有這一個區域在內部默默滾動，絕對不影響外層頂部與底部 */
+    overflow-y: auto; 
+    overflow-x: hidden;
+    padding-bottom: 10px; /* 給 Start 按鈕與下方 Footer 留點安全距離 */
+}
+
+/* 🌟 5. 精準選取到 footer，利用 margin-top: auto 推到底部貼齊 */
+#main-page .tarot-footer {
+    margin-top: auto !important;
+    margin-bottom: 0 !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important; 
+}
+
+/* ==========================================
+   精緻置中 Footer 視覺美學（已修正 100vw 惡性溢出 Bug）
+   ========================================== */
+.tarot-footer {
+    /* 🌟 核心修改：絕對不能用 100vw！改成 100% 才能完美契合外層的 600px 容器 */
+    width: 100% !important; 
+    
+    /* 🌟 移除容易造成位移偏置的 transform */
+    left: 0 !important;
+    transform: none !important;
+    
+    /* 縮小 margin，交由 Flex 的 auto 去彈性推擠 */
+    margin-top: 15px !important; 
+    position: relative;
+    clear: both; 
+    padding: 10px 2px 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    text-align: center; 
+    z-index: 9000; 
+    background: transparent; 
+}
+
+/* 針對互動元素防止「雙擊放大」 */
+button, input, textarea, .cat-btn, .mode-btn {
+    touch-action: manipulation; 
+}
+
+/* =======================================
+   現代奢華美學：宇宙星塵 (聚散流動背景)
+   ======================================= */
+
+.cosmic-star {
+    position: fixed;
+    color: var(--gold-primary, #dbba18);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    pointer-events: none; 
+    z-index: -2;          /* 藏在內容的後方，但在底色之上 */
+    user-select: none;
+    
+    /* 核心動畫：利用 CSS 變數控制每顆星星的獨立閃爍節奏 */
+    animation: luxuryTwinkle var(--twinkle-duration, 4s) ease-in-out infinite alternate;
+}
+
+/* 類型一：原本的奢華金星 */
+.cosmic-star.star-gold {
+    color: var(--gold-primary, #dbba18);
+}
+
+/* 類型二：你絕妙提議的「文字同色星」 (日間自動為 #302814，夜間自動變淺) */
+.cosmic-star.star-text {
+    color: var(--text-color);
+    /* 深色星不需要太強烈的金光陰影，改用淡淡的柔和暈染 */
+    text-shadow: 0 0 8px rgba(48, 40, 20, 0.1) !important; 
+}
+
+/* 呼吸微光動畫：不僅改變透明度，還帶有極其輕微的上下浮動與發光 */
+@keyframes luxuryTwinkle {
+    0% { 
+        opacity: 0.03; 
+        transform: scale(0.85) translateY(0); 
+        filter: blur(1px);
+    }
+    100% { 
+        opacity: var(--max-opacity, 0.6); 
+        transform: scale(1) translateY(-6px);
+        filter: blur(0px); 
+    }
+}
+        .input-group { margin-bottom: clamp(20px, 5vh, 40px); }
+        .label { font-size: 0.8rem; color: var(--gold-primary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
+/* ==========================================
+   Textarea 一鍵清除按鈕系統 (極簡美學)
+   ========================================== */
+.textarea-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* ⚡️ 關鍵修復：調整右側內距，防止輸入很長時文字與清除按鈕重疊 */
+#main-page textarea {
+    padding-right: 32px !important;
+}
+
+/* 清除按鈕基礎狀態 */
+.clear-btn {
+    position: absolute;
+    right: 0;
+    bottom: 6px; /* 完美對齊底部邊框與文字襯線線條 */
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 0.85rem;
+    opacity: 0;
+    visibility: hidden;
+    padding: 4px;
+    z-index: 10;
+    /* 絲滑的淡入淡出、變色與縮放動畫 */
+    transition: opacity 0.3s ease, visibility 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+
+/* 當輸入框有文字時，由 JS 加上此 Class (淡入呈現半透明，不搶視覺焦點) */
+.clear-btn.is-visible {
+    opacity: 0.8;
+    visibility: visible;
+}
+
+/* 滑鼠懸停效果：亮起神祕學金色微光與輕微放大 */
+.clear-btn.is-visible:hover {
+    opacity: 1;
+    color: var(--gold-primary);
+    transform: scale(1.15);
+    text-shadow: 0 0 8px rgba(219, 186, 24, 0.5);
+}
+        textarea {
+            width: 100%; padding: 8px 0; border: none; border-bottom: var(--border-thin); font-size: 16px;
+            background: var(--input-bg); color: var(--text-color); font-size: 0.85rem;
+            resize: none; outline: none; max-height: 100px; transition: 0.4s;
+            -webkit-user-select: auto; user-select: auto;
+        }
+        textarea:focus { border-bottom-color: var(--gold-primary); }
+
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+        .btn-outline {
+            padding: 12px 0; background: transparent; border: var(--border-thin);
+            color: var(--text-color); font-size: 0.8rem; cursor: pointer;
+            opacity: 0.7;
+/* 關鍵修復：清除手機瀏覽器原生的按鈕外觀與預設圓角 */
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 0;
+        }
+
+@media (hover: hover) {
+    .btn-outline:hover { 
+        opacity: 1; 
+        border-color: var(--gold-primary); 
+    }
+}
+
+        .btn-outline.active {
+            border-color: var(--gold-primary) !important; color: var(--gold-primary) !important;
+            background: rgba(182, 154, 104, 0.05)!important; opacity: 1 !important; font-weight: 500;
+        }
+
+        #relation-container {
+            display: none; align-items: center; justify-content: space-between;
+            padding: 1px 0; border-bottom: var(--border-thin); font-size: 0.85rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* 統一按鈕基礎設定 */
+        .btn-solid {
+            width: 100%; padding: 18px; background: var(--gold-primary);
+            color: var(--bg-color); border: none; font-size: 0.8rem;
+            letter-spacing: 5px; text-transform: uppercase; cursor: pointer;margin-right: -5px !important;
+            transition: 0.4s; position: relative; overflow: hidden;
+        }
+        
+        /* 點擊效果 */
+        .btn-solid:active {
+            transform: scale(0.98);
+        }
+
+        /* 主按鈕 Hover */
+        .btn-solid:hover { background: var(--text-color); color: var(--bg-color); }
+
+        /* 特製 Save 按鈕 */
+        .btn-save {
+            flex: 1;
+            background: var(--gold-primary);
+            border: 1px solid var(--gold-primary);
+            color: var(--bg-color);
+            display: flex; align-items: center; justify-content: center; padding: 12px 0;padding-left: 5px !important;
+        }
+        .btn-save:hover {
+            background: var(--text-color); 
+            border-color: var(--text-color);
+        }
+
+        /* 特製 Return 按鈕 */
+        .btn-return {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            display: flex; align-items: center; justify-content: center; padding: 12px 0; padding-left: 5px !important;
+        }
+        .btn-return:hover {
+            background: var(--text-color);
+            color: var(--bg-color);
+        }
+
+/* ==========================================
+   精緻置中 Footer 視覺美學
+   ========================================== */
+.tarot-footer {
+    width: 100vw;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: clamp(20px, 10%, 68px);
+    position: relative;
+    clear: both; padding: 10px 2px 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    text-align: center; z-index:9000; 
+    background: transparent; /* 保持背景透明，完美融入你的主色調 */
+}
+
+.footer-content {
+    font-family: 'Georgia', 'Noto Serif TC', serif;  
+    font-size: clamp(0.5rem, 2.3vw, 0.6rem); /* 精緻細小的低調字體 */
+    letter-spacing: 2px; /* 高階感必備的字距留白 */
+    color: var(--text-color); 
+    opacity: 0.55; /* 降低醒目度，呈現高級隨性感 */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px; /* 元素之間的間距 */
+    line-height: 1.2;
+transition: transform 0.3s ease-out;
+}
+
+/* 分隔線樣式 */
+.footer-divider {
+    color: var(--gold-primary, #dbba18);
+    opacity: 0.5;
+    margin: 0 4px;
+}
+
+/* 超連結基本樣式 */
+.footer-link {
+    color: var(--text-color);
+    text-decoration: none;
+    position: relative;
+    transition: all 0.3s ease;
+    font-weight: 400;
+}
+
+/* 滑鼠懸停時的優雅金色變色與微光 */
+.footer-link:hover {
+    color: var(--gold-primary, #dbba18);
+    opacity: 1;
+    text-shadow: 0 0 8px rgba(219, 186, 24, 0.3);
+}
+
+/* 超連結下方的微細底線動態特效 */
+.footer-link::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 1px;
+    bottom: -2px;
+    left: 0;
+    background-color: var(--gold-primary, #dbba18);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease-out;
+}
+
+.footer-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}
+
+/* 手機版 RWD 微調 */
+@media (max-width: 480px) {
+    .footer-content {
+        letter-spacing: 1px;
+        gap: 4px;
+    }
+
+
+}
+
+@media (max-width: 320px) {
+    .footer-content {
+        gap: 1px;
+    }
+}
+
+@media (min-width: 481px) {
+.btn-solid {font-size: 0.85rem; padding: 15px; text-indent: 10px !important;}
+}
+
+/* 🚀 修正：強制讓三個按鈕內部的所有文字與符號完美居中 */
+.btn-solid, 
+#result-actions button, 
+#result-actions .btn-cart,
+#result-actions .btn-save,
+#result-actions .btn-return {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+
+letter-spacing: 5px; 
+}
+
+/* 🎯 如果按鈕裡面有包文字標籤，直接校正文字本身 */
+#result-actions button span,
+.btn-solid span {
+    letter-spacing: 5px !important;
+    display: inline-block !important;
+}
+
+/* 彈窗遮罩：新增動畫屬性 */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    backdrop-filter: blur(8px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999;
+    
+    /* 動畫設定：初始隱藏 */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s;
+}
+
+/* 當加上 .is-visible class 時顯示 */
+.modal-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 核心卡片：加入浮動動畫 */
+.modal-content {
+    background: var(--panel-bg);
+    border: var(--border-thin);
+    color: var(--text-color);
+    width: 85%;
+    max-width: 320px;
+    padding: 40px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    
+    /* 初始狀態：往下位移一點點並透明 */
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    opacity: 0;
+}
+
+/* 顯現時回到原位 */
+.modal-overlay.is-visible .modal-content {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.modal-content h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.2rem;
+    margin-bottom: 25px;
+    opacity: 0.9;
+}
+
+.notice-list { 
+    text-align: center; 
+    margin: 0 auto 25px auto; 
+    font-size: 0.9rem; 
+    line-height: 2.0; 
+    list-style: none;
+    padding: 0;
+}
+
+.notice-list li { margin-bottom: 10px; opacity: 0.7; }
+
+.modal-content button {
+    background: transparent;
+    border: 1px solid var(--gold-primary);
+    color: var(--text-color);
+    padding: 8px 25px;
+    font-size: 0.75rem;
+    letter-spacing: 0.15rem;
+    cursor: pointer;
+}
+.modal-content button:hover { background: rgba(255, 255, 255, 0.1); }
+
+
+
+body.is-initializing .card-wrap,
+body.is-initializing #result-panel {
+    transition: none !important;
+}
+
+        /* ==========================================
+           5. 扇形展牌與洗牌系統
+           ========================================== */
+        #spread-view {
+            display: none; width: 100vw; height: 100dvh; position: relative;
+            opacity: 0; transition: opacity 1s ease; overflow: hidden;
+        }
+/* 容器需要透視點才有 3D 效果 */
+#cards-container { 
+    position: absolute; 
+    inset: 0; 
+    perspective: 1000px; /* 增加空間感 */
+}
+
+@keyframes luxuryShuffle {
+    0% { 
+        transform: translate(-50%, -50%) translateZ(0) rotate(0deg) rotateY(0deg); 
+        z-index: 10; 
+    }
+    20% { 
+        /* 向左外拋，帶點傾斜 */
+        transform: translate(-65%, -52%) translateZ(30px) rotate(-12deg) rotateY(15deg); 
+        z-index: 20; 
+    }
+    40% { 
+        /* 回收至中心下方 */
+        transform: translate(-45%, -48%) translateZ(-20px) rotate(5deg) rotateY(-10deg); 
+        z-index: 5; 
+    }
+    60% { 
+        /* 向右外拋，產生層次落差 */
+        transform: translate(-35%, -55%) translateZ(50px) rotate(10deg) rotateY(20deg); 
+        z-index: 25; 
+    }
+    80% { 
+        /* 輕微晃動歸位 */
+        transform: translate(-55%, -45%) translateZ(10px) rotate(-3deg) rotateY(-5deg); 
+        z-index: 15; 
+    }
+    100% { 
+        transform: translate(-50%, -50%) translateZ(0) rotate(0deg) rotateY(0deg); 
+        z-index: 10; 
+    }
+}
+
+.shuffling {
+    /* 使用 cubic-bezier 讓動作有「先快後慢」的物理慣性高級感 */
+    animation: luxuryShuffle 1.2s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
+}
+
+.card-wrap {
+    position: absolute; 
+    width: 75px; 
+    height: 115px;
+    cursor: pointer; 
+    z-index: 10;
+    /* 🌟 核心優化 1：移除 wrap 層的 will-change，改用 3D 轉換強制開啟硬體加速 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease; 
+    -webkit-backface-visibility: hidden; 
+    backface-visibility: hidden;
+}
+
+@media (min-width: 768px) {
+    .card-wrap { 
+        width: 120px; 
+        height: 180px; 
+    } 
+    .card-face {
+        box-shadow: 0 4px 10px var(--card-shadow); 
+    }
+}
+
+/* 👑 精致防抖防摔防死循環規則 */
+.card-wrap.is-chosen,
+.card-wrap.revealing,
+.card-wrap.active-draw {
+    pointer-events: none !important; /* 點擊後瞬間與滑鼠絕緣，切斷所有 Hover 偵測 */
+}
+
+.card-wrap.is-chosen .card-inner,
+.card-wrap.revealing .card-inner,
+.card-wrap.active-draw .card-inner {
+    transform: none !important; /* 強制移除任何由滑鼠傾斜產生的額外 3D Transform */
+    animation: none !important; /* 徹底殺死任何閒置時的左右呼吸或搖擺動畫 */
+}
+
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; pointer-events: none; transform: translateZ(0);
+    -webkit-transform: translateZ(0); -webkit-backface-visibility: hidden; 
+    backface-visibility: hidden;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+ .card-face {
+    position: absolute; 
+    inset: 0; 
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden; 
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    border-radius: 8px; 
+    background-position: center;
+    border: var(--border-thin); 
+    box-shadow: 0 5px 15px var(--card-shadow); 
+    background-clip: padding-box; 
+    /* 🌟 核心優化 3：強制開啟 iOS Safari 的最高清圖層圖形流暢渲染 */
+    -webkit-font-smoothing: antialiased;
+}
+        .card-back { background-color: var(--gold-light); background-image: linear-gradient(135deg, var(--gold-primary) 25.5%, transparent 26%); background-repeat: no-repeat;overflow: hidden; }
+        .card-front { transform: rotateY(180deg); background-color: #c7a243; border-radius: 8px;overflow: hidden;-webkit-mask-image: -webkit-radial-gradient(white, black); }
+
+/* 專門針對正面圖片的放大處理 */
+.card-front img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; object-position: 52% 50%;
+    transform: scale(1.05) translate3d(0, 0, 0); 
+    transition: transform 0.3s ease; -webkit-transform: scale(1.05) translate3d(0, 0, 0); image-rendering: -webkit-optimize-contrast;image-rendering: crisp-edges;
+}
+
+        .card-wrap.popped { z-index: 100 !important; }
+        .card-wrap.popped .card-inner {
+            transform: translate(var(--pop-x, 0), var(--pop-y, -50px)) scale(1.15);
+            box-shadow: 0 15px 30px var(--card-shadow-hover);border-radius: 8px; 
+        }
+        
+        .card-wrap.confirmed { pointer-events: auto !important; cursor: pointer; z-index: 2100 !important; }
+
+
+
+        #confirm-btn-float {
+            position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%) translateY(20px);
+            display: none; pointer-events: none; 
+            z-index: 200; padding: 12px 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            opacity: 0; transition: all 0.4s ease;
+        }
+
+        #draw-counter {
+            position: absolute; top: 9%; left: 50%; transform: translateX(-50%);
+            font-size: 1.5rem; color: var(--gold-primary); letter-spacing: 5px;
+            z-index: 50; display: none; font-weight: 300;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        #retry-btn {
+            position: fixed; bottom: 30px; right: 20px; z-index: 8600;
+            display: none; background: var(--panel-bg); backdrop-filter: blur(5px);
+            padding: 10px 15px; border-radius: 5px; width: auto; font-size: 0.7rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease;
+        }
+/* ==========================================================================
+   LVMH 副標題美學：洗牌呼吸文字系統
+   ========================================================================== */
+
+/* 👑 獨立於 JS 之外的奢華呼吸輪播系統 */
+.ritual-text-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 30px;
+    margin-top: 75dvh;
+}
+
+.ritual-text-container .phrase {
+    position: absolute;
+    opacity: 0;
+    transform: translateY(10px);
+    font-family: 'Noto Serif TC', serif;
+    color: var(--gold-primary, #d4af37);
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+    pointer-events: none;
+    
+    /* 核心：三句話總共花 7.5 秒無限輪播 */
+    animation: cssPhraseCycle 7.5s infinite linear;
+}
+
+/* 🌟 精準分配三句話的出场時間軸，各自錯開 2.5 秒 */
+.ritual-text-container .phrase.p1 { animation-delay: 0s; }
+.ritual-text-container .phrase.p2 { animation-delay: 2.5s; }
+.ritual-text-container .phrase.p3 { animation-delay: 5s; }
+
+/* 完美計算的呼吸權重：淡入 ➔ 停頓觀看 ➔ 淡出 */
+@keyframes cssPhraseCycle {
+    0% { opacity: 0; transform: translateY(10px) scale(0.98); filter: blur(3px); }
+    4% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    29% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    33.33% { opacity: 0; transform: translateY(-10px) scale(0.98); filter: blur(2px); }
+    100% { opacity: 0; }
+}
+
+/* 當洗牌結束、發牌階段時，讓整個文字容器優雅退場 */
+.ritual-text-container.fade-out {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+/* =========================================
+   方案四 進階修正：虹光弧影 (Rainbow Radial Fade)
+   ========================================= */
+
+.liquid-cocoon-svg {
+    position: absolute;
+    /* 完全貼合卡牌邊緣 */
+    inset: 0; 
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    /* 配合 3D 翻轉，微幅浮起避免與卡面重合產生的閃爍 */
+    transform: rotateY(180deg) translateZ(1px);
+    backface-visibility: hidden;
+    overflow: visible;
+}
+
+/* =========================================
+   修正版：對角線長征與括號滲透呼吸
+   ========================================= */
+
+/* 基礎設定 */
+.glass-flow, .glass-stasis {
+    fill: none;
+    stroke: url(#rainbowGrad);
+    stroke-linecap: round; /* 確保頭尾都是圓潤的 */
+}
+
+/* --- 動態光束：分層漸變拖尾 (維持你的設定) --- */
+.glass-flow.tail { stroke-width: 2px; stroke-dasharray: 35 100; opacity: 0.25; }
+.glass-flow.mid  { stroke-width: 2px;   stroke-dasharray: 15 100; opacity: 0.6; }
+.glass-flow.head { stroke-width: 2.5px;   stroke-dasharray: 2 100;  opacity: 1; filter: drop-shadow(0 0 4px white); }
+
+.run-cocoon .glass-flow.tail { animation: runTail 4s cubic-bezier(0.3, 0.1, 0.3, 1) infinite; }
+.run-cocoon .glass-flow.mid  { animation: runMid 4s cubic-bezier(0.3, 0.1, 0.3, 1) infinite; }
+.run-cocoon .glass-flow.head { animation: runHead 4s cubic-bezier(0.3, 0.1, 0.3, 1) infinite; }
+
+/* 你的魔法計算 */
+@keyframes runTail {
+    0%  { stroke-dashoffset: 35; stroke-dasharray: 35 100; opacity: 0; }
+    2%  { stroke-dashoffset: 20; stroke-dasharray: 20 100; opacity: 1; }
+    25% { 
+        stroke-dashoffset: -80; 
+        stroke-dasharray: 15 100;
+        opacity: 0.8; 
+    }
+    27% {
+        stroke-dasharray: 5 100; 
+        stroke-dashoffset: -100;
+        opacity: 0.4;
+    }
+    29% {
+        stroke-dasharray: 0 100; 
+        stroke-dashoffset: -105;
+        opacity: 0.2;
+    }
+    30%, 100% { stroke-dashoffset: -105; opacity: 0; }
+}
+
+@keyframes runMid {
+    0%  { stroke-dashoffset: 15; stroke-dasharray: 15 100; opacity: 0; }
+    2%  { stroke-dashoffset: 5;  stroke-dasharray: 15 100; opacity: 1; }
+    25% { 
+        stroke-dashoffset: -95; 
+        stroke-dasharray: 10 100;
+        opacity: 0.9; 
+    }
+    26% {
+        stroke-dasharray: 0 100; 
+        stroke-dashoffset: -110;
+        opacity: 0.6;
+    }
+    29% {
+        stroke-dasharray: 0 100; 
+        stroke-dashoffset: -120;
+        opacity: 0.2;
+    }
+    30%, 100% { stroke-dashoffset: -125; opacity: 0; }
+}
+
+@keyframes runHead {
+    0%  { stroke-dashoffset: 2; opacity: 0; }
+    2%  { stroke-dashoffset: -8; opacity: 1; }
+    25% { stroke-dashoffset: -98; opacity: 0.4; }
+    30%, 100% { stroke-dashoffset: -138; opacity: 0; }
+}
+
+/* --- 全邊框發光：光束抵達後點燃整條路徑 --- */
+.glass-stasis {
+    stroke-width: 2.5px;
+    /* 移除了遮罩設定 */
+    opacity: 0;
+}
+
+.run-cocoon .glass-stasis {
+    /* 沿用你的時間設定，確保無縫銜接 */
+    animation: fullPathBreathe 4s ease-in-out infinite;
+}
+
+@keyframes fullPathBreathe {
+    /* 光束還在趕路，整條邊框保持隱藏 */
+    0%, 23% { opacity: 0; filter: brightness(1); }
+    
+    /* 26%~30%: 光束一頭撞進角落，整條邊框瞬間點亮！ */
+    24% { opacity: 0.5; filter: drop-shadow(0 0 2px white); }
+    30% { opacity: 1; filter: brightness(1.8) drop-shadow(0 0 8px white); }
+    
+    /* 45%~65%: 緩慢的全線發光 ease out */
+    45% { opacity: 0.7; filter: brightness(1.3) drop-shadow(0 0 4px rgba(255,255,255,0.6)); }
+    65% { opacity: 0.95; filter: brightness(1.6) drop-shadow(0 0 6px white); }
+    
+    /* 85%~100%: 能量徹底消散，準備迎接下一輪光束衝刺 */
+    85%, 100% { opacity: 0; filter: brightness(1); }
+}
+
+/* ==========================================
+   卡牌終極展示：四大元素專屬光暈與彈起特效 (防翻轉版)
+   ========================================== */
+
+/* 1. 初始化底陰影與過渡動畫設定 */
+.card-wrap.ready-to-glow .card-inner {
+    position: relative; border-radius: 8px;
+    top: 0; /* 設定初始位置 */
+
+    /* 將過渡屬性改為 top，完全不干擾 JS 的 transform 翻轉 */
+    transition: box-shadow 1.2s cubic-bezier(0.25, 1, 0.3, 1), top 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 6px 20px rgba(48, 40, 20, 0.12); 
+}
+/* 漣漪本體基礎設定 */
+.cosmic-ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none; /* 防止漣漪本身干擾後續點擊 */
+    width: 480px;         /* 寬度確保能覆蓋整張卡牌 */
+    height: 480px;
+    opacity: 0.8;
+    animation: cosmic-ripple-animation 3s cubic-bezier(0.1, 0.8, 0.25, 1) forwards;
+}
+
+/* 擴散並淡出的動畫軌跡 */
+@keyframes cosmic-ripple-animation {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+    }
+}
+
+/* 四大元素的漣漪色彩設定 (使用高級的星光放射性漸層) */
+.ripple-air {
+    background: radial-gradient(circle, rgba(168, 216, 234, 0.7) 0%, rgba(168, 216, 234, 0.2) 40%, transparent 70%);
+}
+
+.ripple-water {
+    background: radial-gradient(circle, rgba(75, 123, 236, 0.7) 0%, rgba(75, 123, 236, 0.2) 40%, transparent 70%);
+}
+
+.ripple-earth {
+    background: radial-gradient(circle, rgba(32, 191, 107, 0.7) 0%, rgba(32, 191, 107, 0.2) 40%, transparent 70%);
+}
+
+.ripple-fire {
+    background: radial-gradient(circle, rgba(235, 59, 90, 0.7) 0%, rgba(235, 59, 90, 0.2) 40%, transparent 70%);
+}
+
+/* =====================================================
+   👑 終極優雅版：1.5秒極致慢速懸浮互動 (不寫死陰影，完美相容四元素)
+   ====================================================== */
+/* 🌟 核心修改 1：把手勢放大的變數綁在最外層的 .card-wrap 上 */
+.card-wrap.ready-to-glow {
+}
+
+/* 1. 當卡牌進入最終 ready-to-glow 狀態，賦予它超慢速互動的基因 */
+.card-wrap.ready-to-glow .card-inner {
+    top: 0;
+    transition: top 1.5s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 1.5s cubic-bezier(0.16, 1, 0.3, 1) !important; /* 用 !important 確保樣式優先級 */
+}
+
+/* 2. 用家自行 Hover / 點擊時，只控制它溫柔地慢速升起 12px */
+.card-wrap.ready-to-glow:hover .card-inner,
+.card-wrap.ready-to-glow:active .card-inner {
+    top: -12px !important; /* 強制執行上升 12px */
+    
+.card-wrap.ready-to-glow:focus-visible .card-inner {
+    top: -12px !important;
+}
+    /* 🚨 這裡「故意不寫死任何 box-shadow」！
+       這樣一來，它就會自動、完美地去讀取你原本在程式碼上方早就寫好的：
+       .element-fire:hover .card-inner、.element-water:hover .card-inner 等專屬彩色光暈！ */
+}
+
+/* 💨 氣元素 (Air) */
+.card-wrap.ready-to-glow.element-air:hover .card-inner,
+.card-wrap.ready-to-glow.element-air:active .card-inner {
+    top: -12px; /* 單純上移，卡牌乖乖保持正面！ */
+    box-shadow: 0 0 35px rgba(168, 216, 234, 0.85), 0 12px 25px rgba(168, 216, 234, 0.3); 
+}
+
+/* 💧 水元素 (Water) */
+.card-wrap.ready-to-glow.element-water:hover .card-inner,
+.card-wrap.ready-to-glow.element-water:active .card-inner {
+    top: -12px;
+    box-shadow: 0 0 35px rgba(75, 123, 236, 0.85), 0 12px 25px rgba(75, 123, 236, 0.3);
+}
+
+/* 🌿 土元素 (Earth) */
+.card-wrap.ready-to-glow.element-earth:hover .card-inner,
+.card-wrap.ready-to-glow.element-earth:active .card-inner {
+    top: -12px;
+    box-shadow: 0 0 35px rgba(32, 191, 107, 0.85), 0 12px 25px rgba(32, 191, 107, 0.3);
+}
+
+/* 🔥 火元素 (Fire) */
+.card-wrap.ready-to-glow.element-fire:hover .card-inner,
+.card-wrap.ready-to-glow.element-fire:active .card-inner {
+    top: -12px;
+    box-shadow: 0 0 35px rgba(235, 59, 90, 0.85), 0 12px 25px rgba(235, 59, 90, 0.3);
+}
+        /* ==========================================
+           6. 隱藏式下拉解說面板與報告佈局
+           ========================================== */
+        #result-panel {
+            position: fixed; bottom: 0; left: 0; width: 100% !important; height: 82dvh; will-change: transform;
+            background: var(--panel-bg);  
+            border-top: var(--border-thin); box-shadow: var(--glass-shadow);
+            padding: 5dvh 10%; overflow-y: auto; overflow-x: hidden !important; z-index: 8500; box-sizing: border-box;
+            transform: translateY(100%); transition: transform 0.9s cubic-bezier(0.2, 1, 0.3, 1);
+scrollbar-width: none; /* 針對 Firefox */
+            -ms-overflow-style: none; /* 針對 IE/Edge */
+        }
+#result-panel::-webkit-scrollbar {
+            display: none;
+        }
+        #result-panel.active { transform: translateY(0); }
+
+        .report-layout-triple {
+            display: flex; gap: 20px; width: 100%; justify-content: space-between;
+        }
+        .report-layout-triple .result-block { flex: 1; border-left: none; border-top: 2px solid var(--gold-primary); padding-left: 0; padding-top: 15px; }
+
+        @media (max-width: 768px) {
+            .report-layout-triple {
+                overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 20px; flex-wrap: nowrap; padding-right: 20px;
+            }
+            .report-layout-triple .result-block {
+                flex: 0 0 85%; scroll-snap-align: center; margin-right: 15px;
+            }
+            .report-layout-triple .result-block:last-child {
+                margin-right: 0;
+            }
+    
+    #result-panel {
+        transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);  /* 0.9s → 0.5s */
+    }
+        }
+	/* 當用戶正在用手指拖曳時，暫時移除 transition，讓面板「死死貼著手指」才不會有延遲感 */
+#result-panel.is-dragging {
+    transition: none !important;
+}
+
+/* ==================================================================
+   👑 奢華彈性美學：面板下拉時卡牌「即時線性放大」與「放手完美同步回彈」
+   ================================================================ */
+
+/* 1. 為所有卡牌外殼注入動態縮放基因 */
+.card-wrap {
+    will-change: scale;
+    /* 當放手重置時，恢復極致高奢的立方貝茲回彈動畫 */
+    transition: transform 0.8s cubic-bezier(0.25, 1, 0.3, 1), 
+                scale 0.4s cubic-bezier(0.25, 1, 0.3, 1),
+                opacity 0.8s ease ;
+}
+
+/* CSS：加入專屬的高級焦點視覺，取代瀏覽器預設的醜陋藍框 */
+.card-wrap:focus-visible {
+    outline: none;
+    /* 利用原有的光暈機制或加上優雅的金邊 */
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.4) !important; border-radius: 12px;
+    transform: translateY(-12px); /* 讓鍵盤選中時也有升起的互動感 */
+}
+
+/* 2. 當手指/滑鼠正在拖曳面板時，拔除過渡動畫，讓卡牌縮放 100% 零延遲跟隨手勢，絕不黏糊 */
+body.is-dragging-panel .card-wrap {
+    transition: none !important;
+}
+
+/* 3. 面板本體的過渡防線 */
+#result-panel {
+    will-change: transform;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.3, 1) !important;
+}
+#result-panel.is-dragging {
+    transition: none !important; /* 拖曳時面板同樣零延遲跟手 */
+}
+
+        .result-block { margin-bottom: 45px; border-left: 2px solid var(--gold-primary); padding-left: 20px; }
+        .res-position { font-size: 0.65rem; color: var(--gold-primary); letter-spacing: 2px; margin-bottom: 8px; }
+        .res-title { font-size: 1.1rem; margin-bottom: 7px; font-weight: 500; }
+        .res-text { font-size: 0.85rem; line-height: 1.8; opacity: 0.85; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ==========================================
+   結果面板按鈕 3:4:3 高級變形動畫系統 (透明底·黑字金邊版)
+   ========================================== */
+
+#result-actions {
+    margin-top: 7dvh; 
+    display: flex; 
+    gap: 10px;
+    width: 100%; /* 確保撐滿面板寬度 */
+}
+
+/* 🟢 階段一：開頭保留 5:5 佔比設定 */
+#result-actions .btn-return {
+    flex: 5 1 0%;
+    white-space: nowrap;
+    transition: flex 1.4s cubic-bezier(0.25, 1, 0.3, 1);
+}
+
+#result-actions .btn-save {
+    flex: 5 1 0%;
+    white-space: nowrap;
+    transition: flex 1.4s cubic-bezier(0.25, 1, 0.3, 1);
+}
+
+/* CART 按鈕初始狀態：寬度與佔比完全為 0，完全隱藏 */
+#result-actions .btn-cart {
+    flex: 0 0 0%;
+    min-width: 0;
+    opacity: 0;
+    padding: 12px 0; /* 上下維持，左右歸零防止擠壓 */
+    overflow: hidden;
+    white-space: nowrap;
+    pointer-events: none; /* 未解鎖前無法點擊 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    
+    /* 💡 關鍵修正：強制覆蓋 solid 的金黃底色與白字 */
+    background: transparent !important;
+    color: var(--text-color, #302814) !important; /* 繼承你專案的高級暗色字 */
+    border: 1px solid transparent !important;      /* 初始隱藏邊框，防止閃爍 */
+    
+    /* 建立極致流暢的擴展動畫軌跡 */
+    transition: 
+        flex 1.4s cubic-bezier(0.25, 1, 0.3, 1),
+        opacity 0.6s ease,
+        padding 1.4s cubic-bezier(0.25, 1, 0.3, 1),
+        border-color 0.6s ease,
+        background-color 0.3s cubic-bezier(0.25, 1, 0.3, 1), /* 新增：底色漸變 */
+        box-shadow 0.3s ease;
+}
+
+/* 內層「CART」文字：初始隱形並向右偏移，確保是穩定的黑/暗色字 */
+#result-actions .btn-cart .cart-txt {
+    opacity: 0;
+    transform: translateX(15px);
+    color: var(--gold-primary, #dbba18) !important;
+    /* 延遲 0.8s，等按鈕空間推開後文字才徐徐浮現 */
+    transition: opacity 0.6s ease 0.8s, transform 0.6s cubic-bezier(0.25, 1, 0.3, 1) 0.8s;
+}
+
+/* 內層「✤」符號：獨立強制維持耀眼的金黃色 */
+#result-actions .btn-cart .cart-star {
+    opacity: 0; margin-right: -5px !important;
+    transform: scale(0.4);
+    display: inline-block;
+    color: var(--gold-primary, #dbba18) !important; /* 確保閃耀金色 */
+    text-shadow: 0 0 4px rgba(219, 186, 24, 0.3); /* 帶有一點點空靈的微光 */
+    /* 延遲 0.2s 快速現身，帶頭往左推開版面 */
+    transition: opacity 0.4s ease 0.2s, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s;
+}
+
+
+/* 🔵 階段二：觸發變形後的最終狀態 (比例轉為 3:4:3) */
+#result-actions.expanded .btn-return {
+    flex: 3 1 0%;
+}
+
+#result-actions.expanded .btn-save {
+    flex: 4 1 0%;
+}
+
+#result-actions.expanded .btn-cart {
+    flex: 3 1 0%;
+    opacity: 1;
+    padding: 12px 15px; 
+    /* 💡 關鍵修正：展開就位後，顯現出與專案風格一致的古典金色邊框 */
+    border: 1px solid var(--gold-primary, #dbba18) !important; 
+    pointer-events: auto; /* 恢復可點擊狀態 */
+	margin-right: 0px !important;
+}
+
+/* 觸發後文字與符號完美現身 */
+#result-actions.expanded .btn-cart .cart-txt {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+#result-actions.expanded .btn-cart .cart-star {
+    opacity: 1;
+    transform: scale(1);
+}
+/* ==========================================
+   CART 按鈕：日間黑底 / 夜間白底 同步 Hover 系統
+   ========================================== */
+
+/* ☀️ 【日間模式 data-theme="day"】滑鼠懸停：轉換為黑底色 */
+html[data-theme="day"] #result-actions.expanded .btn-cart:hover {
+    background-color: #1a1a1a !important; /* 純黑底色 (也可改用你的 var(--text-color)) */
+    border-color: #1a1a1a !important;     /* 邊框同步轉黑，視覺更紮實 */
+    /* 💡 註：原本的金色字體與金色 ✤ 符號在黑底上對比極佳，故維持原色不變 */
+}
+
+/* 🌙 【夜間模式 data-theme="night"】滑鼠懸停：轉換為白底色 */
+html[data-theme="night"] #result-actions.expanded .btn-cart:hover,
+html[data-theme="dark"] #result-actions.expanded .btn-cart:hover {
+    background-color: #ffffff !important; /* 純白底色 */
+    border-color: #ffffff !important;     /* 邊框同步轉白 */
+}
+
+/* 🔥 【夜間 Hover 核心細節優化】
+   當夜間變成白底時，如果文字和星星還是金色會完全看不見！
+   所以在此狀態下，自動將文字與星星轉為深黑色，達成極致帥氣的反白逆轉效果 */
+html[data-theme="night"] #result-actions.expanded .btn-cart:hover .cart-txt,
+html[data-theme="dark"] #result-actions.expanded .btn-cart:hover .cart-txt,
+html[data-theme="night"] #result-actions.expanded .btn-cart:hover .cart-star,
+html[data-theme="dark"] #result-actions.expanded .btn-cart:hover .cart-star {
+    color: #1a1a1a !important;    /* 轉為深色黑字，確保看得到 */
+    text-shadow: none !important; /* 移除原本金星的微光陰影，保持字體俐落乾淨 */
+}
+/* ==========================================
+   神祕交互系統 - 側邊欄與泡泡高階收納美學
+   ========================================== */
+
+/* 1. 螢幕右側的呼吸燈小金點 */
+#bubble-orbit-trigger {
+    position: fixed;
+    right: 20px;
+    bottom: 35%;
+    width: 44px;
+    height: 44px;
+    background: rgba(22, 22, 22, 0.95);
+    border: 1px solid var(--gold-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9500;
+    box-shadow: 0 0 15px rgba(219, 186, 24, 0.4);
+    transform: translateX(100px); /* 初始隱藏 */
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease, all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), visibility 0.6s;;
+visibility: hidden;
+}
+
+#bubble-orbit-trigger.ready {
+    transform: translateX(0);
+    opacity: 1;
+ visibility: visible;
+}
+
+/* 金點的核心微光 */
+.orbit-core {
+    width: 10px;
+    height: 10px;
+    background: var(--gold-primary);
+    border-radius: 50%;
+    animation: goldPulse 2s infinite ease-in-out;
+}
+
+/* 2. 交互提示解說本體（預設收納於右側） */
+#interaction-bubble {
+    position: fixed;
+    bottom: 28%;
+    right: -450px; /* 初始收在螢幕右側外面 */
+    width: 85%;
+    max-width: 360px;
+    background: rgba(22, 22, 22, 0.96);
+    border: 1px solid var(--gold-primary);
+    border-radius: 6px 0 0 6px; /* 左邊圓角，貼合右側邊緣 */
+    padding: 24px 20px 20px 20px;
+    box-shadow: -10px 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 9600;
+opacity: 0;             /* 預設完全透明 */
+pointer-events: none;   /* 關鍵：未觸發時滑鼠直接穿透 */
+    transition: right 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease, visibility 0.6s;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+visibility: hidden;
+}
+
+/* 展開狀態 */
+#interaction-bubble.show {
+    opacity: 1;
+    pointer-events: auto;   /* 恢復面板內按鈕與關閉鍵的點擊功能 */
+visibility: visible;
+}
+
+/* 右上角優雅的收納小按鈕 */
+.bubble-close-x {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--gold-primary);
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.3s;
+    padding: 4px;
+    line-height: 1;
+}
+
+.bubble-close-x:hover {
+    opacity: 1;
+}
+
+.bubble-title {
+    font-size: 0.85rem;
+    color: var(--gold-primary);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 20px; /* 避開關閉按鈕 */
+}
+
+.bubble-title::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--gold-primary);
+    border-radius: 50%;
+}
+
+.bubble-text {
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: #EAE6DF;
+    opacity: 0.9;
+    margin-bottom: 18px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 金色星圖解鎖按鈕 */
+.bubble-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(90deg, #dbba18, #ad910c);
+    color: #161616;
+    border: none;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.bubble-btn:hover {
+    box-shadow: 0 0 15px rgba(219, 186, 24, 0.4);
+    transform: translateY(-1px);
+}
+
+@keyframes goldPulse {
+    0% { transform: scale(0.9); opacity: 0.4; box-shadow: 0 0 0 0 rgba(219, 186, 24, 0.7); }
+    50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 0 8px rgba(219, 186, 24, 0); }
+    100% { transform: scale(0.9); opacity: 0.4; box-shadow: 0 0 0 0 rgba(219, 186, 24, 0); }
+}
+
+/* 歷史記錄懸浮按鈕 */
+.history-fab {
+    position: fixed;
+    bottom: 7dvh;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--gold-primary) 60%, transparent);
+    color: var(--text-color);
+    border: none;
+    cursor: pointer;
+    z-index: 9999;
+    font-size: 16px; opacity: 0.7;
+}
+.history-fab:hover {
+    background: var(--text-color); 
+    box-shadow: 0 0 12px var(--gold-primary);
+}
+
+/* 歷史記錄彈窗內部精細優化 */
+#history-modal .modal-content {
+    background: var(--bg-color);
+    color: var(--text-color);
+    border: var(--border-thin);
+    box-shadow: var(--glass-shadow);
+    max-width: 450px;
+    width: 85%;
+    max-height: 70vh;
+    padding: 30px 25px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+#history-modal h2 {
+    color: var(--gold-primary);
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+/* 滾動條美化 */
+#history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding:0 5px; 
+}
+
+#history-list::-webkit-scrollbar {
+    width: 4px;
+}
+#history-list::-webkit-scrollbar-thumb {
+    background: var(--gold-primary);
+    border-radius: 2px;
+}
+
+/* 🕒 歷史紀錄項目卡牌化樣式 */
+.history-item-card {
+    /* 1. 消除 button 的預設邊框與內距，讓它恢復 div 的乾淨外觀 */
+    background: none;
+    border: none;
+    padding: 10px; /* 根據你原本的設計需求調整 */
+    margin: 5px 0;
+    width: 100%; /* 確保按鈕填滿容器，邊緣就會對齊 */
+    
+    /* 2. 恢復原本 div 的佈局邏輯 */
+    display: block; 
+    text-align: center; /* 確保文字靠左對齊，不再置中 */
+    cursor: pointer;
+    font: inherit; /* 繼承原本的字體 */
+    
+    /* 3. 視覺上的高級感，確保選中時有效果但不會跑版 */
+    box-sizing: border-box; /* 這是關鍵，確保 padding 不會撐破邊緣 */
+    transition: all 0.2s ease;
+    border-radius: 8px; /* 保持圓角一致性 */
+}
+
+/* 當滑鼠懸停或鍵盤選中時的優化 */
+.history-item-card:hover, 
+.history-item-card:focus-visible {
+    background-color: rgba(255, 255, 255, 0.1);
+    outline: 2px solid var(--gold-primary, #d4af37);border-color: var(--gold-primary);
+    outline-offset: -2px; /* 讓邊框向內收，不影響外層對齊 */
+}
+
+/* 夜間模式背景微調 */
+[data-theme="night"] .history-item-card {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* 左上角精緻範疇標籤 */
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-badge-cat {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--text-color);
+    background: var(--gold-light);
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(219, 186, 24, 0.15);
+}
+
+.history-item-mode {
+    font-size: 0.7rem;
+    opacity: 0.5;
+    letter-spacing: 0.5px;
+}
+
+/* 問題與卡牌線 */
+.history-item-query {
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.4;
+    opacity: 0.9;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.history-item-cards-line {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--text-color);
+    letter-spacing: 0.5px;
+    margin: 12px 0;
+}
+
+.history-item-footer-time {
+    font-size: 0.65rem;
+    opacity: 0.5;
+    text-align: center; 
+    margin-bottom: 8px;
+}
+
+/* 建議標籤小優化 */
+.badge-advice {
+    font-size: 0.7rem;
+    background: rgba(219, 186, 24, 0.15);
+    color: var(--gold-primary);
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: 5px;
+    font-weight: normal;
+}
+/* 關閉按鈕 */
+.history-close-btn {
+    background: transparent;
+    color: var(--text-color);
+    border: var(--border-thin);
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.history-close-btn:hover {
+    background: var(--gold-light);
+    border-color: var(--gold-primary);
+}
+
+/* 歷史記錄關閉按鈕的優雅懸停回饋 */
+#history-close-btn {
+    transition: all 0.3s ease;
+    opacity: 0.8;
+}
+
+#history-close-btn:hover {
+    opacity: 1;
+    color: var(--gold-primary) !important;
+    border-color: var(--gold-primary) !important;
+    background: rgba(182, 154, 104, 0.1) !important;
+}
+/* 🌟 商業級重設：讓按鈕完美融入文本，同時具備高級焦點提示 */
+.a11y-text-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    display: inline;
+}
+
+/* 當使用者用鍵盤 Tab 選中它時，顯示優雅的雙重光暈提示，而不是瀏覽器醜陋的藍框 */
+.a11y-text-btn:focus-visible {
+    outline: 2px solid var(--text-color, #fff);
+    outline-offset: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    /* 針對塔羅牌的特別處理：取消光暈動畫，直接顯示結果 */
+    .liquid-cocoon-svg.run-cocoon {
+        display: none !important; 
+    }
+}
+
+/* 🌟 幻影星辰關閉鈕 - 改為 span 標籤專用，徹底斷絕 button 樣式污染 */
+span.illusion-close-btn {
+    position: absolute !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--gold-primary, #dbba18) !important;
+    font-size: 24px !important; /* 大顆一點更清晰 */
+    cursor: pointer !important;
+    z-index: 99 !important; /* 在中央區塊內部也是最高層 */
+    text-shadow: 0 0 12px rgba(219, 186, 24, 0.8);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    user-select: none;
+    pointer-events: auto !important;
+}
+
+span.illusion-close-btn:hover {
+    transform: scale(1.4) !important;
+    color: #ffffff !important;
+    text-shadow: 0 0 18px rgba(255, 255, 255, 1);
+}
+
+/* 點錯時的消散 */
+span.illusion-close-btn.shatter {
+    transform: scale(0) rotate(180deg) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* 🌟 專屬背景卡牌底層容器 - 確保絕對不阻擋任何主頁按鈕 */
+#ambient-lantern-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none; 
+    z-index: -1;          
+    overflow: hidden;
+    opacity: 1;
+    /* 🌟 當離開首頁時，整個容器會一起絲滑淡出 */
+    transition: opacity 0.4s ease;
+}
+
+/* 🌟 主頁背景神秘壁畫卡牌 - 局部探照燈+回應尺寸版 */
+.ambient-lantern-card {
+    position: absolute;
+    width: 24vw;
+    max-width: 110px;
+    aspect-ratio: 1 / 1.6; 
+    border-radius: 6px;
+    pointer-events: auto;  
+    cursor: pointer;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    
+    opacity: 0.12;
+    filter: sepia(0.3) contrast(0.8) brightness(0.2) grayscale(0.2);
+    
+    -webkit-mask-image: radial-gradient(circle 0px at -100px -100px, #000 100%, transparent 100%);
+    mask-image: radial-gradient(circle 0px at -100px -100px, #000 100%, transparent 100%);
+    
+    transition: opacity 0.4s ease, filter 0.4s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity; 
+}
+
+/* 🌟 日間模式優化：正片疊底水墨羊皮紙效果 */
+:root:not([data-theme="night"]) .ambient-lantern-card {
+    opacity: 0.25;
+    mix-blend-mode: multiply; 
+    filter: sepia(0.4) contrast(0.85) brightness(0.85) grayscale(0.1);
+}
+
+/* 🌟 火把照亮範圍內的狀態 */
+.ambient-lantern-card.in-torch-range {
+    opacity: 0.65; 
+    -webkit-mask-image: radial-gradient(circle 80px at var(--mx) var(--my), rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%);
+    mask-image: radial-gradient(circle 80px at var(--mx) var(--my), rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%);
+}
+
+/* 🌟 夜間模式照亮時恢復豐富色彩 */
+[data-theme="night"] .ambient-lantern-card.in-torch-range {
+    filter: sepia(0.1) contrast(1.15) brightness(0.5) grayscale(0);
+}
+/* 🌟 日間模式照亮時恢復清晰 */
+:root:not([data-theme="night"]) .ambient-lantern-card.in-torch-range {
+    filter: sepia(0.1) contrast(1.1) brightness(0.8) grayscale(0);
+}
+
+
+.limit-static-btn {
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    font-size: 2.5rem !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    perspective: 1000px;
+    
+    /* 🌟 核心修正：給予明確的預設大小與位置，當移除消失類別時，才會流暢彈回原本大小 */
+    transform: scale(1) translateY(0) !important;
+    pointer-events: auto !important;
+}
+
+.limit-static-btn:hover {
+    opacity: 1 !important;
+    transform: scale(1.25) !important;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* 🌀 點選錯誤或關閉時，使用純 CSS 觸發 fade out 縮小消失 */
+.limit-static-btn.fade-out-clicked {
+    transform: scale(0.1) translateY(15px) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: transform 0.4s ease, opacity 0.4s ease !important;
+}
+</style>
+</head>
+<body>
+<div id="custom-magic-cursor"></div>
+<div class="nav-header">
+
+    <div class="watermark">Grafittiii</div>
+    <div class="home-title">暉日塔羅 Mascot Tarot</div>
+
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="切換日夜模式">☽</button>
+    </div>
+
+    <div id="loading-screen">
+        <div class="loading-title">
+    <span class="title-zh">孫孫暉日塔羅</span>
+    <span class="title-en">Sun Mascot Tarot</span>
+</div>
+        <div class="progress-track"><div id="progress-bar"></div>           
+    </div>
+</div>
+
+<div id="main-page">
+    <div class="main-content">
+        <div class="input-group">
+            <div class="label">Your Query</div>
+            <div class="textarea-wrapper">
+                <textarea id="q-input" rows="1" placeholder="寫下你的困惑 (選填)..." oninput="toggleClearBtn()"></textarea>
+                <button id="clear-btn" class="clear-btn" onclick="clearTextArea()">✕</button>
+            </div>
+        </div>
+        
+        <div class="input-group">
+            <div class="label">Category</div>
+            <div class="grid-3">
+                <button class="btn-outline cat-btn" onclick="setCat(this, '學業')" aria-label="學業">學業</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '事業')" aria-label="事業">事業</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '愛情')" aria-label="愛情">愛情</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '親友')" aria-label="親友">親友</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '健康')" aria-label="健康">健康</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '心靈')" aria-label="心靈">心靈</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '旅程')" aria-label="旅程">旅程</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '決策')" aria-label="決策">決策</button>
+                <button class="btn-outline cat-btn" onclick="setCat(this, '其他')" aria-label="其他">其他</button>
+            </div>
+        </div>
+
+<div id="relation-container" style="margin-bottom: 20px;">
+     <label for="is-relation" style="cursor: pointer; flex-grow: 1;">
+          <span>是查問你與對方的關係嗎？（使用關係解牌）</span>
+     </label>
+     <input type="checkbox" id="is-relation" style="cursor: pointer;">
+</div>
+
+        <div class="input-group" >
+            <div class="label">Spread Mode</div>
+            <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
+                <button class="btn-outline mode-btn active" id="btn-single" onclick="setMode('single')">單牌指引</button>
+                <button class="btn-outline mode-btn" id="btn-triple" onclick="setMode('triple')">三牌陣</button>
+            </div>
+        </div>
+        
+        <button class="btn-solid" onclick="startDivination()">Start Divination</button>
+    </div> <footer class="tarot-footer">
+        <div class="footer-content">
+            <span>Grafittiii© 2026</span>
+            <span class="footer-divider">|</span>
+            <button onclick="openNotice()" class="a11y-text-btn" aria-label="打開占卜須知彈窗">占卜須知</button>
+            <span class="footer-divider">|</span>
+            <a href="https://www.instagram.com/grafittiii_uru/" target="_blank" class="footer-link">Instagram</a>
+            <span class="footer-divider">|</span>
+            <a href="https://payme.hsbc/jlpl22" target="_blank" class="footer-link">請我喝奶茶~</a>
+        </div> 
+    </footer>
+<button class="history-fab" onclick="openHistoryModal()">🕒</button>
+</div>
+
+    <div id="spread-view" onclick="retractCards(event)">
+        <div id="draw-counter">0/3</div>
+        <div id="cards-container"></div>
+	<div id="spread-ritual-text" class="ritual-text-container">
+    <span class="phrase p1">✦ 深呼吸……想著問題</span>
+    <span class="phrase p2">✦ 正在為你校準能量……</span>
+    <span class="phrase p3">✦ 準備選牌……</span>
+</div>
+</div>
+        <button id="confirm-btn-float" class="btn-solid" style="width: auto;" onclick="confirmCard(event)">Confirm</button>
+    </div>
+
+    <button id="retry-btn" class="btn-outline" onclick="generateReport()">再次生成解牌結果 (Retry)</button>
+
+    <div id="result-panel">
+        <div style="font-size:0.8rem; opacity:0.5; margin-bottom: 20px;" id="report-question"></div>
+        <div id="report-content" aria-live="polite"></div>
+        
+        <div id="advice-section" style="display:none; border-top: var(--border-thin); padding: 25px 0px 10px;">
+            <div class="label" style="margin-bottom:15px;">Guidance</div>
+            <button class="btn-outline" style="width:100%; border-color:#c7a243; color:#c7a243;" onclick="drawAdvice()">需要追問/建議嗎？</button>
+        </div>
+        
+        <!-- 補齊缺失的容器，供 JS 動態寫入內容 -->
+        <div id="advice-content"></div>
+        
+        <div id="result-actions" style="margin-top: 7dvh; display: flex; gap: 10px;">
+            <button class="btn-solid btn-return" onclick="restartApp()">Back</button>
+            <button id="save-btn" class="btn-solid btn-save" onclick="exportImage()">SAVE</button>
+<button id="cart-btn" class="btn-solid btn-cart" onclick="redirectToPaywall()">
+        <span class="cart-txt">CART</span><span class="cart-star">✤</span>
+    </button>
+        </div>
+<footer class="tarot-footer">
+    <div class="footer-content">
+        <span>Mascot Tarot©</span>
+        <span class="footer-divider">|</span>
+        <span>僅供參考</span>
+        <span class="footer-divider">|</span>
+        <a href="https://www.instagram.com/grafittiii_uru/" target="_blank" class="footer-link">Instagram</a>
+        <span class="footer-divider">|</span>
+        <a href="https://payme.hsbc/jlpl22" target="_blank" class="footer-link">請我喝奶茶~</a>
+    </div>
+</footer>
+
+<div id="bubble-orbit-trigger" onclick="toggleBubble(true)">
+    <div class="orbit-core"></div>
+</div>
+
+	<div id="interaction-bubble">
+    <button class="bubble-close-x" onclick="toggleBubble(false)">×</button>
+    <div class="bubble-title" id="bubble-title-target">解鎖隱藏意思</div>
+    <div class="bubble-text" id="bubble-text-target">
+        卡牌間的眼神交會有所意味...
+    </div>
+    <button class="bubble-btn" onclick="redirectToPaywall()">✤ 預約占卜 ✤</button>
+	</div>
+
+    </div>
+
+<div id="notice-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <h2>占卜須知</h2>
+        <ul class="notice-list">
+            <li>一事一占。</li>
+            <li>不強制他人意願，<p>占卜應基於當事人主動參與。</li>
+            <li>不涉入第三方感情及事件。</li>
+            <li>不預測時間，<p>將結果視為現階段的策略參考。</li>
+            <li>占卜僅供參考，<p>最終選擇權在於您本人。</li>
+        </ul>
+        <button onclick="closeNotice()">了解並關閉</button>
+    </div>
+</div>
+
+<div id="limit-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal-content" style="position: relative; min-height: 280px; width: 90%; max-width: 420px; display: flex; flex-direction: column; justify-content: center;">
+        <div id="limit-content" style="position: relative; z-index: 10; text-align: center; padding: 20px 10px; width: 100%;">
+            <h2 style="color: var(--gold-primary, #dbba18); margin-top: 10px;">今日額度已滿</h2>
+            <p style="margin-bottom: 15px; font-size: 0.95em; line-height: 1.6;">
+                每日提供 2 次免費占卜。<br>
+                <span style="font-size: 0.85em; opacity: 0.8; color: var(--gold-secondary, #b69a68);">點擊下方的某符號 即可返回主頁。</span>
+            </p>
+            
+            <div id="limit-static-symbols" style="display: flex !important; justify-content: center !important; gap: 25px !important; margin: 25px auto !important; width: 100% !important; min-height: 50px !important;">
+                <div class="limit-static-btn suit-black" onclick="clickWrongSymbol(this)" style="font-size: 2.5rem; cursor: pointer; user-select: none; opacity: 0.6; color: var(--text-color, #aaa); transition: all 0.3s ease;">♠</div>
+                <div class="limit-static-btn suit-red" onclick="clickCorrectHeart(this)" style="font-size: 2.5rem; cursor: pointer; user-select: none; opacity: 0.7; color: #d9534f; transition: all 0.3s ease; font-weight: bold;">♥</div>
+                <div class="limit-static-btn suit-black" onclick="clickWrongSymbol(this)" style="font-size: 2.5rem; cursor: pointer; user-select: none; opacity: 0.6; color: var(--text-color, #aaa); transition: all 0.3s ease;">♣</div>
+                <div class="limit-static-btn suit-red" onclick="clickWrongSymbol(this)" style="font-size: 2.5rem; cursor: pointer; user-select: none; opacity: 0.6; color: #d9534f; transition: all 0.3s ease;">♦</div>
+            </div>
+            
+            <textarea id="unlock-input" placeholder="輸入解鎖密鑰" style="width: 85%; max-width: 280px; margin-bottom: 15px; padding: 10px; background: rgb(219,186,24,0.15); border: 1px solid var(--gold-primary, #dbba18); color: #fff; border-radius: 4px; resize: none;"></textarea>
+            <div>
+                <button onclick="handleUnlock()">驗證密鑰</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="history-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="history-title">
+    <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+        <h2 id="history-title">歷史占卜記錄</h2>
+        <div id="history-list"></div>
+        <button id="history-close-btn" class="btn-outline" onclick="closeHistoryModal()" style="margin-top: 15px; width: 100%; pointer-events: auto;" tabindex="0">關閉</button>
+    </div>
+</div>
+    <script>
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+	// 禁止 iOS/Android 長按圖片跳出儲存選項
+	document.querySelectorAll('img').forEach(img => {
+	img.style.webkitTouchCallout = 'none';
+	img.style.webkitUserSelect = 'none';
+});
+
+// 防止雙指縮放 (攔截多於兩根手指的觸控)
+document.addEventListener('touchstart', function(event) {
+    if (event.touches.length > 1) {
+        event.preventDefault();
+    }
+}, { passive: false });
+
+// 防止雙指滑動縮放
+document.addEventListener('touchmove', function(event) {
+    if (event.touches.length > 1) {
+        event.preventDefault();
+    }
+}, { passive: false });
+
+// 防止 iOS Safari 雙擊螢幕放大
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(event) {
+    const now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) {
+        // 如果兩次點擊間隔小於 300 毫秒，視為雙擊，攔截掉
+        event.preventDefault();
+    }
+    lastTouchEnd = now;
+}, { passive: false });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const magicCursor = document.getElementById('custom-magic-cursor');
+    if (!magicCursor) return;
+
+    // 1. 讓虛擬鼠標精準跟隨真實滑鼠坐標 (使用 requestAnimationFrame 確保極致順暢)
+    let mouseX = 0, mouseY = 0;
+    let cursorX = 0, cursorY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        magicCursor.style.opacity = "1"; // 有移動時才現身
+    });
+
+    function renderCursor() {
+        // 加上一點點延遲緩動效果 (0.2)，讓滑鼠看起來有靈動的漂浮感
+        cursorX += (mouseX - cursorX) * 0.85;
+        cursorY += (mouseY - cursorY) * 0.95;
+        
+        magicCursor.style.left = `${cursorX}px`;
+        magicCursor.style.top = `${cursorY}px`;
+        requestAnimationFrame(renderCursor);
+    }
+    requestAnimationFrame(renderCursor);
+
+    // 2. 監聽全局 Hover 事件，動態注入變形類別
+    document.addEventListener('mouseover', (e) => {
+        const target = e.target;
+        
+        if (!target) return;
+        
+        // 普通按鈕、可點擊元素，以及【選牌階段的卡牌背面】
+        // 增加 :not(.ready-to-glow) 確保開牌後不會干擾到四大古典元素的幾何圖騰切換
+        if (target.closest('button') || 
+            target.closest('a') || 
+            target.closest('#bubble-orbit-trigger') || 
+            target.closest('.theme-toggle') ||
+            target.closest('.card-wrap:not(.ready-to-glow)')) {
+            magicCursor.classList.add('hover-link'); // 觸發變大、變純白、帶金光
+        }
+        
+        // 判斷是否移入解鎖後的四元素卡牌
+        const card = target.closest('.card-wrap.ready-to-glow');
+        if (card) {
+            if (card.classList.contains('element-air')) magicCursor.classList.add('el-air');
+            if (card.classList.contains('element-water')) magicCursor.classList.add('el-water');
+            if (card.classList.contains('element-earth')) magicCursor.classList.add('el-earth');
+            if (card.classList.contains('element-fire')) magicCursor.classList.add('el-fire');
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        const target = e.target;
+        if (!target) return;
+
+        magicCursor.classList.remove('hover-link');
+        
+        // 離開卡牌時重設
+        if (target.closest('.card-wrap.ready-to-glow')) {
+            magicCursor.classList.remove('el-air', 'el-water', 'el-earth', 'el-fire');
+        }
+    });
+});
+function createCosmicDust() {
+    // 防止重複生成
+    const existingStars = document.querySelectorAll('.cosmic-star');
+    if (existingStars.length > 0) return;
+
+    const body = document.body;
+    
+    // ✨ 混色星塵矩陣：加入 type 屬性控制顏色流向
+    const stars = [
+        // ☀️ 【聚】右上角星團 (金暗交織，帶出網點層次)
+        { top: '12%', left: '82%', size: '18px', op: 0.6, dur: '4s', char: '✦', type: 'gold' },
+        { top: '8%', left: '88%', size: '11px', op: 0.4, dur: '5.5s', char: '✧', type: 'text' }, // 🤎 暗星
+        { top: '5%', left: '85%', size: '14px', op: 0.5, dur: '3.2s', char: '✦', type: 'gold' },
+        { top: '15%', left: '76%', size: '12px', op: 0.3, dur: '6s', char: '✧', type: 'text' },  // 🤎 暗星
+        { top: '27%', left: '80%', size: '9px',  op: 0.4, dur: '4.2s', char: '✦', type: 'gold' },
+        
+        // 🌙 【聚】左下角星團
+        { top: '78%', left: '12%', size: '20px', op: 0.7, dur: '4.5s', char: '✦', type: 'gold' },
+        { top: '85%', left: '8%',  size: '13px', op: 0.5, dur: '3.8s', char: '✧', type: 'text' }, // 🤎 暗星
+        { top: '75%', left: '18%', size: '10px', op: 0.3, dur: '6.5s', char: '✦', type: 'gold' },
+        { top: '88%', left: '15%', size: '15px', op: 0.4, dur: '5s', char: '✧', type: 'text' },  // 🤎 暗星
+        { top: '70%', left: '8%',  size: '11px', op: 0.4, dur: '3.5s', char: '✦', type: 'gold' },
+
+        // 🍃 【散】虛空引路星 (散落各處，平衡主頁面的留白)
+        { top: '35%', left: '12%', size: '15px', op: 0.3, dur: '7s', char: '✧', type: 'text' },  // 🤎 暗星
+        { top: '65%', left: '88%', size: '14px', op: 0.4, dur: '5.8s', char: '✦', type: 'gold' },
+        { top: '48%', left: '92%', size: '16px', op: 0.4, dur: '4.2s', char: '✧', type: 'text' }, // 🤎 暗星
+        { top: '85%', left: '68%', size: '11px', op: 0.2, dur: '8s', char: '✦', type: 'gold' },
+        { top: '22%', left: '25%', size: '12px', op: 0.7, dur: '4.8s', char: '✧', type: 'text' }, // 🤎 暗星
+        { top: '55%', left: '6%',  size: '10px', op: 0.2, dur: '6.2s', char: '✦', type: 'gold' },
+        { top: '28%', left: '65%', size: '13px', op: 0.25, dur: '5.2s', char: '✦', type: 'text' } // 🤎 暗星
+    ];
+
+    stars.forEach(s => {
+        const star = document.createElement('div');
+        // 根據 type 給予不同的 class
+        star.className = s.type === 'text' ? 'cosmic-star star-text' : 'cosmic-star star-gold';
+        star.innerText = s.char;
+        star.style.top = s.top;
+        star.style.left = s.left;
+        star.style.fontSize = s.size;
+        
+        star.style.setProperty('--max-opacity', s.op);
+        star.style.setProperty('--twinkle-duration', s.dur);
+        
+        body.appendChild(star);
+    });
+}
+
+// 確保載入時執行
+document.addEventListener('DOMContentLoaded', () => {
+    createCosmicDust();
+});
+
+// 🔍 1. 監聽輸入狀態：動態控制「清除按鈕」的亮起與隱藏
+function toggleClearBtn() {
+    const input = document.getElementById('q-input');
+    const btn = document.getElementById('clear-btn');
+    if (input && btn) {
+        if (input.value.trim().length > 0) {
+            btn.classList.add('is-visible');
+        } else {
+            btn.classList.remove('is-visible');
+        }
+    }
+}
+
+// 🧹 2. 執行一鍵消除，並自動重新聚焦（Focus）讓用戶直接打字
+function clearTextArea() {
+    const input = document.getElementById('q-input');
+    const btn = document.getElementById('clear-btn');
+    if (input && btn) {
+        input.value = '';             // 清空內容
+        btn.classList.remove('is-visible'); // 隱藏按鈕
+        input.focus();                // 自動重新聚焦輸入框，省去用戶再點一次的麻煩
+        
+        // 💡 如果你的 textarea 原本有綁定自動動態調整高度(Auto-resize)的 function，
+        // 記得在這裡也呼叫一次，讓它清空時高度順便彈回 1 行的高度：
+        // if (typeof adjustHeight === 'function') { adjustHeight(input); }
+    }
+}
+
+// ==========================================
+// 👑 統一自適應排版引擎（2026 最終完美自適應版）
+// ==========================================
+function getLayoutMetrics(totalCards, progress) {
+    const width = window.innerWidth;
+    const isMobile = width < 768;
+    const isUltraSmall = width <= 360; // 🎯 專門捕捉 320px ~ 360px 的超窄手機（如 iPhone SE）
+
+    let baseScale = 1.0;
+    let targetScale = 1.3; 
+    let baseGap = 40;
+    let gapCompensationRatio = 0; // 正數代表下拉時縮窄，負數代表下拉時撐開
+
+    if (isMobile) {
+        // 📱 手機與平板版面 (< 768px)
+        if (totalCards === 1) {
+            baseScale = 1.1; targetScale = 1.3; baseGap = 0; gapCompensationRatio = 0;
+        } 
+        else if (totalCards === 2) {
+            // 🎯 您的要求：2張牌不論平時或下拉都希望隔開、均分寬度
+            baseScale = isUltraSmall ? 0.9 : 1;
+            targetScale = isUltraSmall ? 1.1 : 1.3;     // 320px 螢幕稍微調小放大率防撞
+            baseGap = isUltraSmall ? 34 : 36;           // 大幅拉開初始間距，讓兩張牌分居兩側
+            gapCompensationRatio = -0.06;                // 🌟 核心修正：下拉時不縮窄，反而微調「更開一點點」，絕不重疊
+        } 
+        else if (totalCards === 3) {
+            baseScale = isUltraSmall ? 0.8 : 0.85;
+            targetScale = isUltraSmall ? 1.02 : 1.15;
+            baseGap = isUltraSmall ? 26 : 28;
+            gapCompensationRatio = -0.03;
+        } 
+        else if (totalCards >= 4) {
+            // 🎯 您的要求：<=400px預留多點空間、320px下拉防重疊
+            baseScale = isUltraSmall ? 0.65 : 0.72;
+            targetScale = isUltraSmall ? 0.80 : 0.90;   // 🌟 320px螢幕極限控制在 0.80 倍，精緻防炸
+            baseGap = isUltraSmall ? 22 : 24;           // 🌟 未下拉時從24提高到27，幫卡牌預留呼吸空間
+            gapCompensationRatio = 0;                // 🌟 將原本 0.20 的過度擠壓放鬆到 0.06，維持展開間距
+        }
+    } else {
+        // 🖥️ 橫屏幕 / 電腦版 / 大平版 (>= 768px)
+        if (totalCards === 1) {
+            baseScale = 1.1; targetScale = 1.3; baseGap = 0;
+        } 
+        else if (totalCards === 2) {
+            baseScale = 1.1; targetScale = 1.3; baseGap = 32; gapCompensationRatio = 0;
+        } 
+        else if (totalCards === 3) {
+            baseScale = 1.0; targetScale = 1.3; baseGap = 28; gapCompensationRatio = -0.03;
+        } 
+        else if (totalCards >= 4) {
+            // 🎯 您的要求：4張牌未下拉時希望間距小一點，下拉展開時比例小一點
+            baseScale = 0.85;
+            targetScale = 1.12;          // 🌟 下拉放大目標調小（原1.3 -> 1.12），更顯高階優雅
+            baseGap = 20;               // 🌟 未下拉時（progress=0）初始間距縮窄（原28 -> 22），緊湊好看
+            gapCompensationRatio = -0.03; // 🌟 下拉時不縮窄，反而微微向外展開 3%，抵消放大帶來的擁擠感
+        }
+    }
+
+    // 線性內插計算當下的即時比例與間距
+    const currentScale = baseScale + progress * (targetScale - baseScale);
+    const currentGap = baseGap * (1 - progress * gapCompensationRatio);
+
+    return { scale: currentScale, gap: currentGap };
+}
+
+// ==========================================
+// 👑 結果面板下滑 檢視卡牌手勢聯動系統 + 安全守護網
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const panel = document.getElementById('result-panel');
+    if (!panel) return;
+
+    let startY = 0;          
+    let pullDistance = 0;    
+    const MAX_PULL_DIST = 50; // 允許下拉的最大視覺極限（像素）
+
+    // 👑 簡化後的動態手勢跟手核心引擎
+    function updatePullPosition(currentY) {
+        let diff = currentY - startY;
+        if (diff < 0) diff = 0;
+        
+        // 面板阻尼位移
+        pullDistance = Math.min(diff * 0.4, MAX_PULL_DIST);
+        panel.style.transform = `translateY(${pullDistance}px)`;
+        
+        const totalCards = drawnCards.length;
+        if (totalCards === 0) return;
+
+        // 下拉進度百分比 (0 到 1)
+        const progress = pullDistance / MAX_PULL_DIST; 
+
+        // 🌟 直接呼叫中央排版引擎，精準抓取最新比例
+        const metrics = getLayoutMetrics(totalCards, progress);
+        
+        // 將放大變數即時同步（供 CSS 及系統相容讀取）
+        document.documentElement.style.setProperty('--card-preview-scale', metrics.scale);
+
+        // 重新動態計算起始點，確保核心永遠絕對置中
+        const startX = 50 - ((totalCards - 1) * metrics.gap / 2);
+
+        // 施加 Inline 樣式（手勢期間 transition 為 none，達成零延遲跟手感）
+        drawnCards.forEach((drawn, i) => {
+            const el = drawn.elementDOM;
+            const leftPos = `${startX + (i * metrics.gap)}%`;
+            
+            el.style.transition = 'none'; 
+            el.style.left = leftPos;
+            el.style.top = window.innerWidth < 768 ? '8%' : '12%';
+            el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${metrics.scale})`;
+        });
+    }
+
+    // 🌟 釋放手勢：完美洗掉所有殘留的 Inline 樣式，平滑回彈
+    function handleDragEnd() {
+        panel.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+        panel.style.transform = 'translateY(0px)';
+        
+        // 在呼叫排版引擎前，先幫所有卡牌加上過渡，讓橫移、縮小回彈的過程絲滑無比
+        drawnCards.forEach(drawn => {
+            drawn.elementDOM.style.setProperty('transition', 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), left 0.4s cubic-bezier(0.16, 1, 0.3, 1)', 'important');
+        });
+
+        // 呼叫中央排版引擎，平滑收回未放大狀態 (progress = 0)
+        relayoutCards();
+        
+        document.documentElement.style.setProperty('--card-preview-scale', '1');
+
+        // 動畫結束後，徹底清除殘留的 inline transition 屬性，為下一次完美下拉做準備
+        setTimeout(() => {
+            drawnCards.forEach(drawn => {
+                drawn.elementDOM.style.removeProperty('transition');
+            });
+        }, 400);
+    }
+
+    // ==========================================
+    // 電腦版：滑鼠點擊拖曳監聽
+    // ==========================================
+    let isMouseDragging = false;
+
+    panel.addEventListener('mousedown', (e) => {
+        if (panel.scrollTop > 0) return;
+        if (e.target.closest('button, textarea, input, a, #qr-code, .save-btn, #advice-section')) return;
+
+        isMouseDragging = true;
+        startY = e.clientY;
+        panel.classList.add('is-dragging');
+        document.body.classList.add('is-dragging-panel');
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isMouseDragging) return;
+        updatePullPosition(e.clientY);
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!isMouseDragging) return;
+        isMouseDragging = false;
+        panel.classList.remove('is-dragging');
+        document.body.classList.remove('is-dragging-panel');
+        handleDragEnd();
+    });
+
+    // ==========================================
+    // 手機版：觸控滑動監聽
+    // ==========================================
+    panel.addEventListener('touchstart', (e) => {
+        if (panel.scrollTop > 0) return;
+        if (e.target.closest('button, textarea, input, a, #qr-code, .save-btn, #advice-section')) return;
+        
+        startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    panel.addEventListener('touchmove', (e) => {
+        if (panel.scrollTop > 0) return;
+        const currentY = e.touches[0].clientY;
+        
+        if (currentY > startY) {
+            if (e.cancelable) e.preventDefault();
+            updatePullPosition(currentY);
+        }
+    }, { passive: false });
+
+    panel.addEventListener('touchend', () => {
+        handleDragEnd();
+    });
+
+    // ==========================================
+    // 電腦版：Mac 觸控板 / 滾輪動態預覽
+    // ==========================================
+    panel.addEventListener('wheel', (e) => {
+        if (panel.scrollTop === 0 && e.deltaY < 0) {
+            e.preventDefault();
+            startY = 0;
+            updatePullPosition(MAX_PULL_DIST / 0.4); 
+        } 
+        else if (e.deltaY > 0 && panel.style.transform !== 'translateY(0px)' && panel.style.transform !== '') {
+            e.preventDefault();
+            handleDragEnd();
+        }
+    }, { passive: false });
+
+    // ==========================================
+    // 🛡️ 面板狀態觀察器 (MutationObserver)：移入安全網內，確保對齊
+    // ==========================================
+    const resultPanel = document.getElementById('result-panel');
+    const resultActions = document.querySelector('.result-actions');
+
+    if (resultPanel && resultActions) {
+        const panelObserver = new MutationObserver((mutationsList) => {
+            for (let mutation of mutationsList) {
+                if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+                    setTimeout(() => {
+                        resultActions.classList.add('expanded');
+                    }, 3000);
+                    panelObserver.disconnect(); // 功成身退
+                }
+            }
+        });
+        panelObserver.observe(resultPanel, { attributes: true, attributeFilter: ['style', 'class'] });
+    }
+});
+
+
+// ==========================================
+// Idea 3: 星光漣漪點擊生成邏輯 (完美修復版)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 監聽全域點擊（相容手機 Tap 與電腦 Click）
+    document.addEventListener('pointerdown', (e) => {
+        // 【關鍵修復】：改為尋找點擊的外殼 .card-wrap
+        const cardWrap = e.target.closest('.card-wrap.ready-to-glow');
+        if (!cardWrap) return;
+
+        // 雖然外殼阻擋了事件，但我們依然要把漣漪塞入內層的 .card-inner 中，享受 overflow:hidden 的裁切
+        const cardInner = cardWrap.querySelector('.card-inner');
+        if (!cardInner) return;
+
+        // 1. 計算點擊點相對於卡牌內部（.card-inner）的精確本地 X, Y 座標
+        const rect = cardInner.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        // 2. 動態創建漣漪節點
+        const ripple = document.createElement('div');
+        ripple.className = 'cosmic-ripple';
+        ripple.style.left = `${clickX}px`;
+        ripple.style.top = `${clickY}px`;
+
+        // 3. 根據外殼的元素類別，賦予對應的色彩漸層
+        if (cardWrap.classList.contains('element-air')) ripple.classList.add('ripple-air');
+        if (cardWrap.classList.contains('element-water')) ripple.classList.add('ripple-water');
+        if (cardWrap.classList.contains('element-earth')) ripple.classList.add('ripple-earth');
+        if (cardWrap.classList.contains('element-fire')) ripple.classList.add('ripple-fire');
+
+        // 4. 將漣漪塞入卡牌中
+        cardInner.appendChild(ripple);
+
+        // 5. 動態播放完畢後自動銷毀節點，防止塞爆 HTML 記憶體
+        ripple.addEventListener('animationend', () => {
+            ripple.remove();
+        });
+    });
+});
+
+const liquidCocoonSVG = `
+<svg class="liquid-cocoon-svg" viewBox="0 0 100 150" preserveAspectRatio="none">
+    <defs>
+        <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fc4949" /><stop offset="20%" stop-color="#fcb749" />
+            <stop offset="40%" stop-color="#55fc49" /><stop offset="60%" stop-color="#49fcfc" />
+            <stop offset="80%" stop-color="#7649fc" /><stop offset="100%" stop-color="#f049fc" />
+        </linearGradient>
+    </defs>
+
+    <path class="glass-stasis" d="M 10.5,0 
+             H 89.5 
+             A 10.5,9.5 0 0 1 100,9.5 
+             V 140.5 
+             A 10.5,9.5 0 0 1 89.5,150 
+             H 10.5 
+             A 10.5,9.5 0 0 1 0,140.5 
+             V 9.5 
+             A 10.5,9.5 0 0 1 10.5,0 Z"></path>
+
+    <g class="flow-group">
+        <path class="glass-flow tail" d="M 0,140.5 V 9.5 A 10.5,9.5 0 0 1 10.5,0 H 89.5 A 10.5,9.5 0 0 1 100,9.5" pathLength="100"></path>
+        <path class="glass-flow mid"  d="M 0,140.5 V 9.5 A 10.5,9.5 0 0 1 10.5,0 H 89.5 A 10.5,9.5 0 0 1 100,9.5" pathLength="100"></path>
+        <path class="glass-flow head" d="M 0,140.5 V 9.5 A 10.5,9.5 0 0 1 10.5,0 H 89.5 A 10.5,9.5 0 0 1 100,9.5" pathLength="100"></path>
+    </g>
+
+    <g class="flow-group">
+        <path class="glass-flow tail" d="M 100,9.5 V 140.5 A 10.5,9.5 0 0 1 89.5,150 H 10.5 A 10.5,9.5 0 0 1 0,140.5" pathLength="100"></path>
+        <path class="glass-flow mid"  d="M 100,9.5 V 140.5 A 10.5,9.5 0 0 1 89.5,150 H 10.5 A 10.5,9.5 0 0 1 0,140.5" pathLength="100"></path>
+        <path class="glass-flow head" d="M 100,9.5 V 140.5 A 10.5,9.5 0 0 1 89.5,150 H 10.5 A 10.5,9.5 0 0 1 0,140.5" pathLength="100"></path>
+    </g>
+</svg>
+`;        const tarotData = [
+
+            { id: "0", name: "愚者", img: "card0.png", element: "Air", type: "solo", gaze: "right",
+
+                upright: { keywords: ["開始", "純真", "冒險"], general_meaning: "代表一個全新的開始，充滿無限可能與冒險精神。", spread_meanings: { past: "過去的大膽抉擇影響至今。", present: "現在是踏入新階段的時機。", future: "未來有意外的機遇。", my_view: "你充滿好奇與衝動。", their_view: "對方覺得你難以預測。", current_status: "輕鬆且不穩定的初期。" }, advice: "勇敢跳出舒適圈。" },
+
+                reversed: { keywords: ["魯莽", "疏忽", "遲疑"], general_meaning: "警告不要衝動行事，或因為恐懼而停滯不前。", spread_meanings: { past: "過去的輕率造成了阻礙。", present: "當前猶豫不決錯失良機。", future: "前路可能存在風險。", my_view: "你感到迷茫且不安。", their_view: "對方覺得你缺乏責任感。", current_status: "計畫停滯不前。" }, advice: "在躍下前先看清腳下。" }
+
+            },
+
+            { id: "1", name: "魔術師", img: "card1.png", element: "Air", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["創造力", "意志", "顯化"], general_meaning: "你具備將夢想轉化為現實的所有資源與能力。", spread_meanings: { past: "過去的努力奠定了現有能力。", present: "展現才華的關鍵時刻。", future: "目標將在你的掌握中實現。", my_view: "你感到自信且有主控權。", their_view: "對方被你的才氣所吸引。", current_status: "充滿活力與溝通順暢。" }, advice: "善用你的天賦與資源。" },
+
+                reversed: { keywords: ["操縱", "幻滅", "溝通不順"], general_meaning: "小心被誤導，或因缺乏專注而導致失敗。", spread_meanings: { past: "曾有過被誤導的經驗。", present: "感到力不從心或受挫。", future: "計畫可能遭遇變卦。", my_view: "你覺得事情失控了。", their_view: "對方覺得你不夠真誠。", current_status: "存在信息不對稱。" }, advice: "重新檢視你的動機。" }
+
+            },
+
+            { id: "2", name: "女教皇", img: "card2.png", element: "Water", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["直覺", "神秘", "內在智慧"], general_meaning: "暗示現在應跟隨直覺，而非表面邏輯。", spread_meanings: { past: "過去的靜觀積累了智慧。", present: "隱藏的真相即將顯露。", future: "答案會在潛意識中浮現。", my_view: "你正處於精神高度集中。", their_view: "對方覺得你很有層次。", current_status: "精神層面的深度交流。" }, advice: "靜觀其變，傾聽內心。" },
+
+                reversed: { keywords: ["忽視直覺", "淺薄", "祕密洩漏"], general_meaning: "可能過於表面，或因忽視內心警告而犯錯。", spread_meanings: { past: "曾因過於理智而失策。", present: "情緒不穩定且焦慮。", future: "隱藏的阻礙將會曝光。", my_view: "你感到內心空洞。", their_view: "對方覺得你情緒化。", current_status: "信任感出現裂痕。" }, advice: "誠實面對你的潛意識。" }
+
+            },
+
+            { id: "3", name: "女皇", img: "card3.png", element: "Earth", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["豐盛", "母性", "自然"], general_meaning: "象徵創造力、繁榮與情感的滋養。", spread_meanings: { past: "過去的累積帶來現在的富足。", present: "生活正進入豐盛期。", future: "計畫將結出豐碩果實。", my_view: "你感到充滿愛與動力。", their_view: "對方覺得你溫暖可親。", current_status: "關係穩固且充滿生機。" }, advice: "溫柔地培育你的想法。" },
+
+                reversed: { keywords: ["依賴", "窒息的愛", "創造力受阻"], general_meaning: "可能感到資源匱乏，或因過度保護而失去自由。", spread_meanings: { past: "過去的過度放縱留後患。", present: "感到被瑣事困擾而疲累。", future: "物質上可能出現短缺。", my_view: "你覺得付出得不到回報。", their_view: "對方覺得你控制欲強。", current_status: "情感失衡且停滯。" }, advice: "找回獨立，學會放手。" }
+
+            },
+
+            { id: "4", name: "皇帝", img: "card4.png", element: "Fire", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["權威", "結構", "穩定"], general_meaning: "代表紀律、領導力與穩定的結構。", spread_meanings: { past: "穩固的基礎是成功的關鍵。", present: "需要理智與果斷的決策。", future: "將會獲得長期的穩定。", my_view: "你希望掌握全局。", their_view: "對方視你為可靠的人。", current_status: "組織严密且有序發展。" }, advice: "運用邏輯與意志力。" },
+
+                reversed: { keywords: ["專橫", "僵化", "缺乏自律"], general_meaning: "警告不要過於固執，或因缺乏秩序而失控。", spread_meanings: { past: "曾受困於嚴苛的規則。", present: "感到壓力過大或受制於人。", future: "結構可能因僵化而崩解。", my_view: "你覺得深受束縛。", their_view: "對方覺得你太霸道。", current_status: "權力鬥爭或管理不善。" }, advice: "放鬆控制，展現靈活性。" }
+
+            },
+
+            { id: "5", name: "教皇", img: "card5.png", element: "Earth", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["傳統", "信仰", "指引"], general_meaning: "尋求共識、學習與傳統價值觀的認同。", spread_meanings: { past: "傳統教育影響深遠。", present: "尋求專業建議或導師。", future: "將獲得社會或群體的認可。", my_view: "你追求精神的歸屬感。", their_view: "對方覺得你值得尊敬。", current_status: "穩定且符合規範的關係。" }, advice: "遵循已證實有效的路徑。" },
+
+                reversed: { keywords: ["叛逆", "不合常規", "虛偽"], general_meaning: "挑戰現狀，或對傳統價值產生質疑。", spread_meanings: { past: "曾試圖打破現有的束縛。", present: "感到想法與大眾格格不入。", future: "面臨價值觀的重建。", my_view: "你想尋求改變與突破。", their_view: "對方覺得你離經叛道。", current_status: "溝通出現價值分歧。" }, advice: "思考你的真實信念。" }
+
+            },
+
+            { id: "6", name: "戀人", img: "card6.png", element: "Air", type: "group", gaze: "center",
+
+                upright: { keywords: ["和諧", "選擇", "契合"], general_meaning: "代表重要的抉擇以及靈魂層面的連結。", spread_meanings: { past: "一個關鍵決定奠定現況。", present: "正面臨心靈的選擇。", future: "會有和諧的伴侶或夥伴關係。", my_view: "你感到與對方高度共鳴。", their_view: "對方深深被你吸引。", current_status: "熱情且契合的發展。" }, advice: "跟隨心靈的聲音去選擇。" },
+
+                reversed: { keywords: ["失衡", "不負責任", "衝突"], general_meaning: "內在的不和諧，或是面臨誘惑導致的錯誤決定。", spread_meanings: { past: "過去的選擇導致了遺憾。", present: "面臨難以抉擇的困境。", future: "關係可能遭遇裂痕。", my_view: "你感到內心猶豫不決。", their_view: "對方覺得雙方不合拍。", current_status: "存在價值觀衝突。" }, advice: "找回內心的平衡與誠實。" }
+
+            },
+
+            { id: "7", name: "戰車", img: "card7.png", element: "Water", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["意志力", "勝利", "自律"], general_meaning: "透過強大的意志與專注克服重重困難。", spread_meanings: { past: "過去的勝利歸功於堅持。", present: "掌握局勢全力衝刺。", future: "最終將獲得成功的報償。", my_view: "你充滿鬥志與信心。", their_view: "對方視你為強悍競爭者。", current_status: "進展迅速且具有目標性。" }, advice: "保持專注，直擊目標。" },
+
+                reversed: { keywords: ["失控", "魯莽", "挫敗"], general_meaning: "因缺乏方向或意志力動搖而導致停滯。", spread_meanings: { past: "曾因過於衝動而失敗。", present: "感到混亂且失去主動權。", future: "前路可能遭遇強烈阻力。", my_view: "你感到受挫且力不從心。", their_view: "對方覺得你過於強勢。", current_status: "計畫遭遇突發障礙。" }, advice: "重新校準你的能量方向。" }
+
+            },
+
+            { id: "8", name: "力量", img: "card8.png", element: "Fire", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["勇氣", "耐性", "溫柔的控制"], general_meaning: "並非強硬壓制，而是以內在的力量與慈悲征服恐懼。", spread_meanings: { past: "堅韌的品格讓你度過難關。", present: "需要展現內在的定力。", future: "你將成功馴服內心的野獸。", my_view: "你感到充滿內在平靜。", their_view: "對方敬佩你的氣度。", current_status: "穩定發展且有包容力。" }, advice: "用溫柔而非暴力解決問題。" },
+
+                reversed: { keywords: ["懦弱", "自卑", "濫用武力"], general_meaning: "內心感到恐懼，或在不當的時候展現攻擊性。", spread_meanings: { past: "曾因缺乏自信而退縮。", present: "情緒失控或感到焦慮。", future: "意志力將面臨嚴峻考驗。", my_view: "你感到自我懷疑。", their_view: "對方覺得你難以捉摸。", current_status: "缺乏動力與自信。" }, advice: "找回你的自尊與勇氣。" }
+
+            },
+
+            { id: "9", name: "隱士", img: "card9.png", element: "Earth", type: "solo", gaze: "left",
+
+                upright: { keywords: ["內省", "獨處", "尋求真理"], general_meaning: "這是一個向內看、尋求靈魂指引的階段。", spread_meanings: { past: "過去的沈思成就了現有深度。", present: "需要一段時間的安靜與獨處。", future: "將會獲得重要的智慧體悟。", my_view: "你希望遠離塵囂。", their_view: "對方覺得你有些高冷。", current_status: "進展緩慢且側重內在。" }, advice: "沉澱心靈，不要急於行動。" },
+
+                reversed: { keywords: ["孤立", "偏執", "拒絕指引"], general_meaning: "可能過於封閉自我，或因逃避現實而感到孤單。", spread_meanings: { past: "過去的過度封閉造成隔閡。", present: "感到孤獨且不被理解。", future: "可能陷入自尋煩惱的怪圈。", my_view: "你感到與世隔絕。", their_view: "對方覺得你難以溝通。", current_status: "缺乏交流的冷處理階段。" }, advice: "適度向外尋求支持。" }
+
+            },
+
+            { id: "10", name: "命運之輪", img: "card10.png", element: "Fire", type: "solo", gaze: "center",
+
+                upright: { keywords: ["轉捩點", "運氣", "循環"], general_meaning: "命運的齒輪開始轉動，好運即將到來。", spread_meanings: { past: "一個循環已經圓滿結束。", present: "正在經歷重大的變遷。", future: "轉機將在不經意間出現。", my_view: "你感到命運的推動力。", their_view: "對方視你為幸運星。", current_status: "變化多端且充滿契機。" }, advice: "擁抱變化，把握時機。" },
+
+                reversed: { keywords: ["不幸", "阻力", "無法掌控"], general_meaning: "事情發展不如預期，或被迫接受不想要的改變。", spread_meanings: { past: "曾遭遇突如其來的打擊。", present: "感到正處於谷底。", future: "運勢短期內難以好轉。", my_view: "你覺得運氣很差。", their_view: "對方覺得局勢混亂。", current_status: "計畫偏離軌道。" }, advice: "耐心等待逆境過去。" }
+
+            },
+
+            { id: "11", name: "正義", img: "card11.png", element: "Air", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["公正", "因果", "誠信"], general_meaning: "這是一個評估與平衡的時刻，種瓜得瓜。", spread_meanings: { past: "過去的行為現在獲得回饋。", present: "需要做出公正的裁決。", future: "事情將會獲得公平的結果。", my_view: "你堅持客觀與原則。", their_view: "對方覺得你是非分明。", current_status: "平衡且注重邏輯的狀態。" }, advice: "負起責任，坦誠相待。" },
+
+                reversed: { keywords: ["偏見", "不公", "拒絕承擔"], general_meaning: "可能面臨不公平的對待，或是拒絕承認錯誤。", spread_meanings: { past: "曾受困於不當的指責。", present: "感到受到不公的待遇。", future: "法律或文書可能出錯。", my_view: "你感到內心憤恨不平。", their_view: "對方覺得你太愛計較。", current_status: "失衡且充滿抱怨。" }, advice: "檢視你是否有失偏頗。" }
+
+            },
+
+            { id: "12", name: "倒吊人", img: "card12.png", element: "Water", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["犧牲", "新視角", "等待"], general_meaning: "換一個角度看世界，暫時的停頓是為了更好的跨越。", spread_meanings: { past: "過去的付出現在開始發酵。", present: "目前的停滯是必要的修行。", future: "豁然開朗的覺醒即將到來。", my_view: "你願意為了目標等待。", their_view: "對方覺得你有些被動。", current_status: "沉思期，看似無進展。" }, advice: "放掉控制慾，學習隨遇而安。" },
+
+                reversed: { keywords: ["無謂的犧牲", "拖延", "僵持"], general_meaning: "做無功而返的努力，或是拒絕改變觀點。", spread_meanings: { past: "曾做了錯誤的犧牲。", present: "不願改變導致毫無進展。", future: "可能會遭遇更長的延誤。", my_view: "你感到身心俱疲。", their_view: "對方覺得你在做無用功。", current_status: "陷入僵局且無人讓步。" }, advice: "停止徒勞，主動尋求改變。" }
+
+            },
+
+            { id: "13", name: "死神", img: "card13.png", element: "Water", type: "solo", gaze: "left",
+
+                upright: { keywords: ["結束", "轉化", "新舊更迭"], general_meaning: "並非實質死亡，而是一個階段徹底結束並迎來新生。", spread_meanings: { past: "一段關係或時期已成過去。", present: "正在經歷必要的斷捨離。", future: "徹底翻篇後迎來曙光。", my_view: "你已準備好迎接新生活。", their_view: "對方感到與你已不同路。", current_status: "徹底變化的關鍵時刻。" }, advice: "放下執著，讓該去的離去。" },
+
+                reversed: { keywords: ["抗拒改變", "停滯", "舊情復燃"], general_meaning: "不願面對結束，導致自己陷入長期的痛苦與拖累。", spread_meanings: { past: "過去的陰影尚未消除。", present: "感到恐懼且不敢邁步。", future: "進展將會異常痛苦緩慢。", my_view: "你對未來感到極度不安。", their_view: "對方覺得你死纏爛打。", current_status: "關係名存實亡卻難分。" }, advice: "勇敢面對腐朽，尋求重生。" }
+
+            },
+
+            { id: "14", name: "節制", img: "card14.png", element: "Fire", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["平衡", "融合", "療癒"], general_meaning: "結合不同的元素，達成和諧與中庸之道。", spread_meanings: { past: "適度的調整帶來了平靜。", present: "需要平衡情感與理智。", future: "將達成各方滿意的共識。", my_view: "你情緒穩定且理性。", their_view: "對方覺得你非常有修養。", current_status: "流動且和諧的發展。" }, advice: "凡事適可而止，尋求共贏。" },
+
+                reversed: { keywords: ["失衡", "過度", "缺乏溝通"], general_meaning: "生活失調，或是情緒過激導致局勢崩潰。", spread_meanings: { past: "曾因極端行為導致混亂。", present: "生活節奏紊亂感到焦躁。", future: "計畫可能因分配不當受阻。", my_view: "你感到精疲力竭。", their_view: "對方覺得你反覆無常。", current_status: "充斥衝突與不理解。" }, advice: "重新找回生活重心。" }
+
+            },
+
+            { id: "15", name: "惡魔", img: "card15.png", element: "Earth", type: "group", gaze: "forward",
+
+                upright: { keywords: ["束縛", "慾望", "物質主義"], general_meaning: "被成癮、誘惑或錯誤的價值觀所禁錮。", spread_meanings: { past: "過去的依賴影響至今。", present: "正處於某種危險的吸引中。", future: "需警惕物質或毒性的誘惑。", my_view: "你感到極致的渴求。", their_view: "對方覺得你極具誘惑力。", current_status: "充滿激情但具備依賴性。" }, advice: "審視你的恐懼與癮頭。" },
+
+                reversed: { keywords: ["解脫", "覺醒", "找回主動"], general_meaning: "意識到束縛的存在，並開始嘗試擺脫陰暗面。", spread_meanings: { past: "曾成功克服過心魔。", present: "準備切斷有害的關係。", future: "最終會重獲自由。", my_view: "你開始反思現有的關係。", their_view: "對方感到掌控力在減弱。", current_status: "試圖打破慣性的過渡。" }, advice: "勇敢切斷有毒的連結。" }
+
+            },
+
+            { id: "16", name: "高塔", img: "card16.png", element: "Fire", type: "solo", gaze: "center",
+
+                upright: { keywords: ["劇變", "覺醒", "災難性突破"], general_meaning: "突如其來的打擊摧毀了虛偽的基礎，為真相鋪路。", spread_meanings: { past: "過去的一場突變重塑了你。", present: "防禦崩塌，需面對現實。", future: "突發事件將徹底改變計畫。", my_view: "你感到震撼且難以接受。", their_view: "對方覺得一切都毀了。", current_status: "混亂但必經的轉型期。" }, advice: "不要試圖挽救崩塌，順應它。" },
+
+                reversed: { keywords: ["延遲災難", "抗拒真相", "逃過一劫"], general_meaning: "察覺到危險但試圖逃避，或是痛苦的過程被拉長。", spread_meanings: { past: "曾驚險避開一場危機。", present: "在破敗中苟延殘喘。", future: "若不徹底改革，後患無窮。", my_view: "你感到極度壓抑。", their_view: "對方覺得你在粉飾太平。", current_status: "局勢不穩但尚未爆發。" }, advice: "主動改革勝過被動毀滅。" }
+
+            },
+
+            { id: "17", name: "星星", img: "card17.png", element: "Air", type: "solo", gaze: "forward",
+                upright: {keywords: ["希望", "靈感", "療癒", "寧靜"], 
+        general_meaning: "在黑暗後迎來平靜，象徵靈魂的洗滌、樂觀的期待與光明的未來。", 
+        spread_meanings: { 
+            past: "過去的理想與純粹的信念引導你走到今天。", 
+            present: "感受到內在的平靜，目前正處於信心恢復與自我療癒的階段。", 
+            future: "夢想有實現的強烈可能，前方的道路將變得清晰且充滿希望。", 
+            my_view: "你充滿信心，並以慷慨且開放的心態面對這一切。", 
+            their_view: "對方視你為純潔、具有啟發性且靈魂發光的存在。", 
+            current_status: "關係透明且充滿正能量，是一個身心和諧的發展期。" 
+        }, 
+        advice: "對宇宙保持信任，大膽地分享你的靈感與善意。" 
+    },
+    reversed: { 
+        keywords: ["失望", "悲觀", "靈感枯竭", "缺乏信心"], 
+        general_meaning: "暫時失去了希望，可能因為期望過高而感到失落，或與內心的平靜斷了連結。", 
+        spread_meanings: { 
+            past: "過去的過度樂觀或不切實際的幻想，現在讓你感到幻滅。", 
+            present: "正處於低潮期，感到迷茫且難以看見局勢中的光明面。", 
+            future: "如果不找回自信，計畫可能會因為消極的態度而延誤。", 
+            my_view: "你感到精疲力竭，對目標的達成持懷疑態度。", 
+            their_view: "對方覺得你有些悲觀，或認為你失去了原本的色彩。", 
+            current_status: "關係中缺乏流動感，雙方都感到有些枯燥或前途未卜。" 
+        }, 
+        advice: "調整過高的期望值，先專注於基礎的自我照顧而非遠大的理想。" 
+    }
+},
+
+            { id: "18", name: "月亮", img: "card18.png", element: "Water", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["不安", "幻象", "潛意識"], general_meaning: "局勢不明朗，充滿不安感，需防範隱藏的敵手。", spread_meanings: { past: "曾受困於混亂的情緒。", present: "感到恐懼或看不清未來。", future: "前方充滿變數需謹慎。", my_view: "你感到莫名的擔憂。", their_view: "對方覺得你深不可測。", current_status: "曖昧且不明朗的階段。" }, advice: "面對你的恐懼，不要被表象蒙蔽。" },
+
+                reversed: { keywords: ["真相大白", "克服恐懼", "解除幻象"], general_meaning: "迷霧漸散，開始看清事情的真面貌。", spread_meanings: { past: "曾從混亂中清醒過來。", present: "秘密正逐漸浮出水面。", future: "混亂即將告一段落。", my_view: "你開始找回理智。", their_view: "對方覺得你變得務實。", current_status: "由暗轉明的過渡期。" }, advice: "相信你的直覺，真相將現。" }
+
+            },
+
+            { id: "19", name: "太陽", img: "card19.png", element: "Fire", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["成功", "活力", "喜悅"], general_meaning: "代表光明、成功與純粹的快樂。", spread_meanings: { past: "過去的努力奠定光明基調。", present: "正處於最輝煌的時刻。", future: "結果將令你非常滿意。", my_view: "你感到自信且充滿能量。", their_view: "對方視你為生命中的陽光。", current_status: "坦誠布公且活力十足。" }, advice: "大膽展示你的光芒。" },
+
+                reversed: { keywords: ["短暫陰雲", "過度自信", "延遲成功"], general_meaning: "雖然整體依然積極，但可能會有小波折或暫時的沮喪。", spread_meanings: { past: "曾因過於樂觀而疏忽。", present: "感到有些疲憊或被遮擋。", future: "成功會來得稍晚一些。", my_view: "你覺得事情不夠完美。", their_view: "對方覺得你有些自大。", current_status: "有隔閡但方向正確。" }, advice: "保持童心，烏雲終會散去。" }
+
+            },
+
+            { id: "20", name: "審判", img: "card20.png", element: "Fire", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["覺醒", "重生", "呼喚"], general_meaning: "評估過去的行為，迎接生命的召喚與徹底的新生。", spread_meanings: { past: "一次關鍵覺醒改變了你。", present: "到了做出終極決定的時刻。", future: "將迎來命運的重大獎賞。", my_view: "你感到靈魂的昇華。", their_view: "對方視你為涅槃重生者。", current_status: "關鍵的轉折與定局。" }, advice: "傾聽內心的召喚，採取行動。" },
+
+                reversed: { keywords: ["遲疑", "逃避責備", "拒絕召喚"], general_meaning: "不願面對過去的後果，或是錯失了重生的機會。", spread_meanings: { past: "曾錯失過一次重大的改變。", present: "感到正被過去所糾纏。", future: "若不決斷，將陷入惡性循環。", my_view: "你感到自責與猶豫。", their_view: "對方覺得你停滯不前。", current_status: "糾結於舊帳，進展受阻。" }, advice: "勇敢承擔過去，才能走向未來。" }
+
+            },
+
+            { id: "21", name: "世界", img: "card21.png", element: "Earth", type: "solo", gaze: "forward",
+
+                upright: { keywords: ["圓滿", "成就", "旅程終點"], general_meaning: "一個循環的完美終結，象徵成功、旅行或融入整體。", spread_meanings: { past: "過去的努力達成了現有成就。", present: "一切皆在完美的控制中。", future: "將會獲得最終的圓滿成功。", my_view: "你感到與世界和諧統一。", their_view: "對方視你為理想的伴侶。", current_status: "穩定且接近完美的狀態。" }, advice: "慶祝你的成就，準備新的開始。" },
+
+                reversed: { keywords: ["未竟之志", "延遲圓滿", "缺乏成就感"], general_meaning: "雖然接近成功，但總差那臨門一腳，感到遺憾。", spread_meanings: { past: "曾有過未能完成的遺憾。", present: "感到目標近在咫尺卻難達成。", future: "成功需要比預期更久的努力。", my_view: "你覺得缺少了一點關鍵。", their_view: "對方覺得你要求過高。", current_status: "大致穩定但仍有空缺。" }, advice: "重新檢視細節，完成最後一步。" }
+
+            },
+
+            { id: "c3", name: "聖杯三", img: "3 of Cups.png", element: "Water", type: "group", gaze: "center",
+
+                upright: { keywords: ["慶祝", "友誼", "情感連結"], general_meaning: "與朋友分享快樂，象徵群體間的情感支持與歡愉。", spread_meanings: { past: "愉快的社交活動支持了你。", present: "正與人分享成功的喜悅。", future: "將迎來值得慶祝的聚會。", my_view: "你渴望與人分享喜悅。", their_view: "對方覺得你是極佳的夥伴。", current_status: "和諧且充滿笑聲的氛圍。" }, advice: "分享你的快樂，加強社交。" },
+
+                reversed: { keywords: ["過度放縱", "流言蜚語", "人際疏離"], general_meaning: "過度的派對生活影響健康，或是在群體中感到被孤立。", spread_meanings: { past: "曾因社交過度感到疲憊。", present: "感到被小團體排擠。", future: "需警惕人際關係中的爭端。", my_view: "你感到與社交圈不合。", their_view: "對方覺得你有些浮誇。", current_status: "存在不和諧音或第三方干擾。" }, advice: "減少無效社交，回歸內心。" }
+
+            },
+
+            { id: "w4", name: "權杖四", img: "4 of Wands.png", element: "Fire", type: "group", gaze: "center",
+
+                upright: { keywords: ["穩定", "家園", "慶典"], general_meaning: "象徵一個穩定的階段，具有安全感與歸屬感。", spread_meanings: { past: "穩固的基業為你遮風擋雨。", present: "享受階段性的平靜與快樂。", future: "將步入穩定發展或同居/結婚。", my_view: "你渴望安定的生活。", their_view: "對方覺得你很踏實可靠。", current_status: "和諧且具備長期潛力的關係。" }, advice: "享受當下的安寧與幸福。" },
+
+                reversed: { keywords: ["內心不穩", "家庭摩擦", "儀式感缺失"], general_meaning: "表面平靜下潛藏著不安，或是期待的慶祝被延遲。", spread_meanings: { past: "曾有過根基動搖的經驗。", present: "對目前的安穩感到懷疑。", future: "預期的穩定可能會延後。", my_view: "你感到缺乏安全感。", their_view: "對方覺得關係變得乏味。", current_status: "有些小摩擦需要修復。" }, advice: "從內部尋找安定的力量。" }
+
+            },
+
+{ id: "sp", name: "寶劍侍從", img: "Page of Swords.png", element: "Air", type: "solo", gaze: "right",
+                upright: { keywords: ["警惕", "好奇心", "精神活躍"], general_meaning: "代表一位充滿好奇心、思維敏捷的年輕人，或是即將傳來需要理智分析的消息。", spread_meanings: { past: "過去的觀察與收集資訊為你打下基礎。", present: "當前需要保持警覺，並用理性審視周遭環境。", future: "未來將會出現需要快速應變與學習的新挑戰。", my_view: "你正帶著試探與觀察的心態看待這段關係。", their_view: "對方覺得你心思細密，但也帶有一點防備心。", current_status: "處於互相打探、溝通頻繁但缺乏深層信任的階段。" }, advice: "保持客觀，多觀察、少衝動發表言論。" },
+                reversed: { keywords: ["八卦", "輕率", "言語攻擊"], general_meaning: "警告可能存在流言蜚語、計畫不周、或口角上的爭執與刺探。", spread_meanings: { past: "過去的口舌之快或小人放話留下了後遺症。", present: "目前充斥著虛假消息或流於表面的無效溝通。", future: "若不注意言行，未來容易引發不必要的口角或對立。", my_view: "你感到猜忌、焦慮，容易把對方的話往壞處想。", their_view: "對方覺得你過於尖酸刻薄、或說話不負責任。", current_status: "關係中充滿口舌是非、互不信任與言語刺探的緊繃感。" }, advice: "管好口舌，不要盲目輕信未經證實的傳言。" }
+            },
+            { id: "c7", name: "聖杯七", img: "7 of Cups.png", element: "Water", type: "group", gaze: "center",
+                upright: { keywords: ["幻象", "選擇過多", "白日夢"], general_meaning: "眼前充滿了各種令人眼花繚亂的選擇與誘惑，但多數只是不切實際的虛幻泡影。", spread_meanings: { past: "過去沉溺於不切實際的幻想，耽誤了執行的時機。", present: "正面臨令人困惑的多重選擇，難以看清事物的本質。", future: "未來會出現許多看似美好的機會，需要謹慎甄別。", my_view: "你對未來有太多不切實際的浪漫幻想與期待。", their_view: "對方覺得你捉摸不定，或者有些花心、定不下來。", current_status: "充滿曖昧幻想，表面精彩但缺乏實質承諾與進展的現狀。" }, advice: "拒絕虛榮的誘惑，務實地面對現實並做出一個真正的決定。" },
+                reversed: { keywords: ["清醒", "看清現實", "破除迷惘"], general_meaning: "迷霧終於散去，你開始從白日夢中清醒，看清真相並做出務實的抉擇。", spread_meanings: { past: "過去經歷了一段破除迷茫、看清真相的痛苦過程。", present: "當前終於決定腳踏實地，擺脫那些不切實際的誘惑。", future: "未來將能看穿表象，走向真正切實可行的道路。", my_view: "你終於清醒，不再為對方找藉口，看清了彼此的落差。", their_view: "對方覺得你變得現實、清醒，不再容易被敷衍。", current_status: "泡沫破滅、回歸現實，開始著手解決核心問題的過渡期。" }, advice: "專注於眼前的實際行動，徹底告別不切實際的幻想。" }
+            },
+            { id: "c9", name: "聖杯九", img: "9 of Cups.png", element: "Water", type: "solo", gaze: "forward",
+                upright: { keywords: ["滿足", "願望實現", "物質享樂"], general_meaning: "被譽為塔羅中的「願望牌」，象徵精神與物質上的高度滿足，個人的願望即將達成。", spread_meanings: { past: "過去的知足與累積，造就了當前豐裕的局面。", present: "正享受著心想事成的快樂，對現狀感到無比自豪與滿意。", future: "未來你的堅持將得到回報，迎來預期的成功與享受。", my_view: "你對這段關係感到非常滿意，甚至覺得有點自我中心。", their_view: "對方覺得你條件優越，過得很滋潤且富有吸引力。", current_status: "各取所需、和諧富足，兩人都相當享受當下狀態的關係。" }, advice: "在享受成功的同時，也要懂得感恩與分享，避免流於傲慢。" },
+                reversed: { keywords: ["過度放縱", "表面風光", "內心空虛"], general_meaning: "警告可能陷入了貪圖享樂、暴飲暴食，或是外在物質豐裕但內心極度空虛的狀態。", spread_meanings: { past: "過去的縱慾或過度自信，導致了現階段的後悔。", present: "當前雖然看似什麼都不缺，但內心總覺得缺少了真正的靈魂連結。", future: "若持續過度消耗，未來將面臨樂極生悲或資源透支的窘境。", my_view: "你覺得這段關係流於表面，無法填補你內心的寂寞。", their_view: "對方覺得你太過自私、貪得無厭或虛榮心太重。", current_status: "表面看似令人羨慕，實則缺乏深度情感交流且各自精神空虛。" }, advice: "克制物慾與虛榮，去尋找真正能滋養內心靈魂的事物。" }
+            },
+            { id: "p2", name: "星幣二", img: "2 of Pentacles.png", element: "Earth", type: "solo", gaze: "left",
+                upright: { keywords: ["平衡", "適應力", "多工處理"], general_meaning: "代表在兩個選擇、財務或生活事務之間努力維持平衡，展現出極佳的彈性與適應力。", spread_meanings: { past: "過去在跌跌撞撞中勉強維持了局面的平衡。", present: "目前正忙於應付工作與生活（或兩條感情線）之間的拉扯。", future: "未來局勢依舊充滿變動，需要你保持敏捷的適應能力。", my_view: "你在關係中顯得有些猶豫不決，正努力權衡得失。", their_view: "對方覺得你總是很忙，或者在感情中表現得不夠專一、在兩頭搖擺。", current_status: "處於一種動態平衡、分身乏術，雖然有趣但伴隨著不穩定感的關係。" }, advice: "保持幽默感與彈性，分清事情的優先順序，別讓自己精疲力竭。" },
+                reversed: { keywords: ["失衡", "財務混亂", "難以應付"], general_meaning: "生活或財務的雜耍球終於落地，象徵局面的失控、分身乏術以及因壓力過大而崩潰。", spread_meanings: { past: "過去因為過度擴張或管理不當，導致了局面的失衡。", present: "當前感到壓力爆棚，已經無法同時兼顧多項事務或情感。", future: "若不停止硬撐，未來生活或計畫將會面臨徹底失控的混亂。", my_view: "你感到心力交瘁，已經快要無法維持這段關係的平衡。", their_view: "對方覺得你反覆無常、承諾無法兌現，表現得極其不靠譜。", current_status: "失衡崩潰、頻頻出錯，隨時可能因為外界小事而爭吵斷裂的危機期。" }, advice: "別再試圖隱瞞或勉強硬撐，大膽放下不必要的負擔，回歸專一。" }
+            },
+            { id: "p9", name: "星幣九", img: "9 of Pentacles.png", element: "Earth", type: "solo", gaze: "forward",
+                upright: { keywords: ["獨立", "富足", "怡然自得"], general_meaning: "象徵透過自身的努力獲得了物質上的獨立與成功，享受著高品質的單身或私人生活。", spread_meanings: { past: "過去長期自律且勤奮的努力，締造了現在優渥的根基。", present: "正處於經濟獨立、享受個人空間且不依賴他人的美好時光。", future: "未來將會收穫豐厚的物質財富，並擁有極高的生活自主權。", my_view: "你非常享受個人的獨立空間，認為即使單身也能過得極好。", their_view: "對方視你為高貴、優雅、經濟獨立且有品味的理想對象。", current_status: "彼此尊重私人空間，不黏人、高質感且物質基礎極其穩固的成熟關係。" }, advice: "好好犒賞自己，享受你應得的富足與安寧。" },
+                reversed: { keywords: ["過度依賴", "外強中乾", "失去自由"], general_meaning: "可能為了物質財富而犧牲了自由，或者是表面上裝得很富有，私下卻面臨財務或精神危機。", spread_meanings: { past: "過去為了追求金錢或名利，犧牲了自由與人際關係。", present: "雖然物質不缺，但感到自己像被關在黃金鳥籠裡一樣失去了自由。", future: "若不及時調整，未來可能會為了維持虛榮而付出極大代價。", my_view: "你感到在這段關係中失去了自我，或過度依賴對方的經濟與資源。", their_view: "對方覺得你好高騖遠、虛張聲勢，或者是個依附於人的拜金者。", current_status: "充滿了物質算計、依賴性重，或者為了維持表面風光而互相忍耐的緊繃關係。" }, advice: "重新檢視金錢與自由的價值，找回真正屬於自己的獨立與尊嚴。" }
+            }
+
+        ];
+function preloadTarotDeck() {
+    const imagesToPreload = ['tarot-cards/photo-output.png']; // 卡背
+    
+    // 把所有卡牌正面圖加進清單
+    tarotData.forEach(card => {
+        imagesToPreload.push(`tarot-cards/${card.img}`);
+    });
+
+    // 靜默載入 (瀏覽器會在背景自動下載並快取)
+    imagesToPreload.forEach(src => {
+        const img = new Image();
+        img.src = src;
+    });
+}
+
+window.onload = () => {
+    preloadTarotDeck();
+    startPreloading();
+};
+
+// === 1. 提取所有需要載入的圖片路徑 ===
+const imageUrls = tarotData.map(card => `tarot-cards/${card.img}`);
+const cardBackUrl = "tarot-cards/photo-output.png";
+imageUrls.push("tarot-cards/photo-output.png");
+
+// === 2. 預載入控制核心 ===
+let loadedCount = 0;
+const totalImages = imageUrls.length;
+const threshold = 0.85; // 設定 80% 門檻
+const progressBar = document.getElementById('progress-bar');
+const loadingScreen = document.getElementById('loading-screen');
+const mainPage = document.getElementById('main-page');
+
+// 全局變數保持不變
+let currentCategory = '';
+let spreadMode = 'single';
+let isRelationship = false;
+let shuffledDeck = [];
+let drawnCards = [];
+let poppedCardEl = null;
+
+// ==========================================
+// 🌟 鍵盤左右方向鍵 (Arrow Keys) 輔助選牌
+// ==========================================
+document.addEventListener('keydown', function(e) {
+    const spreadView = document.getElementById('spread-view');
+    // 確保選牌畫面正在顯示時，方向鍵才生效
+    if (!spreadView || window.getComputedStyle(spreadView).opacity !== '1') return;
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        // 抓出當前畫面上所有「未被確認挑選」的活耀卡牌
+        const availableCards = Array.from(document.querySelectorAll('#cards-container .card-wrap'))
+                                    .filter(el => !el.classList.contains('confirmed'));
+        
+        if (availableCards.length === 0) return;
+
+        // 尋找當前獲得鍵盤焦點的卡牌索引
+        let currentIndex = availableCards.indexOf(document.activeElement);
+        
+        if (e.key === 'ArrowRight') {
+            // 往右切換，如果超出長度就回到第一張
+            currentIndex = (currentIndex + 1) % availableCards.length;
+        } else if (e.key === 'ArrowLeft') {
+            // 往左切換，如果小於零就跳到最後一張
+            currentIndex = (currentIndex - 1 + availableCards.length) % availableCards.length;
+        }
+
+        // 🎯 讓該卡牌獲得焦點（同時會觸發我們剛才寫的 focus 監聽，讓牌自己彈起來）
+        availableCards[currentIndex].focus();
+        
+        e.preventDefault(); // 阻止頁面預設的捲動行為
+    }
+});
+
+
+function prebuildDeckDOM() {
+    const container = document.getElementById('cards-container');
+    if (container.children.length > 0) return; // 避免重複建立
+
+    // 建立 78 張牌的基礎結構
+    for (let i = 0; i < 78; i++) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'card-wrap';
+        wrapper.style.display = 'none'; // 初始隱藏
+        
+        // 初始狀態下不允許 Tab 聚焦與互動
+        wrapper.setAttribute('tabindex', '-1');
+        wrapper.setAttribute('role', 'button');
+
+        wrapper.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-back">
+                    <img src="tarot-cards/photo-output.png" 
+                         style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform:translate3d(0,0,0); -webkit-transform:translate3d(0,0,0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" 
+                         onload="this.parentElement.style.backgroundImage='none';" 
+                         onerror="this.style.display='none';" 
+                         draggable="false">
+                </div>
+                <div class="card-face card-front">
+                    <img src="" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0); -webkit-transform:scale(1.05) translate3d(0,0,0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" draggable="false">
+                    ${typeof liquidCocoonSVG !== 'undefined' ? liquidCocoonSVG : ''}
+                </div>
+            </div>
+        `;
+        container.appendChild(wrapper);
+    }
+}
+
+async function preloadCardBackFirst() {
+    return new Promise((resolve) => {
+        const cardBackImg = new Image();
+        cardBackImg.onload = () => {
+            // 🎴 CRITICAL: Force full decode before moving on
+            if (cardBackImg.decode) {
+                cardBackImg.decode()
+                    .then(() => {
+                        console.log('✅ Card back fully decoded');
+                        updateProgress();
+                        resolve();
+                    })
+                    .catch(() => {
+                        console.warn('⚠️ Card back decode failed, proceeding anyway');
+                        updateProgress();
+                        resolve();
+                    });
+            } else {
+                updateProgress();
+                resolve();
+            }
+        };
+        cardBackImg.onerror = () => {
+            console.error('❌ Card back failed to load');
+            updateProgress();
+            resolve();
+        };
+        // 🎴 Start loading card back FIRST
+        cardBackImg.src = cardBackUrl;
+    });
+}
+
+function startPreloading() {
+    document.fonts.ready.then(async () => {
+        prebuildDeckDOM();
+        console.log('🎴 Loading card back first...');
+        await preloadCardBackFirst();
+        
+        console.log('🎴 Loading card fronts...');
+        const otherImages = imageUrls.filter(url => url !== cardBackUrl);
+        
+        otherImages.forEach(url => {
+            const img = new Image();
+            img.src = url; 
+            img.onload = () => {
+                if (img.decode) {
+                    img.decode()
+                        .then(() => updateProgress())
+                        .catch(() => updateProgress());
+                } else {
+                    updateProgress();
+                }
+            };
+            img.onerror = () => updateProgress();
+        });
+    });
+}
+
+function updateProgress() {
+    loadedCount++;
+    
+    // 🌟 修正1：使用 Math.min 確保百分比絕對不超過 100%
+    let progressPercent = (loadedCount / totalImages) * 100;
+    if (progressPercent > 100) progressPercent = 100;
+
+    console.log(`Progress: ${loadedCount}/${totalImages} (${Math.round(progressPercent)}%)`);
+
+    // 更新進度條 UI
+    if (progressBar) {
+        progressBar.style.width = `${progressPercent}%`;
+    }
+
+    // 達到門檻就進入主頁面
+    if (progressPercent >= threshold * 100) { // 修改判斷邏輯更安全
+        if (loadingScreen.dataset.loadingComplete) return;
+        loadingScreen.dataset.loadingComplete = "true";
+
+        console.log('✅ Threshold reached, entering main page');
+        setTimeout(enterMainPage, 500); 
+    }
+}
+
+// ==========================================
+// 日夜模式系統：自動偵測 + 手動記憶
+// ==========================================
+
+// 1. 🌟 在 DOM 載入完成後，除了預載卡牌，也要初始化 Theme 按鈕的符號
+window.addEventListener('DOMContentLoaded', () => {
+    startPreloading(); // 你原本的預載函式
+    initThemeButtonUI(); // 初始化按鈕符號
+});
+
+// 2. 核心：手動切換 Theme 函式（已加入 localStorage 記憶功能）
+function toggleTheme() {
+    const html = document.documentElement;
+    const btn = document.getElementById('themeBtn');
+    
+    if (html.getAttribute('data-theme') === 'day') {
+        html.setAttribute('data-theme', 'night');
+        if (btn) btn.innerText = '☼';
+        // 🌟 記住使用者的選擇為 night
+        localStorage.setItem('user-tarot-theme', 'night');
+    } else {
+        html.setAttribute('data-theme', 'day');
+        if (btn) btn.innerText = '☽';
+        // 🌟 記住使用者的選擇為 day
+        localStorage.setItem('user-tarot-theme', 'day');
+    }
+}
+
+// 3. 輔助：根據當前實際套用的主題，自動校準按鈕上的符號
+function initThemeButtonUI() {
+    const html = document.documentElement;
+    const btn = document.getElementById('themeBtn');
+    if (!btn) return;
+    
+    // 如果當前是 day，按鈕要顯示 ☽（提示可以切換成夜晚）
+    // 如果當前是 night，按鈕要顯示 ☼（提示可以切換成白天）
+    if (html.getAttribute('data-theme') === 'day') {
+        btn.innerText = '☽';
+    } else {
+        btn.innerText = '☼';
+    }
+}
+
+// 確保這個函式定義在 enterMainPage 之前
+function initCustomCursor() {
+    const cursor = document.getElementById('custom-magic-cursor');
+    if (!cursor) return; // 如果找不到元素，直接結束，避免報錯
+
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+    });
+}
+
+// 統整後的進入主頁邏輯
+function enterMainPage() {
+    // 防止重複觸發
+    if (loadingScreen.style.opacity === '0') return;
+
+    loadingScreen.style.opacity = '0';
+    
+    setTimeout(() => {
+        loadingScreen.style.display = 'none';
+        
+        mainPage.style.visibility = 'visible';
+        mainPage.style.opacity = '1';
+        
+        // 加上你第二段程式碼中的這行，確保標題動畫正常顯示
+        document.body.classList.add('show-home-title');
+        createCosmicDust(); 
+        initCustomCursor();
+    }, 1000); // 1秒淡出時間
+}
+
+
+        function setCat(btn, cat) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentCategory = cat;
+            
+            const relBox = document.getElementById('relation-container');
+            if (cat === '愛情' || cat === '親友') {
+                relBox.style.display = 'flex';
+            } else {
+                relBox.style.display = 'none';
+                document.getElementById('is-relation').checked = false;
+            }
+        }
+
+        function setMode(mode) {
+            spreadMode = mode;
+            document.getElementById('btn-single').classList.remove('active');
+            document.getElementById('btn-triple').classList.remove('active');
+            document.getElementById(`btn-${mode}`).classList.add('active');
+        }
+
+        function updateCounterUI() {
+            const counter = document.getElementById('draw-counter');
+            if (spreadMode === 'triple') {
+                counter.style.display = 'block';
+                counter.innerText = `${drawnCards.length}/3`;
+            } else {
+                counter.style.display = 'none';
+            }
+        }
+
+        function startDivination() {
+            if (!currentCategory) {
+                alert("請先選擇占卜範疇。");
+                return;
+            }
+
+	// 🌟 核心修正：在這裡接上次數限制的檢查開關！
+            if (!canPerformReading()) {
+                const limitModal = document.getElementById('limit-modal');
+                limitModal.style.display = 'flex';
+                // 觸發優雅的淡入動畫
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        limitModal.classList.add('is-visible');
+                    });
+                });
+                return; // 🚨 次數超過，直接終止後續占卜流程
+            }
+
+            // 檢查通過，扣除一次額度
+            incrementReading();
+
+            isRelationship = document.getElementById('is-relation').checked;
+            
+            const main = document.getElementById('main-page');
+            main.style.opacity = '0';
+            setTimeout(() => {
+                main.style.display = 'none';
+                initSpreadView();
+            }, 800);
+        }
+
+
 // ==========================================
 // 主控函式：負責指揮整個洗牌與發牌流程
 async function initSpreadView() {
@@ -12,9 +3120,10 @@ async function initSpreadView() {
         ritualTextContainer.classList.remove('fade-out');
     }
 
+    // 🚨 刪除重疊：這裡拿掉了 container.innerHTML = ''; 避免毀滅已建好的 78 個外框
+
     if (tarotData.length === 0) return;
 
-    // 1. 打亂資料庫陣列
     shuffledDeck = [...tarotData].sort(() => Math.random() - 0.5);
     drawnCards = [];
     updateCounterUI();
@@ -22,26 +3131,35 @@ async function initSpreadView() {
     const isMobile = window.innerWidth < 768;
     const total = shuffledDeck.length;
 
-    // 🌟 核心優化 1：絕對不使用 innerHTML = '' 清空！
-    // 直接抓取在網頁一開始就已經建好的 78 張牌，進行環保回收利用，瞬間消除手機卡頓！
+    // 🌟 核心優化：直接抓取畫面上既有的 78 張卡牌外框來「替換內容」，避免手機卡頓
     const cards = document.querySelectorAll('#cards-container .card-wrap');
 
-    // 🌟 核心優化 2：不論手機或電腦，統一在這裡初始化位置與圖片
     cards.forEach((wrapper, index) => {
+        const cardData = shuffledDeck[index];
         wrapper.dataset.index = index;
+        wrapper.className = 'card-wrap'; // 清除洗牌等舊類別
         wrapper.style.display = 'block';
-        wrapper.className = 'card-wrap'; // 清除舊的 shuffling 狀態
-        wrapper.style.opacity = '0';     // 先全體隱形，等下各自現身
+        wrapper.style.opacity = '0';     // 先隱藏，交由後續流程控制顯示
         wrapper.style.pointerEvents = 'none';
 
-        // 抽換為洗牌後的新正面圖片
-        const frontImg = wrapper.querySelector('.card-front img');
-        if (frontImg && shuffledDeck[index]) {
-            // 同時確保圖片帶有 3D 硬體加速，防模糊
-            frontImg.src = `tarot-cards/${shuffledDeck[index].img}`;
-        }
+        // 🌟 完整保留你的心血：原封不動的高清 imgTag 與卡背設定！
+        // （微調了 crisp-edges 的正確 CSS 語法，確保瀏覽器能正確讀取）
+        const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0); -webkit-transform:scale(1.05) translate3d(0,0,0); image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
 
-        // 統一將 78 張牌安靜地疊在畫面正中央
+        wrapper.innerHTML = `
+            <div class="card-inner">
+                <div class="card-face card-back">
+                    <img src="tarot-cards/photo-output.png" 
+                         style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform:translate3d(0,0,0); -webkit-transform:translate3d(0,0,0); image-rendering: -webkit-optimize-contrast;" 
+                         onload="this.parentElement.style.backgroundImage='none';" 
+                         onerror="this.style.display='none';" 
+                         draggable="false">
+                </div>
+                <div class="card-face card-front">${imgTag}</div>
+            </div>
+        `;
+
+        // 統一初始化回到螢幕正中央
         wrapper.style.transition = 'none'; 
         wrapper.style.left = "50%";
         wrapper.style.top = "50%";
@@ -49,20 +3167,17 @@ async function initSpreadView() {
         wrapper.style.transformOrigin = "center center"; 
         wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`;
 
-        // 重新綁定點擊事件
         wrapper.onclick = (e) => handleCardClick(e, wrapper);
     });
 
-    // 🌟 核心優化 3：分流展示邏輯
     if (isMobile) {
-        // 📱 手機版：不播洗牌動畫。直接讓 78 張牌瞬間現身疊在中央
+        // 📱 手機版：不播洗牌動畫，直接瞬間疊好現身
         cards.forEach(wrapper => wrapper.style.opacity = '1');
         
-        // 🌟 修正文字閃退：將等待時間從 950ms 延長至 2500ms！
-        // 這 2.5 秒能讓使用者看著疊好的卡牌靜心，並讓 ".p2 正在為你校準能量" 完美浮現！
+        // 🌟 保留 2.5 秒的「冥想時間」，這樣文字轉換動畫 (p1 -> p2 -> p3) 才能完美播完不閃退！
         await new Promise(resolve => setTimeout(resolve, 2500));
     } else {
-        // 💻 電腦版：進入電腦專屬的飛舞洗牌動畫 (2.2秒)
+        // 💻 電腦版：維持原本的洗牌動畫流程
         await playShuffleAnimation(cards);
     }
 
@@ -71,26 +3186,1731 @@ async function initSpreadView() {
 }
 
 // ==========================================
-// 模組 1：電腦專屬洗牌動畫
+// 模組 1：洗牌階段
 // ==========================================
 function playShuffleAnimation(cards) {
     return new Promise((resolve) => {
-        
         cards.forEach((wrapper, index) => {
-            // 電腦版只讓前 7 張卡牌擁有動畫類別，節省 GPU 負擔
+            // 只讓前 7 張卡牌擁有動畫類別
             if (index < 7) {
                 wrapper.classList.add('shuffling');
                 wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
                 wrapper.style.opacity = '1';
             } else {
-                // 其他卡牌在洗牌時保持隱形，發牌時才跟著展開
                 wrapper.style.opacity = '0';
             }
         });
 
-        // 等待洗牌動畫結束 (2.2秒)
+        // 電腦版洗牌維持 2.2 秒
         setTimeout(() => {
-            resolve();
+            resolve(cards);
         }, 2200);
     });
 }
+
+// ==========================================
+// 模組 2：展開階段 (已整合無障礙 Tab/左右鍵、滑鼠 Hover、手機滑動選牌)
+// ==========================================
+function playSpreadAnimation(cards, isMobile, total) {
+    return new Promise((resolve) => {
+        
+        cards.forEach((wrapper) => {
+            wrapper.classList.remove('shuffling');
+            wrapper.style.transition = 'none'; 
+
+            if (isMobile) {
+                // 🌟 高清核心修正 4：為初始堆疊狀態補上 translateZ(0)，確保像素完美對齊
+                wrapper.style.transform = "translate(-50%, -50%) translateZ(0)"; 
+            } else {
+                wrapper.style.left = "50%";
+                wrapper.style.top = "50%";
+                wrapper.style.bottom = "auto";
+                wrapper.style.transformOrigin = "center center";
+                wrapper.style.transform = "translate(-50%, -50%) rotate(0deg) translateZ(0)";
+            }
+        });
+
+        document.body.classList.remove('show-home-title');
+        const ritualTextContainer = document.getElementById('spread-ritual-text');
+        if (ritualTextContainer) {
+            ritualTextContainer.classList.add('fade-out');
+        }
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                
+                cards.forEach((wrapper, index) => {
+                    const duration = isMobile ? '1.5s' : '1s'; 
+                    
+                    wrapper.setAttribute('tabindex', '0');
+                    wrapper.setAttribute('role', 'button');
+                    wrapper.setAttribute('aria-label', `第 ${index + 1} 張塔羅牌`);
+
+                    wrapper.onfocus = (e) => {
+                        if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
+                        handleCardClick(e, wrapper);
+                    };
+
+                    wrapper.onkeydown = (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            if (poppedCardEl === wrapper) {
+                                confirmCard(e);
+                            } else {
+                                handleCardClick(e, wrapper);
+                            }
+                        }
+                    };
+
+                    wrapper.onmouseenter = (e) => {
+                        if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
+                        handleCardClick(e, wrapper);
+                    };
+                    
+                    if (isMobile) {
+                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), opacity 0.8s ease-out`;
+                        wrapper.style.transitionDelay = `${index * 0.02}s, 0s`; 
+                        
+                        wrapper.style.opacity = '1'; 
+                        wrapper.style.pointerEvents = 'auto'; 
+
+                        const angle = -45 + (index * (90 / total)); 
+                        
+                        // 🌟 高清核心修正 5：在最終扇形展開的 Transform 結尾，強制烙印 translateZ(0)
+                        wrapper.style.transform = `translate(-50%, -50%) translateX(-50vw) rotate(${angle}deg) translateX(calc(38vw + 50%)) translateZ(0)`;
+                        
+                        wrapper.style.setProperty('--pop-x', '30px');
+                        wrapper.style.setProperty('--pop-y', '0px');
+                    } else {
+                        wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), left ${duration}, top ${duration}, bottom ${duration}`;
+                        wrapper.style.transitionDelay = `${index * 0.02}s`;
+                        
+                        const angle = -60 + (index * (120 / total));
+                        wrapper.style.transformOrigin = "center bottom";
+                        wrapper.style.left = "50%";
+                        wrapper.style.top = "auto";
+                        wrapper.style.bottom = "5vh"; 
+                        wrapper.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-18vh) translateZ(0)`;
+                        wrapper.style.setProperty('--pop-x', '0px');
+                        wrapper.style.setProperty('--pop-y', '-50px');
+                    }
+                });
+                
+                // ==========================================
+                // 📱 手機版：手指滑動掃描選牌功能 (修正 DOMContentLoaded 邏輯錯誤)
+                // ==========================================
+                const container = document.getElementById('cards-container');
+                if (container && isMobile) {
+                    let isScanning = false;
+
+                    container.ontouchstart = () => {
+                        const spreadView = document.getElementById('spread-view');
+                        if (spreadView && window.getComputedStyle(spreadView).opacity === '1') {
+                            isScanning = true;
+                        }
+                    };
+
+                    container.ontouchmove = (e) => {
+                        if (!isScanning) return;
+                        const touch = e.touches[0];
+                        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+                        if (!targetEl) return;
+
+                        const wrapper = targetEl.closest('.card-wrap');
+                        if (wrapper && !wrapper.classList.contains('confirmed') && !wrapper.classList.contains('shuffling')) {
+                            if (poppedCardEl !== wrapper) {
+                                handleCardClick(e, wrapper);
+                            }
+                        }
+                    };
+
+                    container.ontouchend = () => { isScanning = false; };
+                    container.ontouchcancel = () => { isScanning = false; };
+                }
+
+                setTimeout(resolve, 1500);
+            }); 
+        }); 
+    });
+}
+
+function handleCardClick(e, wrapper) {
+    // 🌟 核心防禦線：檢查結果面板是否已經打開
+    const resultPanel = document.getElementById('result-panel');
+    const isPanelActive = resultPanel && resultPanel.classList.contains('active');
+
+    // 🛑 只要滿足以下任一條件，絕對不觸發「彈起卡牌」與「顯示確認按鈕」：
+    // 1. 已經進入結束選牌狀態 (window.isSelectionFinalized)
+    // 2. 結果面板已經在畫面上 (isPanelActive) -> 完美解決歷史紀錄點擊問題
+    // 3. 卡牌本身已經帶有發光類別 (ready-to-glow)
+    if (window.isSelectionFinalized || isPanelActive || wrapper.classList.contains('ready-to-glow')) {
+        return;
+    }
+
+    e.stopPropagation();
+    if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
+
+    const btn = document.getElementById('confirm-btn-float');
+    
+    if (poppedCardEl === wrapper) return;
+
+    if (poppedCardEl) { poppedCardEl.classList.remove('popped'); }
+
+    wrapper.classList.add('popped');
+    poppedCardEl = wrapper;
+
+    btn.style.display = 'block';
+    btn.style.pointerEvents = 'auto'; 
+    setTimeout(() => {
+        btn.style.opacity = '1';
+        btn.style.transform = 'translateX(-50%) translateY(0)';
+    }, 10);
+}
+
+function retractCards(e) {
+    if (!e.target.closest('.card-wrap') && poppedCardEl) {
+        poppedCardEl.classList.remove('popped');
+        poppedCardEl = null;
+        const btn = document.getElementById('confirm-btn-float');
+        btn.style.opacity = '0';
+        btn.style.transform = 'translateX(-50%) translateY(20px)';
+        btn.style.pointerEvents = 'none'; 
+        setTimeout(() => btn.style.display = 'none', 400);
+    }
+}
+
+function confirmCard(e) {
+    e.stopPropagation();
+    if (!poppedCardEl) return;
+
+    const btn = document.getElementById('confirm-btn-float');
+    btn.style.opacity = '0';
+    btn.style.pointerEvents = 'none'; 
+    setTimeout(() => btn.style.display = 'none', 400);
+
+    const idx = parseInt(poppedCardEl.dataset.index);
+    const cardData = shuffledDeck[idx];
+    const isReversed = Math.random() > 0.5;
+    drawnCards.push({ ...cardData, isReversed, elementDOM: poppedCardEl });
+
+    poppedCardEl.classList.remove('popped');
+    poppedCardEl.classList.add('confirmed');
+    if (cardData.element) {
+        poppedCardEl.classList.add(`element-${cardData.element.toLowerCase()}`);
+    }
+
+    const isMobile = window.innerWidth < 768;
+    const drawnIndex = drawnCards.length - 1; 
+
+poppedCardEl.style.transition = 'transform 0.6s ease, left 0.6s ease, top 0.6s ease, bottom 0.6s ease';
+    poppedCardEl.style.transformOrigin = "center center";
+
+    if (spreadMode === 'single') {
+        poppedCardEl.style.left = "50%"; 
+        poppedCardEl.style.top = "50%";
+        poppedCardEl.style.bottom = "auto";
+        // 🌟 修正：補上 translateZ(0) 鎖定 3D 硬體高清渲染，防止放大 1.1 倍時邊緣朦朧
+        poppedCardEl.style.transform = `translate(-50%, -50%) rotate(0deg) scale(1) translateZ(0)`; 
+    } else {
+        if (isMobile) {
+            poppedCardEl.style.left = "80vw"; 
+            poppedCardEl.style.top = `${15 + (drawnIndex * 22)}vh`;
+            poppedCardEl.style.bottom = "auto";
+            // 🌟 修正：補上 translateZ(0) 防止縮小到 0.7 倍時次像素發虛
+            poppedCardEl.style.transform = `translate(-50%, -50%) rotate(0deg) scale(1) translateZ(0)`;
+        } else {
+            poppedCardEl.style.left = `${35 + (drawnIndex * 15)}vw`; 
+            poppedCardEl.style.top = "30vh";
+            poppedCardEl.style.bottom = "auto";
+            // 🌟 修正：同理，電腦版縮放也加入硬體鎖定
+            poppedCardEl.style.transform = `translate(-50%, -50%) rotate(0deg) scale(0.7) translateZ(0)`;
+        }
+    }
+
+    poppedCardEl = null;
+    updateCounterUI();
+
+    const requiredLimit = spreadMode === 'single' ? 1 : 3;
+    if (drawnCards.length >= requiredLimit) {
+        setTimeout(finalizeSelection, 500); 
+    }
+}
+
+// ==========================================
+// 🌟 輔助：鍵盤左右方向鍵的全局監聽器 (放全域即可)
+// ==========================================
+document.addEventListener('keydown', function(e) {
+    const spreadView = document.getElementById('spread-view');
+    if (!spreadView || window.getComputedStyle(spreadView).opacity !== '1') return;
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const availableCards = Array.from(document.querySelectorAll('#cards-container .card-wrap'))
+                                    .filter(el => !el.classList.contains('confirmed'));
+        
+        if (availableCards.length === 0) return;
+        let currentIndex = availableCards.indexOf(document.activeElement);
+        
+        if (e.key === 'ArrowRight') {
+            currentIndex = (currentIndex + 1) % availableCards.length;
+        } else if (e.key === 'ArrowLeft') {
+            currentIndex = (currentIndex - 1 + availableCards.length) % availableCards.length;
+        }
+
+        availableCards[currentIndex].focus(); // 會自動觸發上面綁定的 onfocus 並浮起
+        e.preventDefault();
+    }
+});
+
+function finalizeSelection() {
+    const totalCards = drawnCards.length;
+    const isMobile = window.innerWidth < 768;
+    window.isSelectionFinalized = true;
+
+    // --- 階段 0：隱藏多餘 UI (T = 0ms) ---
+    const counter = document.getElementById('draw-counter');
+    if (counter) counter.style.display = 'none';
+    const confirmBtn = document.getElementById('confirm-btn-float');
+    if (confirmBtn) {
+        confirmBtn.style.opacity = '0';
+        confirmBtn.style.pointerEvents = 'none'; 
+confirmBtn.classList.remove('show');
+        setTimeout(() => confirmBtn.style.display = 'none', 400); 
+    }
+
+// 🌟 清除當前的 Tab 焦點，並移除場上卡牌的 Tab 索引，防止外框殘留
+    if (document.activeElement) {
+        document.activeElement.blur(); 
+    }
+
+// 🌟 核心修正 1：瞬間封印所有「已選卡牌」的點擊神經！
+    // 確保在整個過場動畫期間，使用者無論怎麼戳螢幕，都不會喚醒任何多餘的按鈕或反應
+    drawnCards.forEach(drawn => {
+        drawn.elementDOM.style.setProperty('pointer-events', 'none', 'important');
+    });
+HistoryManager.save(drawnCards);
+    // --- 階段 1：未選卡牌退場離開 (T = 0ms, 耗時 500ms) ---
+    document.querySelectorAll('.card-wrap:not(.confirmed)').forEach(el => {
+        el.style.transition = 'opacity 0.5s ease-out, left 0.5s ease-in, bottom 0.5s ease-in, transform 0.5s ease-in'; 
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+        if (isMobile) {
+            el.style.left = '-50%'; el.style.transform = `${el.style.transform} translateX(-50vh) scale(0.8)`;
+        } else {
+            el.style.bottom = '5vh'; 
+	el.style.transform = `${el.style.transform} translateY(50vh) scale(0.8)`; el.style.left = '50%';
+        }
+    });
+
+    // --- 階段 2：安靜地預載入 SVG (T = 600ms) ---
+    // 👑 效能救星：等退場動畫結束、畫面完全靜止時，才把複雜的 SVG 塞入 DOM。
+    // 這能完美避免翻牌與移動時發生 DOM Reflow 導致的嚴重卡頓！
+    setTimeout(() => {
+        drawnCards.forEach((drawn) => {
+            const inner = drawn.elementDOM.querySelector('.card-inner'); 
+            if (!inner.querySelector('.liquid-cocoon-svg')) {
+                inner.insertAdjacentHTML('beforeend', liquidCocoonSVG);
+            }
+        });
+    }, 1000);
+
+    // --- 階段 3：已選卡牌來到中心 (T = 700ms, 耗時 600ms) ---
+    // 給予 100ms 緩衝後，卡牌才開始飛向螢幕正中央
+    setTimeout(() => {
+        drawnCards.forEach((drawn, i) => {
+            const el = drawn.elementDOM;
+            el.classList.remove('confirmed');
+            el.style.opacity = '1';
+            
+            el.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), left 0.6s cubic-bezier(0.25, 1, 0.5, 1), top 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+            
+            const centerOffsetX = (totalCards === 1) ? 0 : (i - (totalCards - 1) / 2) * (isMobile ? 110 : 160); 
+            
+            el.style.transformOrigin = "center center";
+            el.style.left = `calc(50% + ${centerOffsetX}px)`;
+            el.style.top = `50%`;
+            el.style.bottom = 'auto';
+            el.style.transform = `translate(-50%, -50%) rotate(0deg) scale(${totalCards === 1 ? 1.1 : 1})`; 
+        });
+    }, 700);
+
+// --- 階段 4：來到中心的已選卡牌進行翻牌 (T = 1400ms, 耗時 800ms) ---
+setTimeout(() => {
+    drawnCards.forEach((drawn) => {
+        const inner = drawn.elementDOM.querySelector('.card-inner'); 
+        
+        // 🌟 核心優化：開啟 will-change 應對即將到來的 3D 翻轉
+        if (inner) inner.style.willChange = 'transform'; 
+        
+        const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
+        inner.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        inner.style.transform = rotation;
+    });
+}, 1400);
+
+// --- 階段 5：翻牌後往上移動，並啟動特效 (T = 2400ms, 耗時 800ms) ---
+setTimeout(() => {
+    const isMobile = window.innerWidth < 768;
+    const totalCards = drawnCards.length;
+
+    const metrics = getLayoutMetrics(totalCards, 0);
+    const startX = 50 - ((totalCards - 1) * metrics.gap / 2);
+
+    drawnCards.forEach((drawn, i) => { 
+        const el = drawn.elementDOM;
+        
+        const svg = el.querySelector('.liquid-cocoon-svg');
+        if (svg) svg.classList.add('run-cocoon');
+
+        el.style.setProperty('transition', 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), left 0.8s cubic-bezier(0.25, 1, 0.5, 1), top 0.8s cubic-bezier(0.25, 1, 0.5, 1)', 'important');
+        
+        const inner = el.querySelector('.card-inner');
+        if (inner) {
+            inner.style.transition = ''; 
+            // 🌟 核心優化：完全刪除 will-change 屬性，而不是設為 'auto'，這會逼手機重繪高清原圖！
+            inner.style.removeProperty('will-change'); 
+        }
+
+        let leftPos = `${startX + (i * metrics.gap)}%`;
+        const baseScale = metrics.scale;
+            
+        el.style.left = leftPos;
+        el.style.top = isMobile ? '8%' : '12%';
+        
+        // 🌟 核心優化：為外層框架也補上 translateZ(0)，防止 scale 放大時造成次像素模糊
+        el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${baseScale}) translateZ(0)`;
+
+        setTimeout(() => {
+            el.classList.add('ready-to-glow');
+            el.style.removeProperty('transition');
+            el.style.removeProperty('pointer-events');
+            
+            // 🌟 額外保險：此時卡牌已完全定位且翻牌完畢，再次確保 inner 的 will-change 被拔乾淨
+            if (inner) inner.style.removeProperty('will-change');
+        }, 800); 
+    });
+}, 2400);
+
+    // --- 階段 6：Result Panel 出現 (T = 3300ms) ---
+    // 卡牌完全定位後 (2400+800=3200)，下方的結果面板才優雅滑出
+    setTimeout(() => {
+        generateReport();
+    }, 3300);
+}
+
+function generateReport(isHistoryView = false) {
+    try {
+        const panel = document.getElementById('result-panel');
+        const content = document.getElementById('report-content');
+        const adviceSection = document.getElementById('advice-section');
+        const adviceContent = document.getElementById('advice-content');
+        const qStr = document.getElementById('q-input').value.trim();
+        
+        document.getElementById('report-question').innerText = qStr ? `你的提問：${qStr}` : `占卜範疇：${currentCategory}`;
+
+        let html = '';
+        const isTriple = spreadMode === 'triple';
+        
+        const tripleLabels = (isRelationship && (currentCategory === '愛情' || currentCategory === '親友')) 
+            ? [{label: '我的看法', key: 'my_view'}, {label: '對方的看法', key: 'their_view'}, {label: '現況', key: 'current_status'}]
+            : [{label: '過去', key: 'past'}, {label: '現在', key: 'present'}, {label: '未來', key: 'future'}];
+
+        // 🌟 核心修改：將主牌與建議牌分開，防止破壞三牌陣排版
+        const mainCards = drawnCards.filter(c => !c.isAdvice);
+        const adviceCard = drawnCards.find(c => c.isAdvice);
+
+        mainCards.forEach((card, i) => {
+            let stateData = card.isReversed ? card.reversed : card.upright;
+            if (!stateData) stateData = card.upright; 
+            
+            let posLabel = '核心指引';
+            let meaningText = stateData.general_meaning || '牌義正在連結中...';
+
+            if (isTriple) {
+                posLabel = tripleLabels[i].label;
+                if (stateData.spread_meanings && stateData.spread_meanings[tripleLabels[i].key]) {
+                    meaningText = stateData.spread_meanings[tripleLabels[i].key];
+                }
+            } else {
+                if (isRelationship && (currentCategory === '愛情' || currentCategory === '親友')) {
+                    meaningText = stateData.advice || meaningText;
+                    posLabel = '關係建議'; 
+                }
+            }
+
+            const kwStr = (stateData.keywords && Array.isArray(stateData.keywords)) ? stateData.keywords.join(' / ') : '';
+
+            html += `
+                <div class="result-block">
+                    <div class="res-position">${posLabel}</div>
+                    <div class="res-title">${card.name} ${card.isReversed ? '(逆位)' : '(正位)'}</div>
+                    <div class="res-position" style="color:var(--text-color); opacity:0.6;">Keywords: ${kwStr}</div>
+                    <div class="res-text">${meaningText}</div>
+                </div>
+            `;
+        });
+
+        content.innerHTML = isTriple ? `<div class="report-layout-triple">${html}</div>` : html;
+        panel.classList.add('active');
+
+        // 🌟 核心修改：判斷是否為歷史模式，智慧切換按鈕與內容
+        if (isHistoryView) {
+            if (adviceSection) adviceSection.style.display = 'none'; // 歷史紀錄隱藏抽取按鈕
+            
+            if (adviceCard && adviceContent) {
+                // 如果歷史紀錄中有建議牌，直接寫入建議內容並顯示
+                adviceContent.innerHTML = `
+                    <div class="result-block" style="border-color: var(--text-color); padding-left: 20px;">
+                        <div class="res-position" style="color: var(--text-color);">追加建議</div>
+                        <div class="res-title">${adviceCard.name} ${adviceCard.isReversed ? '(逆位)' : '(正位)'}</div>
+                        <div class="res-text"><strong>建議：</strong>${adviceCard.adviceText || '跟隨內心的指引。'}</div>
+                    </div>
+                `;
+                adviceContent.style.opacity = '1';
+                adviceContent.style.animation = 'none'; // 歷史紀錄直接顯示，不需動畫
+            } else if (adviceContent) {
+                adviceContent.innerHTML = ''; // 若無建議牌則清空
+            }
+        } else {
+            if (adviceSection) adviceSection.style.display = 'block'; // 正常新占卜，開放追問按鈕
+            if (adviceContent) adviceContent.innerHTML = ''; // 清空先前的建議
+        }
+        
+    const confirmBtn = document.getElementById('confirm-btn-float');
+    if (confirmBtn) {
+        confirmBtn.style.opacity = '0';
+        confirmBtn.style.pointerEvents = 'none'; 
+        setTimeout(() => confirmBtn.style.display = 'none', 200); 
+    }
+
+        if (document.getElementById('retry-btn')) {
+            document.getElementById('retry-btn').style.display = 'none';
+        }
+    } catch (error) {
+        console.error("生成報告時發生錯誤：", error);
+        if (document.getElementById('retry-btn')) document.getElementById('retry-btn').style.display = 'block';
+    }
+}
+
+
+// 眼神對視與交互偵測系統
+function analyzeInteractions(results) {
+    if (results.length < 3) return;
+
+    const leftCard = results[0];
+    const centerCard = results[1];
+    const rightCard = results[2];
+
+    let interactionTitle = "";
+    let interactionTeaser = "";
+    let hasInteraction = false;
+
+    // 狀況 A：左邊與中間對視 (左卡看右 right，中間卡看左 left)
+    if (leftCard.gaze === "right" && centerCard.gaze === "left"&& rightCard.gaze !== "left") {
+        hasInteraction = true;
+        interactionTitle = `「命運的交織：${leftCard.name} ✕ ${centerCard.name}」`;
+        interactionTeaser = `這兩張牌的眼神在你的潛意識深處交會。${leftCard.name}正注視著${centerCard.name}的核心秘密，這暗示著你問的問題中，過去的某個隱蔽動機正在`;
+    }
+    // 狀況 B：中間與右邊對視 (中卡看右 right，右卡看左 left)
+    else if (leftCard.gaze !== "right" && centerCard.gaze === "right" && rightCard.gaze === "left") {
+        hasInteraction = true;
+        interactionTitle = `「未來的凝視：${centerCard.name} ✕ ${rightCard.name}」`;
+        interactionTeaser = `當前的${centerCard.name}正凝視著未來。這意味著你當下做出的任何選擇，都將`;
+    }
+    // 狀況 C：左右兩張牌跨越中間對視 (左卡看右 right，右卡看左 left，中間非直視)
+    else if (leftCard.gaze === "right" && rightCard.gaze === "left") {
+        hasInteraction = true;
+        interactionTitle = `「跨越時空的共鳴：${leftCard.name} ✕ ${rightCard.name}」`;
+        interactionTeaser = `過去與未來正在注視現在...`;
+    }
+    // 狀況 D：三張牌全部直視前方
+    else if (leftCard.gaze === "forward" && centerCard.gaze === "forward" && rightCard.gaze === "forward") {
+        hasInteraction = true;
+        interactionTitle = `「靈魂三相直視陣」`;
+        interactionTeaser = `三張牌的孫孫同時直視著你。此刻你要高度覺察`;
+    }
+
+    // 如果觸發特殊交互，則顯示神祕泡泡
+    if (hasInteraction) {
+        showInteractionBubble(interactionTitle, interactionTeaser);
+    }
+}
+
+// 2. 延遲注入文本，並讓金點側邊欄率先登場
+function prepareInteractionBubble(title, teaser) {
+    document.getElementById('bubble-title-target').innerText = title;
+    document.getElementById('bubble-text-target').innerText = teaser + "…… (詳細解讀待解鎖)";
+    
+    // 延遲 1.8 秒：等用戶看完了解牌面板（result-panel）的初步動畫後，小金點才悄悄滑入
+    setTimeout(() => {
+        document.getElementById('bubble-orbit-trigger').classList.add('ready');
+    }, 1800);
+}
+
+// 3. 控制側邊欄面板滑出與縮回
+function toggleBubble(open) {
+    const bubble = document.getElementById('interaction-bubble');
+    const trigger = document.getElementById('bubble-orbit-trigger');
+    
+    if (open) {
+        bubble.classList.add('show');
+        trigger.style.opacity = '0'; // 打開面板時，金點暫時隱藏
+    } else {
+        bubble.classList.remove('show');
+        trigger.style.opacity = '1'; // 收起面板時，金點恢復呼吸
+    }
+}
+
+// 4. 跳轉Google
+function redirectToPaywall() {
+    const targetUrl = "https://forms.gle/qsQig5t8JX99XRjd8";
+    window.open(targetUrl, '_blank');
+}
+
+
+ 
+function relayoutCards(transitionStyle = 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), left 0.8s cubic-bezier(0.25, 1, 0.5, 1), top 0.8s cubic-bezier(0.25, 1, 0.5, 1)') {
+    const totalCards = drawnCards.length;
+    if (totalCards === 0) return;
+
+    const isMobile = window.innerWidth < 768;
+    // 取得基礎狀態 (progress = 0)
+    const metrics = getLayoutMetrics(totalCards, 0); 
+    const startX = 50 - ((totalCards - 1) * metrics.gap / 2);
+
+    drawnCards.forEach((drawn, i) => {
+        const el = drawn.elementDOM;
+        const leftPos = `${startX + (i * metrics.gap)}%`;
+
+        el.style.transition = transitionStyle;
+        el.style.left = leftPos;
+        el.style.top = isMobile ? '8%' : '12%';
+        el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${metrics.scale})`;
+
+        setTimeout(() => {
+            el.style.transition = '';
+        }, parseFloat(transitionStyle.match(/[\d.]+s/)[0]) * 1000 + 50);
+    });
+}
+
+
+
+
+function drawAdvice() {
+    document.getElementById('advice-section').style.display = 'none'; 
+    
+    const usedIds = drawnCards.map(c => c.id);
+    const remaining = tarotData.filter(c => !usedIds.includes(c.id));
+    if (remaining.length === 0) return;
+
+    // 抽出追加建議牌
+    const advCard = remaining[Math.floor(Math.random() * remaining.length)];
+    const isReversed = Math.random() > 0.5;
+    let stateData = isReversed ? advCard.reversed : advCard.upright;
+    if (!stateData) stateData = advCard.upright; 
+
+    const container = document.getElementById('cards-container');
+    const wrapper = document.createElement('div');
+    
+    wrapper.className = 'card-wrap'; 
+    if (advCard.element) wrapper.classList.add(`element-${advCard.element.toLowerCase()}`);
+    
+    wrapper.style.left = '120%';
+    wrapper.style.top = window.innerWidth < 768 ? '8%' : '12%';
+    wrapper.style.transform = 'translate(-50%, 0) scale(0.5)';
+    wrapper.style.opacity = '0';
+    
+    const imgTag = `<img src="tarot-cards/${advCard.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0);-webkit-transform:scale(1.05) translate3d(0,0,0);" draggable="false">`;
+    
+    // 🌟 完美救出：將 liquidCocoonSVG 移出 card-front，放到 card-inner 根層級，防止溢出被裁剪
+    wrapper.innerHTML = `
+        <div class="card-inner" style="transform: ${isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)'}">
+            <div class="card-face card-back"></div>
+            <div class="card-face card-front">
+                ${imgTag}
+            </div>
+            ${typeof liquidCocoonSVG !== 'undefined' ? liquidCocoonSVG : ''}
+        </div>
+    `;
+    
+    container.appendChild(wrapper);
+
+    drawnCards.push({ 
+        ...advCard, 
+        isReversed, 
+        elementDOM: wrapper, 
+        isAdvice: true, 
+        adviceText: stateData.advice 
+    });
+
+    HistoryManager.saveAdviceToCurrentRecord(advCard, stateData.advice);
+
+    const olderCards = drawnCards.slice(0, -1);
+    olderCards.forEach(c => c.elementDOM.classList.remove('ready-to-glow'));
+
+    setTimeout(() => {
+        // 🌟 點火時機：在滑入動畫開始時為 SVG 注入 cocoon
+        const svg = wrapper.querySelector('.liquid-cocoon-svg');
+        if (svg) svg.classList.add('run-cocoon');
+        
+        wrapper.style.opacity = '1';
+        relayoutCards();
+        
+        setTimeout(() => {
+            drawnCards.forEach(c => c.elementDOM.classList.add('ready-to-glow'));
+        }, 900);
+    }, 50);
+
+
+    // ==========================================
+    // 👑 階段 2：寫入面板的解說文字
+    // ==========================================
+    const html = `
+        <div class="result-block" style="border-color: var(--text-color); padding-left: 20px;">
+            <div class="res-position" style="color: var(--text-color);">追加建議</div>
+            <div class="res-title">${advCard.name} ${isReversed ? '(逆位)' : '(正位)'}</div>
+            <div class="res-text"><strong>建議：</strong>${stateData.advice || '跟隨內心的指引。'}</div>
+        </div>
+    `;
+    
+    const target = document.getElementById('advice-content');
+    if(target) {
+        target.innerHTML = html;
+        target.style.opacity = '0';
+        target.style.animation = 'fadeIn 1s ease forwards';
+    }
+}
+
+
+function restartApp() {
+    // 👑 【核心修復】安全地重置結果面板
+    const resultPanel = document.getElementById('result-panel');
+    if (resultPanel) {
+        resultPanel.classList.remove('active');
+        resultPanel.classList.remove('show');
+        
+        // 🚀【關鍵行】：不寫死 100%，而是直接「清空」行內樣式！
+        // 這樣它既能退場，下一次占卜翻牌時，CSS 的 .active 才能成功再次把它拉起來！
+        resultPanel.style.transform = ''; 
+    }
+
+window.isSelectionFinalized = false;
+
+    // 移除按鈕的 3 秒擴展排版類別
+    const resultActions = document.querySelector('.result-actions');
+    if (resultActions) {
+        resultActions.classList.remove('expanded');
+    }
+
+    // 安全重置動畫防線旗標（加上 typeof 檢查，絕對不報錯）
+    if (typeof hasTriggeredCartAnimation !== 'undefined') {
+        hasTriggeredCartAnimation = false;
+    }
+
+   document.getElementById('spread-view').style.opacity = '0';
+    document.getElementById('retry-btn').style.display = 'none';
+    
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) saveBtn.style.display = 'flex'; 
+
+    const confirmBtn = document.getElementById('confirm-btn-float');
+    if (confirmBtn) {
+        confirmBtn.style.opacity = '0';
+        confirmBtn.style.display = 'none';
+        confirmBtn.style.pointerEvents = 'none'; 
+    }
+    window.isLanternActive = true;
+    setTimeout(() => {
+        document.getElementById('spread-view').style.display = 'none';
+        document.getElementById('cards-container').innerHTML = '';
+        if(document.getElementById('advice-content')) document.getElementById('advice-content').innerHTML = '';
+        document.getElementById('advice-section').style.display = 'none';
+        
+        // 🌟【完美回歸 CSS】完全清空檢視歷史時可能殘留的行內隱藏樣式
+        // 這樣一來，它就能無干擾地套用你原本寫在 CSS 裡的 1.2s 漸變
+        const homeTitle = document.getElementById('home-title') || document.querySelector('.home-title');
+        if (homeTitle) {
+            homeTitle.style.display = '';    
+            homeTitle.style.opacity = '';    
+            homeTitle.style.transform = '';  
+            homeTitle.style.transition = ''; // 徹底釋放 JS 控制，擁抱 CSS 1.2s 
+        }
+
+        const main = document.getElementById('main-page');
+        if (main) {
+            main.style.display = 'flex';
+            main.style.opacity = '0';
+            main.style.transform = ''; 
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    // 🌟 注入這個類別，觸發你原本的 CSS 1.2s opacity/visibility 動畫
+                    document.body.classList.add('show-home-title');
+                    main.style.opacity = '1';
+                });
+            });
+        }
+    }, 900);
+}
+
+// 輔助函式維持不變
+function drawQRCodeToCanvas(ctx, x, y, dark, light) {
+    // 必須 return 一個 Promise
+    return new Promise((resolve, reject) => { 
+        const qrDiv = document.createElement('div');
+        new QRCode(qrDiv, {
+            text: "https://grafittiii-hub.github.io/MascotTarot/",
+            width: 80,
+            height: 80,
+            colorDark: dark,
+            colorLight: light
+        });
+
+        const checkQR = setInterval(() => {
+            const qrImg = qrDiv.querySelector('img');
+            if (qrImg && qrImg.src) {
+                clearInterval(checkQR);
+                ctx.drawImage(qrImg, x, y, 80, 80);
+                
+                // 現在 resolve 已經在 Promise 參數中定義了
+                resolve(); 
+            }
+        }, 50);
+
+        // 可選：加上超時保護，避免死循環
+        setTimeout(() => {
+            clearInterval(checkQR);
+            resolve(); // 即使失敗也 resolve，避免 exportImage 卡死
+        }, 3000);
+    });
+}
+
+async function exportImage() {
+    await document.fonts.load("1em 'Noto Serif TC'");
+    const saveBtn = document.getElementById('save-btn');
+    if (!saveBtn) return; 
+    
+    const originalText = saveBtn.innerText;
+    saveBtn.innerText = "SAVING...";
+    
+    try {
+        // 1. 取得顏色系統
+        const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
+        const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--gold-primary').trim();
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+
+        // 2. 擷取文字內容
+        const qText = document.getElementById('report-question').innerText;
+        const blocks = document.querySelectorAll('#result-panel .result-block');
+        const parsedBlocks = Array.from(blocks).map(block => {
+            const allPosEls = block.querySelectorAll('.res-position');
+            const pos = allPosEls[0] ? allPosEls[0].innerText : '';
+            const kws = allPosEls.length > 1 ? allPosEls[1].innerText : '';
+            const title = block.querySelector('.res-title') ? block.querySelector('.res-title').innerText : '';
+            const text = block.querySelector('.res-text') ? block.querySelector('.res-text').innerText : '';
+            return { pos, title, kws, text };
+        });
+
+        // 3. 畫布參數設定
+        const finalWidth = 1080;
+        const contentWidth = 920; 
+        const marginX = (finalWidth - contentWidth) / 2;
+        const cardW = 120;  // 稍微加大卡牌尺寸更有氣勢
+        const cardH = 192;  
+        const cardGap = 40;
+        const headerSpace = 200; 
+
+        // 4. 動態高度計算引擎
+        const tempCanvas = document.createElement('canvas');
+        const dCtx = tempCanvas.getContext('2d');
+        
+        function measureWrappedText(ctx, text, maxWidth, lineHeight) {
+            if (!text) return 0;
+            const paragraphs = text.split('\n');
+            let totalHeight = 0;
+            for (let p of paragraphs) {
+                let currentLine = '';
+                for (let char of p) {
+                    const testLine = currentLine + char;
+                    if (ctx.measureText(testLine).width > maxWidth && currentLine !== '') {
+                        totalHeight += lineHeight;
+                        currentLine = char;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                totalHeight += lineHeight;
+            }
+            return totalHeight;
+        }
+
+        let totalContentHeight = headerSpace + (drawnCards.length > 0 ? cardH + 100 : 0);
+        dCtx.font = "26px 'Georgia', 'Noto Serif TC', serif";
+        totalContentHeight += measureWrappedText(dCtx, qText, contentWidth, 40) + 60;
+
+        parsedBlocks.forEach(b => {
+            totalContentHeight += 40; // padding
+            if (b.pos) totalContentHeight += 35;
+            if (b.title) totalContentHeight += 60;
+            if (b.kws) totalContentHeight += 35;
+            if (b.text) {
+                dCtx.font = "28px serif";
+                totalContentHeight += measureWrappedText(dCtx, b.text, contentWidth - 40, 48);
+            }
+            totalContentHeight += 60; 
+        });
+
+        const finalHeight = totalContentHeight + 200;
+
+        // 5. 正式開始繪製
+        const canvas = document.createElement('canvas');
+        canvas.width = finalWidth;
+        canvas.height = finalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = "top";
+        
+        // 背景
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 標題
+        ctx.fillStyle = goldColor;
+        ctx.font = "bold 40px 'Georgia', 'Noto Serif TC', serif";
+        ctx.textAlign = "center"; ctx.letterSpacing = "3px";
+        ctx.fillText("孫孫暉日塔羅 MASCOT TAROT", canvas.width / 2, 80);
+
+        // 繪製卡牌 (包含正逆位邏輯)
+        if (drawnCards && drawnCards.length > 0) {
+            const totalCardsWidth = (drawnCards.length * cardW) + ((drawnCards.length - 1) * cardGap);
+            const startX = (canvas.width - totalCardsWidth) / 2;
+
+            drawnCards.forEach((card, i) => {
+                const imgEl = card.elementDOM.querySelector('.card-front img');
+                if (imgEl) {
+                    ctx.save();
+                    const centerX = startX + i * (cardW + cardGap) + cardW / 2;
+                    const centerY = headerSpace + cardH / 2;
+                    ctx.translate(centerX, centerY);
+
+                    if (card.isReversed) ctx.rotate(Math.PI);
+
+                    // 模擬 Object-fit: cover 與 Scale(1.05)
+                    const sScale = 1.05;
+                    const imgW = imgEl.naturalWidth;
+                    const imgH = imgEl.naturalHeight;
+                    const targetAspect = cardW / cardH;
+                    let sW, sH, sx, sy;
+
+                    if ((imgW / imgH) > targetAspect) {
+                        sH = imgH / sScale;
+                        sW = sH * targetAspect;
+                    } else {
+                        sW = imgW / sScale;
+                        sH = sW / targetAspect;
+                    }
+                    sx = (imgW - sW) * 0.52; // 依照你 CSS 的 52% 偏移
+                    sy = (imgH - sH) * 0.50;
+
+                    ctx.drawImage(imgEl, sx, sy, sW, sH, -cardW/2, -cardH/2, cardW, cardH);
+                    ctx.restore();
+                }
+            });
+        }
+
+        // 6. 繪製報告文字
+        let drawY = headerSpace + (drawnCards.length > 0 ? cardH + 80 : 0);
+        ctx.textAlign = "left"; 
+        
+        // 問題內容
+        ctx.fillStyle = textColor;
+        ctx.globalAlpha = 0.5;
+        ctx.font = "26px 'Georgia', 'Noto Serif TC', serif";
+        function drawText(txt, x, y, maxWidth, lineHeight) {
+            ctx.font = "20px 'Georgia', 'Noto Serif TC', serif";
+            const paragraphs = txt.split('\n');
+            let currentY = y;
+            for (let p of paragraphs) {
+                let line = '';
+                for (let char of p) {
+                    const test = line + char;
+                    if (ctx.measureText(test).width > maxWidth) {
+                        ctx.fillText(line, x, currentY);
+                        currentY += lineHeight;
+                        line = char;
+                    } else {
+                        line = test;
+                    }
+                }
+                ctx.fillText(line, x, currentY);
+                currentY += lineHeight;
+            }
+            return currentY - y;
+        }
+
+        drawY += drawText(qText, marginX, drawY, contentWidth, 40) + 40;
+        ctx.globalAlpha = 1.0;
+
+        // 解牌區塊
+        parsedBlocks.forEach(b => {
+            const blockStartY = drawY;
+            drawY += 20;
+            const textX = marginX + 30;
+
+            if (b.pos) {
+                ctx.fillStyle = goldColor;
+                ctx.font = "22px 'Georgia', 'Noto Serif TC', serif";ctx.letterSpacing = "3px";
+                ctx.fillText(b.pos, textX, drawY);
+                drawY += 50;
+            }
+            if (b.title) {
+                ctx.fillStyle = textColor;
+                ctx.font = "36px 'Georgia', 'Noto Serif TC', serif";ctx.letterSpacing = "3px";
+                ctx.fillText(b.title, textX, drawY);
+                drawY += 60;
+            }
+            if (b.kws) {
+                ctx.fillStyle = textColor;
+                ctx.globalAlpha = 0.6;
+                ctx.font = "22px 'Georgia', 'Noto Serif TC', serif";
+                ctx.letterSpacing = "3px";
+                ctx.fillText(b.kws, textX, drawY);
+                drawY += 40;
+                ctx.globalAlpha = 1.0;
+            }
+            if (b.text) {
+                ctx.fillStyle = textColor;
+                ctx.font = "28px 'Georgia', 'Noto Serif TC', serif";ctx.letterSpacing = "2px";
+                drawY += drawText(b.text, textX, drawY, contentWidth - 40, 48);
+            }
+
+            // 金色左裝飾線
+            ctx.fillStyle = goldColor;
+            ctx.fillRect(marginX, blockStartY + 20, 4, drawY - blockStartY - 10);
+            drawY += 50;
+        });
+
+// 7. Footer 與 QR Code
+        ctx.textAlign = "center";
+        ctx.fillStyle = textColor;
+        ctx.globalAlpha = 0.5;
+        ctx.font = "14px 'Georgia', 'Noto Serif TC', serif"; 
+        ctx.letterSpacing = "2px";
+        ctx.fillText("Copyright© 2026 Grafittiii | Mascot Tarot", canvas.width / 2, finalHeight - 50);
+        
+        // 呼叫 QR Code 繪製並等待完成
+        await drawQRCodeToCanvas(ctx, canvas.width - 150, finalHeight - 150, goldColor, bgColor);
+
+        // 獲取並格式化西曆時間 (YYYYMMDDHHmm)
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+
+        // 下載圖片
+        setTimeout(() => {
+            const link = document.createElement('a');
+            const categoryName = typeof currentCategory !== 'undefined' ? currentCategory : 'Tarot';
+            link.download = `MascotTarot_${categoryName}_${timeStr}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            saveBtn.innerText = originalText;
+        }, 600);
+
+    } catch (err) {
+        console.error("下載失敗:", err);
+        saveBtn.innerText = "ERROR";
+    }
+}
+
+
+// 預設密鑰 (你可以設定一個固定的密鑰)
+const UNLOCK_KEY = "SUN26"; 
+
+function canPerformReading() {
+    // 1. 檢查是否已使用密鑰解鎖
+    if (localStorage.getItem('isUnlocked') === 'true') return true;
+
+    const today = new Date().toISOString().split('T')[0];
+    let dailyData = JSON.parse(localStorage.getItem('readingData')) || { date: today, count: 0 };
+
+    // 2. 如果日期變了，重置計數
+    if (dailyData.date !== today) {
+        dailyData = { date: today, count: 0 };
+    }
+
+    // 3. 檢查次數
+    if (dailyData.count >= 2) {
+        return false;
+    }
+
+    return true;
+}
+
+function incrementReading() {
+    if (localStorage.getItem('isUnlocked') === 'true') return;
+
+    const today = new Date().toISOString().split('T')[0];
+    let dailyData = JSON.parse(localStorage.getItem('readingData')) || { date: today, count: 0 };
+    dailyData.count++;
+    localStorage.setItem('readingData', JSON.stringify(dailyData));
+}
+
+// 解鎖功能
+function checkUnlockKey(inputKey) {
+    if (inputKey === UNLOCK_KEY) {
+        localStorage.setItem('isUnlocked', 'true');
+        alert("已解鎖今日無限次數！");
+        return true;
+    }
+    alert("密鑰錯誤");
+    return false;
+}
+
+// ==========================================
+// 自動偵測進入 Result Panel 3秒後擴展按鈕邏輯
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const resultPanel = document.getElementById('result-panel');
+    const resultActions = document.getElementById('result-actions');
+    
+    if (!resultPanel || !resultActions) return;
+
+    let hasTriggeredCartAnimation = false; // 確保「第一次進入」才生效的防線旗標
+
+    // 建立一個高效率的網頁變動觀察器
+    const panelObserver = new MutationObserver((mutations) => {
+        if (hasTriggeredCartAnimation) return; // 如果已經觸發過，直接攔截不重複執行
+
+        // 檢查 #result-panel 是否脫離了隱藏狀態 (例如從 translateY(100%) 變成了 0，或者擁有了某個顯示的 class)
+        // 這裡透過讀取瀏覽器計算後的真實位置來判定面板是否「浮上來現身」
+        const computedStyle = window.getComputedStyle(resultPanel);
+        const transformMatrix = computedStyle.transform;
+
+        // 當 transform 不是 none 且不是完全沉在底下的 100% 時，代表使用者進入了面板
+        // 或者如果你的開啟機制是靠增加 class，也可以直接檢查：resultPanel.classList.contains('你的顯示Class')
+        if (transformMatrix !== 'none' && !transformMatrix.includes('100%') || resultPanel.style.transform === 'translateY(0px)' || resultPanel.style.transform === 'translateY(0)') {
+            
+            hasTriggeredCartAnimation = true; // 鎖定防線，避免後續上下滑動面板重複觸發
+            
+            // ⏳ 精準倒數 3000 毫秒（3 秒）
+            setTimeout(() => {
+                // 為父容器注入 .expanded 類別，全面啟動 CSS 3:4:3 華麗推移
+                resultActions.classList.add('expanded');
+            }, 3000);
+
+            // 功成身退，關閉觀察器節省系統記憶體
+            panelObserver.disconnect();
+        }
+    });
+
+    // 啟動監聽：密切注意面板的 class 與 style 屬性變化
+    panelObserver.observe(resultPanel, { attributes: true, attributeFilter: ['style', 'class'] });
+});
+
+console.log("%c停！別看我的code了，需要抽牌定制的就來找我吧！", "color: blue; font-size: 15px; font-weight: bold;");
+
+// 🌟 統一彈窗開關邏輯 (適用於「占卜須知」與「次數限制」)
+function openNotice() {
+    const modal = document.getElementById('notice-modal');
+    modal.style.display = 'flex'; 
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modal.classList.add('is-visible');
+        });
+    });
+}
+
+function closeNotice() {
+    const modal = document.getElementById('notice-modal');
+    modal.classList.remove('is-visible');
+    // 等待 0.4s 動畫結束後，才徹底隱藏
+    setTimeout(() => modal.style.display = 'none', 400);
+}
+
+function handleUnlock() {
+    const input = document.getElementById('unlock-input').value;
+    if (checkUnlockKey(input)) {
+        const limitModal = document.getElementById('limit-modal');
+        // 解鎖成功後，同樣播放優雅的關閉動畫
+        limitModal.classList.remove('is-visible');
+        setTimeout(() => {
+            limitModal.style.display = 'none';
+            // 清空輸入框準備下次使用
+            document.getElementById('unlock-input').value = ''; 
+        }, 400);
+    }
+}
+// ==========================================
+// 📜 歷史紀錄管理器 (不遺漏任何原本資訊，完美修復語法錯誤)
+// ==========================================
+// 🌟 1. 全域變數：追蹤當前正在進行的占卜 ID
+let currentReadingSessionId = null;
+
+// 🌟 2. 終極統合版：歷史紀錄管理器
+const HistoryManager = {
+    // 儲存主牌陣
+    save(cards) {
+        if (!cards || cards.length === 0) return;
+        const history = this.getAll();
+        
+        const qStr = document.getElementById('q-input') ? document.getElementById('q-input').value.trim() : '';
+        const cat = typeof currentCategory !== 'undefined' ? currentCategory : '其他';
+        const isRel = document.getElementById('is-relation') ? document.getElementById('is-relation').checked : false;
+        const mode = typeof spreadMode !== 'undefined' ? spreadMode : 'single';
+
+        // 建立唯一識別碼並賦予全域變數
+        currentReadingSessionId = 'tarot_' + Date.now(); 
+
+        const newRecord = {
+            id: currentReadingSessionId,
+            timestamp: new Date().toISOString(),
+            category: cat,
+            query: qStr,
+            isRelationship: isRel,
+            spreadMode: mode,
+            cards: cards.map(c => ({
+                id: c.id,
+                name: c.name,
+                isReversed: c.isReversed,
+                upright: c.upright,
+                reversed: c.reversed,
+                gaze: c.gaze
+            })),
+            hasAdvice: false,
+            adviceData: null
+        };
+        history.unshift(newRecord);
+        localStorage.setItem('tarot_history_data', JSON.stringify(history));
+    },
+
+    // 完美合併：儲存追加建議牌到當前紀錄
+    saveAdviceToCurrentRecord(adviceCard, adviceText) {
+        if (!currentReadingSessionId) return; 
+
+        let history = this.getAll();
+        const recordIndex = history.findIndex(r => r.id === currentReadingSessionId);
+        
+        if (recordIndex !== -1) {
+            history[recordIndex].hasAdvice = true;
+            history[recordIndex].adviceData = {
+                card: {
+                    id: adviceCard.id,
+                    name: adviceCard.name,
+                    isReversed: adviceCard.isReversed,
+                    element: adviceCard.element
+                },
+                text: adviceText
+            };
+            localStorage.setItem('tarot_history_data', JSON.stringify(history));
+        }
+    },
+
+    getAll() {
+        return JSON.parse(localStorage.getItem('tarot_history_data') || '[]');
+    },
+
+    formatDate(isoString) {
+        const date = new Date(isoString);
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const mm = String(date.getMinutes()).padStart(2, '0');
+        return `${y}/${m}/${d} ${hh}:${mm}`;
+    }
+};
+
+
+// 開啟歷史記錄彈窗
+// 修正後的開啟歷史紀錄彈窗
+function openHistoryModal() {
+window.isLanternActive = false;
+    const modal = document.getElementById('history-modal');
+    
+    // 確保狀態乾淨，先移除舊的監聽器防止重複綁定
+    modal.removeEventListener('keydown', trapFocus);
+    
+    modal.classList.add('active');
+    
+    // 聚焦第一個可交互元素
+    const firstFocusable = modal.querySelector('button, [tabindex="0"]');
+    if (firstFocusable) firstFocusable.focus();
+
+    // 監聽彈窗內的 Tab 鍵 (焦點陷阱)
+    modal.addEventListener('keydown', trapFocus);
+    
+    const listDiv = document.getElementById('history-list');
+    const records = HistoryManager.getAll();
+    
+    listDiv.innerHTML = records.length ? '' : '<p>尚無記錄</p>';
+    
+    records.forEach(rec => {
+        const item = document.createElement('button'); 
+        item.className = 'history-item-card';
+        item.setAttribute('type', 'button'); // 🌟 強制指定為普通按鈕，防止觸發任何表單預設重新整理行為
+        item.setAttribute('aria-label', `查看於 ${HistoryManager.formatDate(rec.timestamp)} 的占卜紀錄，問題為：${rec.query || '無'}`);
+        item.setAttribute('tabindex', '0');
+
+        // 🌟 點擊事件：先解除焦點鎖定，再還原畫面
+        item.onclick = (e) => {
+            e.preventDefault();
+            // 點擊瞬間立刻解鎖焦點，防止 trapFocus 卡死新畫面
+            const modalEl = document.getElementById('history-modal');
+            if (modalEl) modalEl.removeEventListener('keydown', trapFocus);
+            
+            restoreHistoryView(rec.id);
+        };
+
+        // 鍵盤 Enter 鍵事件
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const modalEl = document.getElementById('history-modal');
+                if (modalEl) modalEl.removeEventListener('keydown', trapFocus);
+                
+                restoreHistoryView(rec.id);
+            }
+        });
+        
+        let adviceBadge = '';
+        let adviceCardName = '';
+        if (rec.hasAdvice && rec.adviceData && rec.adviceData.card) {
+            adviceBadge = `<span class="badge-advice">✤ 建議</span>`;
+            adviceCardName = ` ➔ [${rec.adviceData.card.name}${rec.adviceData.card.isReversed ? '↓':'↑'}]`;
+        }
+        
+        const modeLabel = rec.spreadMode === 'triple' ? '三牌陣' : '單牌指引';
+        const cardNames = rec.cards.map(c => `${c.name}${c.isReversed ? '↓':'↑'}`).join('、');
+
+        // 🌟 小技巧：將內部 div 改為 span 或加上 pointer-events: none，確保點擊目標絕對是外層 button
+        item.innerHTML = `
+            <div class="history-item-header" style="pointer-events: none;">
+                <span class="history-badge-cat">${rec.category}</span>
+                <span class="history-item-mode">${modeLabel}</span>
+            </div>
+            <div class="history-item-query" style="pointer-events: none;">${rec.query ? `「${rec.query}」` : '無填寫問題'}</div>
+            <div class="history-item-cards-line" style="pointer-events: none;">${cardNames}<span style="color: var(--gold-primary); font-size:0.9em;">${adviceCardName}</span> ${adviceBadge}</div>
+            <div class="history-item-footer-time" style="pointer-events: none;">🕒 ${HistoryManager.formatDate(rec.timestamp)}</div>
+        `;
+        listDiv.appendChild(item);
+    });
+
+modal.style.display = 'flex';
+    requestAnimationFrame(() => {
+        modal.classList.add('is-visible');
+        modal.classList.add('active');
+        
+        // 🌟 關鍵優化：彈窗動畫開始後，立刻抓取歷史面板內的第一筆資料或關閉按鈕並聚焦
+        setTimeout(() => {
+            const firstFocusable = modal.querySelector('.history-item-card, #history-close-btn');
+            if (firstFocusable) {
+                firstFocusable.focus();
+            }
+        }, 50); // 微調延遲，確保 DOM 完全渲染好
+    });
+}
+
+function restoreHistoryView(recordId) {
+    window.isLanternActive = false;
+    let history = HistoryManager.getAll();
+    let record = history.find(r => r.id === recordId);
+    if (!record) return;
+
+    currentCategory = record.category;
+    spreadMode = record.spreadMode;
+    if (typeof isRelationship !== 'undefined') isRelationship = record.isRelationship;
+    
+    if (document.getElementById('q-input')) document.getElementById('q-input').value = record.query || '';
+    if (document.getElementById('is-relation')) document.getElementById('is-relation').checked = record.isRelationship;
+    
+    currentReadingSessionId = record.id; 
+
+    drawnCards = [];
+    const container = document.getElementById('cards-container');
+    container.innerHTML = ''; 
+
+    let cardsToRestore = [...record.cards];
+    if (record.hasAdvice && record.adviceData && record.adviceData.card) {
+        cardsToRestore.push({ 
+            ...record.adviceData.card, 
+            isAdvice: true,
+            adviceText: record.adviceData.text 
+        });
+    }
+
+    cardsToRestore.forEach((savedData) => {
+        const fullCardData = tarotData.find(c => c.id === savedData.id);
+        if (!fullCardData) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = `card-wrap ready-to-glow element-${fullCardData.element.toLowerCase()}`;
+        
+        const rotation = savedData.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
+        const imgTag = `<img src="tarot-cards/${fullCardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05)translate3d(0,0,0);-webkit-transform:scale(1.05) translate3d(0,0,0);" draggable="false">`;
+        
+        // 🌟 完美救出：移出 card-front，且修復你之前在內層重複添加 ready-to-glow 類別導致的 CSS 重疊混亂
+        wrapper.innerHTML = `
+            <div class="card-inner" style="transform: ${rotation}; top: 0;">
+                <div class="card-face card-back"></div>
+                <div class="card-face card-front">
+                    ${imgTag}
+                </div>
+                ${typeof liquidCocoonSVG !== 'undefined' ? liquidCocoonSVG : ''}
+            </div>
+        `;
+
+        wrapper.style.opacity = '1';
+        wrapper.style.pointerEvents = 'auto'; 
+        
+        const finalCardObj = { 
+            ...fullCardData, 
+            isReversed: savedData.isReversed, 
+            elementDOM: wrapper, 
+            isAdvice: savedData.isAdvice, 
+            adviceText: savedData.adviceText 
+        };
+        drawnCards.push(finalCardObj);
+        container.appendChild(wrapper);
+
+        // 🌟 關鍵修正：使用 requestAnimationFrame 確保 DOM 已經被瀏覽器註冊後，再於下一幀點燃動畫
+        requestAnimationFrame(() => {
+            const svg = wrapper.querySelector('.liquid-cocoon-svg');
+            if (svg) svg.classList.add('run-cocoon');
+        });
+    });
+
+    const mainPage = document.getElementById('main-page');
+    const spreadView = document.getElementById('spread-view');
+    const homeTitle = document.getElementById('home-title') || document.querySelector('.home-title');
+    
+    const ritualText = document.getElementById('spread-ritual-text');
+    if (ritualText) {
+        ritualText.style.display = 'none';
+        ritualText.innerHTML = ''; 
+    }
+
+    [mainPage, spreadView, homeTitle].forEach(el => {
+        if (el) el.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+    });
+
+    closeHistoryModal();
+
+    if (homeTitle) homeTitle.style.opacity = '0';
+    if (mainPage) mainPage.style.opacity = '0';
+
+    setTimeout(() => {
+        if (mainPage) mainPage.style.display = 'none'; 
+        
+        if (spreadView) {
+            spreadView.style.display = 'block';
+            spreadView.style.opacity = '0';
+            spreadView.offsetHeight; // Force Reflow
+            spreadView.style.opacity = '1';
+        }
+        
+        relayoutCards(); 
+        
+        setTimeout(() => {
+            generateReport(true); 
+            const resultPanel = document.querySelector('.result-panel');
+            if (resultPanel) {
+                resultPanel.style.display = 'block';
+                resultPanel.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                resultPanel.classList.add('active');
+                resultPanel.style.opacity = '1';
+                resultPanel.style.visibility = 'visible';
+                resultPanel.scrollIntoView({ behavior: 'smooth' }); 
+            }
+        }, 250);
+        
+    }, 400);
+}
+
+// 修正後的關閉歷史紀錄彈窗（確保將 active 和 is-visible 一併清除，並移除監聽）
+function closeHistoryModal() {
+window.isLanternActive = true;
+    const modal = document.getElementById('history-modal');
+    if (!modal) return;
+    
+    // 🌟 徹底移除焦點陷阱監聽器，還給主頁面自由
+    modal.removeEventListener('keydown', trapFocus);
+    
+    modal.classList.remove('is-visible');
+    modal.classList.remove('active'); // 🌟 同步移除 active 類別！
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 400); 
+}
+
+function trapFocus(e) {
+    if (e.key !== 'Tab') return;
+
+    const modal = document.getElementById('history-modal');
+    if (!modal || !modal.classList.contains('is-visible')) return;
+
+    // 🌟 嚴格只抓取這個彈窗內部的可聚焦元素（排除主網頁的所有 tab 和輸入框）
+    const focusableElements = modal.querySelectorAll('button, [tabindex="0"], a, input, textarea');
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.shiftKey) { // 按住 Shift + Tab 往回走
+        if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus(); // 跑到最後一個（通常是關閉按鈕）
+        }
+    } else { // 單獨按 Tab 往前走
+        if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus(); // 回到第一個歷史記錄項目
+        }
+    }
+}
+
+window.isLanternActive = true; 
+
+function initAmbientLanternEffect() {
+    const mainPage = document.getElementById('main-page');
+    if (!mainPage || typeof tarotData === 'undefined') return;
+
+    // 清除舊的容器與卡牌
+    document.getElementById('ambient-lantern-container')?.remove();
+    document.querySelectorAll('.ambient-lantern-card').forEach(el => el.remove());
+
+    // 建立專屬的底層容器，確保絕對不擋住主頁按鈕
+    const bgContainer = document.createElement('div');
+    bgContainer.id = 'ambient-lantern-container';
+    document.body.appendChild(bgContainer);
+
+    const totalCards = 4; 
+    const lanternCards = [];
+    const shuffledTarot = [...tarotData].sort(() => 0.5 - Math.random());
+
+    // 百分比佈局
+    const positions = [
+        { top: '14%', left: '6%', rotate: '-10deg' },   
+        { top: '17%', right: '6%', rotate: '8deg' },    
+        { bottom: '25%', left: '8%', rotate: '12deg' }, 
+        { bottom: '5%', right: '8%', rotate: '-6deg' } 
+    ];
+
+    for (let i = 0; i < totalCards; i++) {
+        if (!shuffledTarot[i]) break;
+        const cardEl = document.createElement('div');
+        cardEl.className = 'ambient-lantern-card';
+        cardEl.style.backgroundImage = `url('tarot-cards/${shuffledTarot[i].img}')`;
+        
+        const pos = positions[i];
+        if (pos.top) cardEl.style.top = pos.top;
+        if (pos.bottom) cardEl.style.bottom = pos.bottom;
+        if (pos.left) cardEl.style.left = pos.left;
+        if (pos.right) cardEl.style.right = pos.right;
+        
+        cardEl.style.transform = `rotate(${pos.rotate})`;
+
+        // 點擊卡牌時優雅下沉縮小隱藏
+        cardEl.addEventListener('click', function(e) {
+            e.stopPropagation(); 
+            this.classList.add('shattered-sink');
+        });
+
+        bgContainer.appendChild(cardEl);
+        lanternCards.push({ el: cardEl, rect: null });
+    }
+
+    // 🌟 核心修正：火把跟隨與探照門禁控制（升級智慧防禦）
+    function updateTorchLight(x, y) {
+        const container = document.getElementById('ambient-lantern-container');
+        if (!container) return;
+
+        // 🚨 門禁升級：檢查全局效能開關 window.isLanternActive 與頁面狀態
+        if (
+            !window.isLanternActive ||
+            !mainPage || 
+            mainPage.style.display === 'none' || 
+            mainPage.style.opacity === '0' ||
+            document.getElementById('spread-view')?.style.display === 'block'
+        ) {
+            // 💡 特例防禦：如果這個時候 container 被 Limit Modal 提到最上層（zIndex 是 2001），
+            // 說明使用者正處於額度滿了的解除結界狀態，此時允許卡牌維持顯示讓使用者點擊！
+            if (container.style.zIndex === '2001') {
+                container.style.display = 'block';
+                container.style.opacity = '1';
+            } else {
+                // 否則（只要在抽牌或看歷史紀錄中），一律用 display: none 物理蒸發，徹底釋放 100% GPU
+                container.style.display = 'none';
+                container.style.opacity = '0';
+                lanternCards.forEach(c => c.el.classList.remove('in-torch-range'));
+                return;
+            }
+        } else {
+            // 重新回到首頁，且開關開啟時，恢復容器與管線運作
+            container.style.display = 'block';
+            container.style.opacity = '1';
+        }
+
+        lanternCards.forEach(card => {
+            if (card.el.classList.contains('shattered-sink')) return;
+
+            if (!card.rect || Math.random() < 0.02) {
+                card.rect = card.el.getBoundingClientRect();
+            }
+
+            const rect = card.rect;
+            if (rect.width === 0) return;
+
+            // 觸發探照燈的邊緣緩衝區 (80px)
+            const padding = 80;
+            if (x >= rect.left - padding && x <= rect.right + padding &&
+                y >= rect.top - padding && y <= rect.bottom + padding) {
+                
+                const relativeX = x - rect.left;
+                const relativeY = y - rect.top;
+
+                card.el.style.setProperty('--mx', `${relativeX}px`);
+                card.el.style.setProperty('--my', `${relativeY}px`);
+
+                card.el.classList.add('in-torch-range');
+            } else {
+                card.el.classList.remove('in-torch-range');
+            }
+        });
+    }
+
+    // 監聽指針移動
+    let ticking = false;
+    function handleMove(clientX, clientY) {
+        // 🚨 核心防護：如果全局開關已被關閉，連 requestAnimationFrame 都不准啟動，節省處理器資源
+        if (!window.isLanternActive) return;
+
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                updateTorchLight(clientX, clientY);
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }
+
+    window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+    window.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) handleMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    window.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) handleMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+}
+
+// 啟動
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAmbientLanternEffect);
+} else {
+    initAmbientLanternEffect();
+}
+
+// 🌟 全局監聽 ESC 鍵，優化商業產品的閉合體驗
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+        
+        // 1. 檢查占卜須知 Modal 是否開啟，若是則關閉
+        const noticeModal = document.getElementById('notice-modal');
+        if (noticeModal && noticeModal.style.display === 'block') {
+            if (typeof closeNotice === 'function') closeNotice();
+        }
+        
+        // 2. 檢查限額 Modal 是否開啟，若是則關閉
+        const limitModal = document.getElementById('limit-modal');
+        if (limitModal && limitModal.style.display === 'block') {
+            limitModal.style.display = 'none';
+        }
+
+        // 3. 檢查歷史紀錄 Modal 是否開啟，若是則關閉
+        const historyModal = document.getElementById('history-modal');
+        if (historyModal && historyModal.classList.contains('active')) {
+            if (typeof closeHistoryModal === 'function') closeHistoryModal();
+        }
+        
+        // 4. 檢查解牌結果面板是否開啟，若是則關閉
+        const resultPanel = document.getElementById('result-panel');
+        if (resultPanel && resultPanel.classList.contains('active')) {
+            resultPanel.classList.remove('active');
+        }
+    }
+});
+
+// 👑 點擊特定的愛心（唯一的固定關閉按鈕）
+function clickCorrectHeart(element) {
+    element.classList.add('fade-out-clicked');
+    
+    const unlockInput = document.getElementById('unlock-input');
+    if (unlockInput) unlockInput.value = "✦";
+
+    setTimeout(() => {
+        alert("✨ 你選中了正確的符號，即將返回主頁！");
+        closeLimitModal();
+
+        const main = document.getElementById('main-page');
+        if (main) {
+            main.style.opacity = '1';
+            main.style.display = 'block';
+        }
+    }, 300);
+}
+
+// 🌀 點擊其他錯誤的符號
+function clickWrongSymbol(element) {
+    element.classList.add('fade-out-clicked');
+}
+
+// 檢查並回復符號按鈕的專屬核心函式
+function checkAndResetLimitSymbols() {
+    console.log("🔍 正在檢查符號復活...");
+    const symbols = document.querySelectorAll('.limit-static-btn');
+    
+    symbols.forEach(btn => {
+        // 移除消失類別
+        btn.classList.remove('fade-out-clicked');
+        // 強制恢復點擊權限
+        btn.style.pointerEvents = 'auto';
+        
+        // 再次打印確認是否成功回復
+        if(btn.classList.contains('fade-out-clicked')) {
+            console.error("❌ 警告：符號重置失敗，類別依舊殘留！");
+        }
+    });
+}
+
+function openLimitModal() {
+    const modal = document.getElementById('limit-modal');
+    if (!modal) return;
+    
+    // 🎯 打開的瞬間，立刻強行復活所有符號
+    checkAndResetLimitSymbols();
+
+    modal.style.display = 'flex'; 
+    modal.classList.add('is-visible');
+    window.isLanternActive = true; 
+}
+
+// 🌟 3. 關閉彈窗：多做回復點擊權限的功夫
+function closeLimitModal() {
+    const modal = document.getElementById('limit-modal');
+    if (modal) {
+        modal.classList.remove('is-visible');
+        setTimeout(() => { 
+            modal.style.display = 'none'; 
+            // 🎯 核心優化：在動畫完全隱藏後，在後台再次執行復活檢查，確保下次萬無一失！
+            checkAndResetLimitSymbols();
+        }, 400);
+    }
+    
+    const unlockInput = document.getElementById('unlock-input');
+    if (unlockInput) unlockInput.value = ''; 
+    
+    window.isLanternActive = false;
+
+    if (limitModalFocusHandler) {
+        window.removeEventListener('keydown', limitModalFocusHandler);
+        limitModalFocusHandler = null;
+    }
+}
+</script>
+</body>
+</html>
