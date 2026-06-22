@@ -804,19 +804,29 @@ body.is-initializing #result-panel {
     animation: luxuryShuffle 1.2s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
 }
 
-        .card-wrap {
-            position: absolute; width: 75px; height: 115px;
-            cursor: pointer; z-index: 10;will-change: transform, opacity, left, top;transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease; 
-    -webkit-backface-visibility: hidden; /* 專為 iOS Safari 準備 */
-        }
-        @media (min-width: 768px) {
-        .card-wrap { 
-width: 120px; height: 180px; will-change: transform, opacity;} 
-        .card-face {
-                /* 平板版稍微調弱重疊陰影，避免 Webkit 渲染過載 */
-                box-shadow: 0 4px 10px var(--card-shadow); 
-            }
-        }
+.card-wrap {
+    position: absolute; 
+    width: 75px; 
+    height: 115px;
+    cursor: pointer; 
+    z-index: 10;
+    /* 🌟 核心優化 1：移除 wrap 層的 will-change，改用 3D 轉換強制開啟硬體加速 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease; 
+    -webkit-backface-visibility: hidden; 
+    backface-visibility: hidden;
+}
+
+@media (min-width: 768px) {
+    .card-wrap { 
+        width: 120px; 
+        height: 180px; 
+    } 
+    .card-face {
+        box-shadow: 0 4px 10px var(--card-shadow); 
+    }
+}
 
 /* 👑 精致防抖防摔防死循環規則 */
 .card-wrap.is-chosen,
@@ -832,18 +842,27 @@ width: 120px; height: 180px; will-change: transform, opacity;}
     animation: none !important; /* 徹底殺死任何閒置時的左右呼吸或搖擺動畫 */
 }
 
-        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; pointer-events: none; will-change: transform; -webkit-backface-visibility: hidden; 
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; pointer-events: none; transform: translateZ(0);
+    -webkit-transform: translateZ(0); -webkit-backface-visibility: hidden; 
     backface-visibility: hidden;
     transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
-        .card-face {
-            position: absolute; inset: 0; backface-visibility: hidden; width: 100%;
-            height: 100%;
-            object-fit: cover; 
-            border-radius: 8px; background-position: center;
-            border: var(--border-thin); box-shadow: 0 5px 15px var(--card-shadow); background-clip: padding-box; 
-
-        }
+ .card-face {
+    position: absolute; 
+    inset: 0; 
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden; 
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    border-radius: 8px; 
+    background-position: center;
+    border: var(--border-thin); 
+    box-shadow: 0 5px 15px var(--card-shadow); 
+    background-clip: padding-box; 
+    /* 🌟 核心優化 3：強制開啟 iOS Safari 的最高清圖層圖形流暢渲染 */
+    -webkit-font-smoothing: antialiased;
+}
         .card-back { background-color: var(--gold-light); background-image: linear-gradient(135deg, var(--gold-primary) 25.5%, transparent 26%); background-repeat: no-repeat;overflow: hidden; }
         .card-front { transform: rotateY(180deg); background-color: #c7a243; border-radius: 8px;overflow: hidden;-webkit-mask-image: -webkit-radial-gradient(white, black); }
 
@@ -852,9 +871,8 @@ width: 120px; height: 180px; will-change: transform, opacity;}
     width: 100%;
     height: 100%;
     object-fit: cover; object-position: 52% 50%;
-    /* 核心修改：透過 scale 放大圖片約 5%，這會直接裁切掉原本素材周圍的空白 */
-    transform: scale(1.05) translateZ(0); 
-    transition: transform 0.3s ease; -webkit-transform: scale(1.05) translateZ(0); image-rendering: -webkit-optimize-contrast;
+    transform: scale(1.05) translate3d(0, 0, 0); 
+    transition: transform 0.3s ease; -webkit-transform: scale(1.05) translate3d(0, 0, 0); image-rendering: -webkit-optimize-contrast;image-rendering: crisp-edges;
 }
 
         .card-wrap.popped { z-index: 100 !important; }
@@ -3144,7 +3162,7 @@ window.isLanternActive = false;
             wrapper.className = 'card-wrap'; // 移除 shuffling 類別
             wrapper.dataset.index = index;
 
-            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" onerror="this.style.opacity='0';" draggable="false">`;
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05)translate3d(0,0,0);-webkit-transform:scale(1.05) translate3d(0,0,0);" onerror="this.style.opacity='0';" draggable="false">`;
 
             wrapper.innerHTML = `
                 <div class="card-inner">
@@ -3211,7 +3229,7 @@ function playShuffleAnimation(isMobile) {
             wrapper.dataset.index = index;
             wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
 
-            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" onerror="this.style.opacity='0';" draggable="false">`;
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0);-webkit-transform:scale(1.05) translate3d(0,0,0);" onerror="this.style.opacity='0';" draggable="false">`;
 
             wrapper.innerHTML = `
                 <div class="card-inner">
@@ -3622,59 +3640,62 @@ HistoryManager.save(drawnCards);
         });
     }, 700);
 
-    // --- 階段 4：來到中心的已選卡牌進行翻牌 (T = 1400ms, 耗時 800ms) ---
-    // 等移動完全結束後 (700+600=1300，我們抓 1400ms)，才開始 3D 翻轉，絕不搶拍。
-    setTimeout(() => {
-        drawnCards.forEach((drawn) => {
-            const inner = drawn.elementDOM.querySelector('.card-inner'); 
-            
-            // 開啟 3D 硬體加速，確保翻牌極度絲滑
-            inner.style.willChange = 'transform'; 
-            
-            const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
-            inner.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-            inner.style.transform = rotation;
-        });
-    }, 1400);
+// --- 階段 4：來到中心的已選卡牌進行翻牌 (T = 1400ms, 耗時 800ms) ---
+setTimeout(() => {
+    drawnCards.forEach((drawn) => {
+        const inner = drawn.elementDOM.querySelector('.card-inner'); 
+        
+        // 🌟 核心優化：開啟 will-change 應對即將到來的 3D 翻轉
+        if (inner) inner.style.willChange = 'transform'; 
+        
+        const rotation = drawn.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
+        inner.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        inner.style.transform = rotation;
+    });
+}, 1400);
 
 // --- 階段 5：翻牌後往上移動，並啟動特效 (T = 2400ms, 耗時 800ms) ---
-    setTimeout(() => {
-        const isMobile = window.innerWidth < 768;
-        const totalCards = drawnCards.length;
+setTimeout(() => {
+    const isMobile = window.innerWidth < 768;
+    const totalCards = drawnCards.length;
 
-        // 🌟 呼叫進度為 0 的完美 metrics
-        const metrics = getLayoutMetrics(totalCards, 0);
-        const startX = 50 - ((totalCards - 1) * metrics.gap / 2);
+    const metrics = getLayoutMetrics(totalCards, 0);
+    const startX = 50 - ((totalCards - 1) * metrics.gap / 2);
 
-        drawnCards.forEach((drawn, i) => { 
-            const el = drawn.elementDOM;
+    drawnCards.forEach((drawn, i) => { 
+        const el = drawn.elementDOM;
+        
+        const svg = el.querySelector('.liquid-cocoon-svg');
+        if (svg) svg.classList.add('run-cocoon');
+
+        el.style.setProperty('transition', 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), left 0.8s cubic-bezier(0.25, 1, 0.5, 1), top 0.8s cubic-bezier(0.25, 1, 0.5, 1)', 'important');
+        
+        const inner = el.querySelector('.card-inner');
+        if (inner) {
+            inner.style.transition = ''; 
+            // 🌟 核心優化：完全刪除 will-change 屬性，而不是設為 'auto'，這會逼手機重繪高清原圖！
+            inner.style.removeProperty('will-change'); 
+        }
+
+        let leftPos = `${startX + (i * metrics.gap)}%`;
+        const baseScale = metrics.scale;
             
-            const svg = el.querySelector('.liquid-cocoon-svg');
-            if (svg) svg.classList.add('run-cocoon');
+        el.style.left = leftPos;
+        el.style.top = isMobile ? '8%' : '12%';
+        
+        // 🌟 核心優化：為外層框架也補上 translateZ(0)，防止 scale 放大時造成次像素模糊
+        el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${baseScale}) translateZ(0)`;
 
-            el.style.setProperty('transition', 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), left 0.8s cubic-bezier(0.25, 1, 0.5, 1), top 0.8s cubic-bezier(0.25, 1, 0.5, 1)', 'important');
+        setTimeout(() => {
+            el.classList.add('ready-to-glow');
+            el.style.removeProperty('transition');
+            el.style.removeProperty('pointer-events');
             
-            const inner = el.querySelector('.card-inner');
-            if (inner) {
-                inner.style.transition = ''; 
-                inner.style.willChange = 'auto'; 
-            }
-
-            // 🌟 嚴格遵照完美百分比公式定位
-            let leftPos = `${startX + (i * metrics.gap)}%`;
-            const baseScale = metrics.scale;
-                
-            el.style.left = leftPos;
-            el.style.top = isMobile ? '8%' : '12%';
-            el.style.transform = `translate(-50%, 0) rotate(0deg) scale(${baseScale})`;
-
-            setTimeout(() => {
-                el.classList.add('ready-to-glow');
-                el.style.removeProperty('transition');
-                el.style.removeProperty('pointer-events');
-            }, 800); 
-        });
-    }, 2400);
+            // 🌟 額外保險：此時卡牌已完全定位且翻牌完畢，再次確保 inner 的 will-change 被拔乾淨
+            if (inner) inner.style.removeProperty('will-change');
+        }, 800); 
+    });
+}, 2400);
 
     // --- 階段 6：Result Panel 出現 (T = 3300ms) ---
     // 卡牌完全定位後 (2400+800=3200)，下方的結果面板才優雅滑出
@@ -3905,7 +3926,7 @@ function drawAdvice() {
     wrapper.style.transform = 'translate(-50%, 0) scale(0.5)';
     wrapper.style.opacity = '0';
     
-    const imgTag = `<img src="tarot-cards/${advCard.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">`;
+    const imgTag = `<img src="tarot-cards/${advCard.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0);-webkit-transform:scale(1.05) translate3d(0,0,0);" draggable="false">`;
     
     // 🌟 完美救出：將 liquidCocoonSVG 移出 card-front，放到 card-inner 根層級，防止溢出被裁剪
     wrapper.innerHTML = `
@@ -4342,7 +4363,7 @@ function incrementReading() {
 function checkUnlockKey(inputKey) {
     if (inputKey === UNLOCK_KEY) {
         localStorage.setItem('isUnlocked', 'true');
-        alert("已解鎖無限次數！");
+        alert("已解鎖今日無限次數！");
         return true;
     }
     alert("密鑰錯誤");
@@ -4629,7 +4650,7 @@ function restoreHistoryView(recordId) {
         wrapper.className = `card-wrap ready-to-glow element-${fullCardData.element.toLowerCase()}`;
         
         const rotation = savedData.isReversed ? 'rotateY(180deg) rotateZ(180deg)' : 'rotateY(180deg)';
-        const imgTag = `<img src="tarot-cards/${fullCardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05);" draggable="false">`;
+        const imgTag = `<img src="tarot-cards/${fullCardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05)translate3d(0,0,0);-webkit-transform:scale(1.05) translate3d(0,0,0);" draggable="false">`;
         
         // 🌟 完美救出：移出 card-front，且修復你之前在內層重複添加 ready-to-glow 類別導致的 CSS 重疊混亂
         wrapper.innerHTML = `
