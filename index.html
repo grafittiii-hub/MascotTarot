@@ -3119,12 +3119,12 @@ function enterMainPage() {
 // ==========================================
 // 主控函式：負責指揮整個洗牌與發牌流程
 // ==========================================
+// 主控函式：負責指揮整個洗牌與發牌流程
 async function initSpreadView() {
-window.isLanternActive = false;
+    window.isLanternActive = false;
     const spreadView = document.getElementById('spread-view');
     spreadView.style.display = 'block';
     
-    // 💡 修正：不論手機或電腦，我們都精準控制淡入
     setTimeout(() => spreadView.style.opacity = '1', 50);
 
     const ritualTextContainer = document.getElementById('spread-ritual-text');
@@ -3159,16 +3159,18 @@ window.isLanternActive = false;
         // ==========================================
         shuffledDeck.forEach((cardData, index) => {
             const wrapper = document.createElement('div');
-            wrapper.className = 'card-wrap'; // 移除 shuffling 類別
+            wrapper.className = 'card-wrap'; 
             wrapper.dataset.index = index;
 
-            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05)translate3d(0,0,0);-webkit-transform:scale(1.05) translate3d(0,0,0);" onerror="this.style.opacity='0';" draggable="false">`;
+            // 🌟 高清核心修正 1：正面圖片注入完整的 3D 加速與平滑抗鋸齒
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0); -webkit-transform:scale(1.05) translate3d(0,0,0); image-rendering: -webkit-optimize-contrast; crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
 
+            // 🌟 高清核心修正 2：卡背圖片（300x300）同樣必須強制綁定 translate3d(0,0,0) 防模糊
             wrapper.innerHTML = `
                 <div class="card-inner">
                     <div class="card-face card-back">
                         <img src="tarot-cards/photo-output.png" 
-                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform:translate3d(0,0,0); -webkit-transform:translate3d(0,0,0); image-rendering: -webkit-optimize-contrast;" 
                              onload="this.parentElement.style.backgroundImage='none';" 
                              onerror="this.style.display='none';" 
                              draggable="false">
@@ -3177,12 +3179,11 @@ window.isLanternActive = false;
                 </div>
             `;
 
-            // 🌟 關鍵優化：加上 transition: none 確保一開始切換頁面時，牌組不會因為任何 class 變動而產生滑動位移
             wrapper.style.transition = 'none'; 
             wrapper.style.left = "50%";
             wrapper.style.top = "50%";
             wrapper.style.transformOrigin = "center center"; 
-            wrapper.style.transform = `translate(-50%, -50%)`;
+            wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`; // 加上外層基底加速
             wrapper.style.opacity = '1'; 
 
             wrapper.onclick = (e) => handleCardClick(e, wrapper);
@@ -3190,19 +3191,16 @@ window.isLanternActive = false;
         });
 
         cards = document.querySelectorAll('.card-wrap');
-
-        // 🌟 核心調整：等待整個 spreadView 頁面淡入完成（原設定 700ms，我們等 850ms 確保畫面完全穩定）
-        // 在這段等待期間，使用者只會看到黑底/背景緩緩亮起，中央有一疊整齊的塔羅牌靜止不動
         await new Promise(resolve => setTimeout(resolve, 950));
 
     } else {
         // ==========================================
-        // 💻 電腦版：維持原本的洗牌動畫流程 (等待 2.2 秒)
+        // 💻 電腦版：維持原本的洗牌動畫流程
         // ==========================================
         cards = await playShuffleAnimation(isMobile);
     }
 
-    // 🌟 完美的開牌時機：現在手機版會在這裡才「突然優雅地」展開成扇形牌陣！
+    // 展開成扇形牌陣
     await playSpreadAnimation(cards, isMobile, total);
 }
 
@@ -3215,12 +3213,9 @@ function playShuffleAnimation(isMobile) {
 
         shuffledDeck.forEach((cardData, index) => {
             const wrapper = document.createElement('div');
-            
             const isShuffleTarget = !isMobile || index < 7;
             wrapper.className = isShuffleTarget ? 'card-wrap shuffling' : 'card-wrap';
             
-            // 🌟 關鍵修復 1：不用 display: none，改用 opacity 隱形
-            // 這樣瀏覽器不會在喚醒時卡頓，大幅減少 GPU 負擔
             if (!isShuffleTarget) {
                 wrapper.style.opacity = '0';
                 wrapper.style.pointerEvents = 'none'; 
@@ -3229,13 +3224,14 @@ function playShuffleAnimation(isMobile) {
             wrapper.dataset.index = index;
             wrapper.style.animationDelay = `${Math.random() * 0.5}s`;
 
-            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0);-webkit-transform:scale(1.05) translate3d(0,0,0);" onerror="this.style.opacity='0';" draggable="false">`;
+            // 🌟 高清核心修正 3：電腦版與洗牌階段的行內樣式同步最高規格 3D 渲染
+            const imgTag = `<img src="tarot-cards/${cardData.img}" style="width:100%; height:100%; object-fit:cover; transform:scale(1.05) translate3d(0,0,0); -webkit-transform:scale(1.05) translate3d(0,0,0); image-rendering: -webkit-optimize-contrast; crisp-edges;" onerror="this.style.opacity='0';" draggable="false">`;
 
             wrapper.innerHTML = `
                 <div class="card-inner">
                     <div class="card-face card-back">
                         <img src="tarot-cards/photo-output.png" 
-                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;" 
+                             style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; transform:translate3d(0,0,0); -webkit-transform:translate3d(0,0,0); image-rendering: -webkit-optimize-contrast;" 
                              onload="this.parentElement.style.backgroundImage='none';" 
                              onerror="this.style.display='none';" 
                              draggable="false">
@@ -3244,11 +3240,10 @@ function playShuffleAnimation(isMobile) {
                 </div>
             `;
 
-            // 初始位置，全體統一鎖死在畫面正中央
             wrapper.style.left = "50%";
             wrapper.style.top = "50%";
             wrapper.style.transformOrigin = "center center"; 
-            wrapper.style.transform = `translate(-50%, -50%)`;
+            wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`;
 
             wrapper.onclick = (e) => handleCardClick(e, wrapper);
             container.appendChild(wrapper);
@@ -3267,22 +3262,19 @@ function playShuffleAnimation(isMobile) {
 function playSpreadAnimation(cards, isMobile, total) {
     return new Promise((resolve) => {
         
-        // 🌟 第一階段：拔除動畫，強制收攏到正中央
         cards.forEach((wrapper) => {
             wrapper.classList.remove('shuffling');
-            wrapper.style.transition = 'none'; // 拔除所有動畫
+            wrapper.style.transition = 'none'; 
 
             if (isMobile) {
-                // 🌟 關鍵修復 2：手機版【絕對不要】改變 left 或 transformOrigin！
-                // 讓它們維持在正中央，單純疊整齊，避免 Safari 觸發 Layout Reflow
-                wrapper.style.transform = "translate(-50%, -50%)"; 
+                // 🌟 高清核心修正 4：為初始堆疊狀態補上 translateZ(0)，確保像素完美對齊
+                wrapper.style.transform = "translate(-50%, -50%) translateZ(0)"; 
             } else {
-                // 電腦版維持你的原設定
                 wrapper.style.left = "50%";
                 wrapper.style.top = "50%";
                 wrapper.style.bottom = "auto";
                 wrapper.style.transformOrigin = "center center";
-                wrapper.style.transform = "translate(-50%, -50%) rotate(0deg)";
+                wrapper.style.transform = "translate(-50%, -50%) rotate(0deg) translateZ(0)";
             }
         });
 
@@ -3292,71 +3284,21 @@ function playSpreadAnimation(cards, isMobile, total) {
             ritualTextContainer.classList.add('fade-out');
         }
 
-        // 🌟 第二階段：Double rAF 確保畫面穩定
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 
-                // 🌟 第三階段：套用展開動畫
                 cards.forEach((wrapper, index) => {
                     const duration = isMobile ? '1.5s' : '1s'; 
                     
-// ==========================================
-// 🌟 手機版：全方位手指滑動掃描選牌功能 (不限方向)
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('cards-container');
-    if (!container) return;
-
-    let isScanning = false;
-
-    // 手指壓下時，檢查是否在選牌畫面中
-    container.addEventListener('touchstart', (e) => {
-        const spreadView = document.getElementById('spread-view');
-        if (spreadView && window.getComputedStyle(spreadView).opacity === '1') {
-            isScanning = true;
-        }
-    }, { passive: true });
-
-    // 手指不論上下左右移動，皆實時追蹤位置並觸發預覽
-    container.addEventListener('touchmove', (e) => {
-        if (!isScanning) return;
-        
-        const touch = e.touches[0];
-        // 透過觸控的即時 X, Y 座標，抓取當前手指正下方的 DOM 元素
-        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (!targetEl) return;
-
-        // 向上尋找最近的卡牌節點
-        const wrapper = targetEl.closest('.card-wrap');
-        
-        // 排除已確認或正在洗牌的卡牌
-        if (wrapper && !wrapper.classList.contains('confirmed') && !wrapper.classList.contains('shuffling')) {
-            if (poppedCardEl !== wrapper) {
-                handleCardClick(e, wrapper); // 自動觸發浮起並亮出按鈕
-            }
-        }
-    }, { passive: true });
-
-    // 手指放開時結束掃描
-    container.addEventListener('touchend', () => {
-        isScanning = false;
-    }, { passive: true });
-});
-
-                    // ==========================================
-                    // 🌟 核心升級：動態注入無障礙 Tab 與滑鼠/鍵盤選牌事件
-                    // ==========================================
                     wrapper.setAttribute('tabindex', '0');
                     wrapper.setAttribute('role', 'button');
                     wrapper.setAttribute('aria-label', `第 ${index + 1} 張塔羅牌`);
 
-                    // 1. 鍵盤 Tab 焦點選牌 (一 Focus 就彈起)
                     wrapper.onfocus = (e) => {
                         if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
                         handleCardClick(e, wrapper);
                     };
 
-                    // 2. 鍵盤 Enter 或 空格鍵確認抽牌
                     wrapper.onkeydown = (e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
@@ -3368,29 +3310,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     };
 
-                    // 3. 電腦版：滑鼠滑過 (Hover) 立即浮起預覽
                     wrapper.onmouseenter = (e) => {
                         if (wrapper.classList.contains('confirmed') || wrapper.classList.contains('shuffling')) return;
                         handleCardClick(e, wrapper);
                     };
                     
                     if (isMobile) {
-                        // 手機版：同時漸變 transform 與 opacity (讓隱藏的牌滑順浮現)
                         wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), opacity 0.8s ease-out`;
-                        wrapper.style.transitionDelay = `${index * 0.02}s, 0s`; // opacity 不 delay
+                        wrapper.style.transitionDelay = `${index * 0.02}s, 0s`; 
                         
-                        wrapper.style.opacity = '1'; // 喚醒隱藏的卡牌
+                        wrapper.style.opacity = '1'; 
                         wrapper.style.pointerEvents = 'auto'; 
 
                         const angle = -45 + (index * (90 / total)); 
                         
-                        // 🌟 關鍵修復 3：純 Transform 空間魔法！(0 佈局變動)
-                        wrapper.style.transform = `translate(-50%, -50%) translateX(-50vw) rotate(${angle}deg) translateX(calc(38vw + 50%))`;
+                        // 🌟 高清核心修正 5：在最終扇形展開的 Transform 結尾，強制烙印 translateZ(0)
+                        wrapper.style.transform = `translate(-50%, -50%) translateX(-50vw) rotate(${angle}deg) translateX(calc(38vw + 50%)) translateZ(0)`;
                         
                         wrapper.style.setProperty('--pop-x', '30px');
                         wrapper.style.setProperty('--pop-y', '0px');
                     } else {
-                        // 電腦版維持你的原設定：從中央飛向底部扇形
                         wrapper.style.transition = `transform ${duration} cubic-bezier(0.2, 1.2, 0.3, 1), left ${duration}, top ${duration}, bottom ${duration}`;
                         wrapper.style.transitionDelay = `${index * 0.02}s`;
                         
@@ -3399,17 +3338,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         wrapper.style.left = "50%";
                         wrapper.style.top = "auto";
                         wrapper.style.bottom = "5vh"; 
-                        wrapper.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-18vh)`;
+                        wrapper.style.transform = `translateX(-50%) rotate(${angle}deg) translateY(-18vh) translateZ(0)`;
                         wrapper.style.setProperty('--pop-x', '0px');
                         wrapper.style.setProperty('--pop-y', '-50px');
                     }
                 });
                 
                 // ==========================================
-                // 🌟 核心升級：注入手機版全方位滑動預覽 (上下左右皆觸發)
+                // 📱 手機版：手指滑動掃描選牌功能 (修正 DOMContentLoaded 邏輯錯誤)
                 // ==========================================
                 const container = document.getElementById('cards-container');
-                if (container) {
+                if (container && isMobile) {
                     let isScanning = false;
 
                     container.ontouchstart = () => {
@@ -3422,7 +3361,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     container.ontouchmove = (e) => {
                         if (!isScanning) return;
                         const touch = e.touches[0];
-                        // 即時抓取手指下方的元素
                         const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
                         if (!targetEl) return;
 
@@ -3512,25 +3450,28 @@ function confirmCard(e) {
     const isMobile = window.innerWidth < 768;
     const drawnIndex = drawnCards.length - 1; 
 
-    poppedCardEl.style.transition = 'transform 0.6s ease, left 0.6s ease, top 0.6s ease, bottom 0.6s ease';
+poppedCardEl.style.transition = 'transform 0.6s ease, left 0.6s ease, top 0.6s ease, bottom 0.6s ease';
     poppedCardEl.style.transformOrigin = "center center";
 
     if (spreadMode === 'single') {
         poppedCardEl.style.left = "50%"; 
         poppedCardEl.style.top = "50%";
         poppedCardEl.style.bottom = "auto";
-        poppedCardEl.style.transform = `translate(-50%, -50%) rotate(0deg) scale(1.1)`; 
+        // 🌟 修正：補上 translateZ(0) 鎖定 3D 硬體高清渲染，防止放大 1.1 倍時邊緣朦朧
+        poppedCardEl.style.transform = `translate(-50%, -50%) rotate(0deg) scale(1.1) translateZ(0)`; 
     } else {
         if (isMobile) {
             poppedCardEl.style.left = "80vw"; 
             poppedCardEl.style.top = `${15 + (drawnIndex * 22)}vh`;
             poppedCardEl.style.bottom = "auto";
-            poppedCardEl.style.transform = `translate(-50%, -50%) rotate(0deg) scale(0.7)`;
+            // 🌟 修正：補上 translateZ(0) 防止縮小到 0.7 倍時次像素發虛
+            poppedCardEl.style.transform = `translate(-50%, -50%) rotate(0deg) scale(0.7) translateZ(0)`;
         } else {
             poppedCardEl.style.left = `${35 + (drawnIndex * 15)}vw`; 
             poppedCardEl.style.top = "30vh";
             poppedCardEl.style.bottom = "auto";
-            poppedCardEl.style.transform = `translate(-50%, -50%) rotate(0deg) scale(0.7)`;
+            // 🌟 修正：同理，電腦版縮放也加入硬體鎖定
+            poppedCardEl.style.transform = `translate(-50%, -50%) rotate(0deg) scale(0.7) translateZ(0)`;
         }
     }
 
