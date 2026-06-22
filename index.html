@@ -4270,15 +4270,38 @@ async function exportImage() {
     }
 }
 
-
 // ==========================================
-// 核心：進階版密鑰與有效期管理
+// 點擊「確認解鎖」按鈕的事件觸發器
 // ==========================================
+// 🌟 核心修正：加入 async，這樣才能配合 await 等待雲端資料庫回傳結果！
+async function handleUnlock() {
+    const inputInputEl = document.getElementById('unlock-input');
+    if (!inputInputEl) return;
 
-// 定義不同密鑰的有效期 (單位：毫秒)
-const KEY_CONFIG = {
-    "sun26": 24 * 60 * 60 * 1000,       // 1 天
-};
+    const input = inputInputEl.value.trim(); // 去除前後空白
+    if (!input) {
+        alert("請輸入密鑰");
+        return;
+    }
+
+    // 🌟 核心修正：加上 await，老老實實等待 Supabase 查完資料
+    const isSuccess = await checkUnlockKey(input); 
+
+    if (isSuccess) {
+        const limitModal = document.getElementById('limit-modal');
+        if (limitModal) {
+            // 解鎖成功後，同樣播放優雅的關閉動畫
+            limitModal.classList.remove('is-visible');
+            setTimeout(() => {
+                limitModal.style.display = 'none';
+                // 清空輸入框準備下次使用
+                inputInputEl.value = ''; 
+                // 復活符號（因為關閉了）
+                checkAndResetLimitSymbols();
+            }, 400);
+        }
+    }
+}
 
 function canPerformReading() {
     // 檢查是否有過期時間記錄
@@ -4304,9 +4327,9 @@ function canPerformReading() {
 // 融合版：優先查 Supabase 雲端，查不到再比對本地後門
 // ==========================================
 async function checkUnlockKey(inputKey) {
-    // 預留的本地硬編碼密鑰（可以當作你的秘密後門）
+    // 預留的本地硬編碼密鑰（可以當作你的秘密後門，統一改大寫防止混淆）
     const LOCAL_KEY_CONFIG = {
-        "SUN26": 3650 * 24 * 60 * 60 * 1000 // 永久
+        "SUN26": 24 * 60 * 60 * 1000, // 1天本地備用券
     };
 
     try {
@@ -4343,7 +4366,7 @@ async function checkUnlockKey(inputKey) {
             return true;
         }
     } catch (err) {
-        console.log("Supabase 查詢異常，嘗試走本地後門驗證...", err);
+        console.warn("Supabase 查詢未命中或異常，嘗試走本地後門驗證...", err);
     }
 
     // 4. 🚪 備用後門：如果雲端查不到，看看是不是你寫死在代碼裡的本地密鑰
@@ -4364,7 +4387,6 @@ async function checkUnlockKey(inputKey) {
 }
 
 function incrementReading() {
-    // 只有在未解鎖狀態下才計算次數
     const expiry = localStorage.getItem('unlockExpiry');
     if (expiry && new Date().getTime() < parseInt(expiry)) return;
 
@@ -4428,24 +4450,25 @@ function openNotice() {
     });
 }
 
-function closeNotice() {
-    const modal = document.getElementById('notice-modal');
-    modal.classList.remove('is-visible');
-    // 等待 0.4s 動畫結束後，才徹底隱藏
-    setTimeout(() => modal.style.display = 'none', 400);
-}
-
-function handleUnlock() {
-    const input = document.getElementById('unlock-input').value;
-    if (checkUnlockKey(input)) {
-        const limitModal = document.getElementById('limit-modal');
-        // 解鎖成功後，同樣播放優雅的關閉動畫
-        limitModal.classList.remove('is-visible');
-        setTimeout(() => {
-            limitModal.style.display = 'none';
-            // 清空輸入框準備下次使用
-            document.getElementById('unlock-input').value = ''; 
+// 🌟 3. 關閉彈窗
+function closeLimitModal() {
+    const modal = document.getElementById('limit-modal');
+    if (modal) {
+        modal.classList.remove('is-visible');
+        setTimeout(() => { 
+            modal.style.display = 'none'; 
+            checkAndResetLimitSymbols();
         }, 400);
+    }
+    
+    const unlockInput = document.getElementById('unlock-input');
+    if (unlockInput) unlockInput.value = ''; 
+    
+    window.isLanternActive = false;
+
+    if (limitModalFocusHandler) {
+        window.removeEventListener('keydown', limitModalFocusHandler);
+        limitModalFocusHandler = null;
     }
 }
 // ==========================================
