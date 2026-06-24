@@ -4344,7 +4344,14 @@ async function exportImage() {
         saveBtn.innerText = "ERROR";
     }
 }
-
+		
+function closeNotice() {
+    const modal = document.getElementById('notice-modal');
+    modal.classList.remove('is-visible');
+    // 等待 0.4s 動畫結束後，才徹底隱藏
+    setTimeout(() => modal.style.display = 'none', 400);
+}
+		
 // ==========================================
 // 點擊「確認解鎖」按鈕的事件觸發器
 // ==========================================
