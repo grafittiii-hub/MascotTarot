@@ -3112,15 +3112,53 @@ function startDivination() {
                 });
             });
         }
-        return; // 次數超過，終止流程，且不鎖定狀態（允許用戶選別的或等一下再點）
+        return; 
     }
 
     // 🔒 檢查通過，立刻上鎖！防止用戶在畫面淡出的 0.8 秒內再次點擊
     isDivinationLocked = true;
 
+    // ==========================================
+    // 📊 背景默默上傳：收集用戶輸入的塔羅問題
+    // ==========================================
+    try {
+        // 🎯 核心修正：精準抓取你 HTML 裡的 id="q-input"
+        const questionInput = document.getElementById('q-input');
+        // 🔍 抓取你的雙人/單人勾選框，請確認你的專案中它的 id 是不是 'is-relation'
+        const relationCheck = document.getElementById('is-relation');
+        
+        const questionText = questionInput ? questionInput.value.trim() : "";
+        const isRelationshipValue = relationCheck ? relationCheck.checked : false;
+
+        // 如果使用者有輸入問題（非空字串），才發送給資料庫
+        if (questionText !== "") {
+            // 🌟 使用我們上一階段改好的全域連線物件：supabaseClient
+            supabaseClient
+              .from('user_questions')
+              .insert([
+                { 
+                  category: currentCategory, 
+                  question_text: questionText,
+                  is_relationship: isRelationshipValue
+                }
+              ])
+              .then(({ error }) => {
+                  if (error) {
+                      console.error("❌ 問題儲存失敗，請確認 user_questions 的 RLS Policy 是否改為 anon 允許 INSERT：", error);
+                  } else {
+                      console.log("📊 成功在背景收集到一筆占卜問題！");
+                  }
+              });
+        }
+    } catch (e) {
+        // 防止萬一 DOM 元素抓取失敗時，程式卡死影響使用者占卜
+        console.error("抓取問題資料時出錯，但不影響占卜進行：", e);
+    }
+    // ==========================================
+
     // 扣除一次額度
     incrementReading();
-    isRelationship = document.getElementById('is-relation').checked;
+    isRelationship = document.getElementById('is-relation') ? document.getElementById('is-relation').checked : false;
 
     const main = document.getElementById('main-page');
     if (main) {
