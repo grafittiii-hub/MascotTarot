@@ -4533,16 +4533,24 @@ function openNotice() {
     });
 }
 
-// 🌟 3. 關閉彈窗
+// 🌟 3. 關閉彈窗：多做回復點擊權限的功夫（加裝防當機安全鎖）
 function closeLimitModal() {
     const modal = document.getElementById('limit-modal');
     if (modal) {
         modal.classList.remove('is-visible');
         setTimeout(() => { 
             modal.style.display = 'none'; 
+            // 🎯 核心優化：在動畫完全隱藏後，在後台再次執行復活檢查，確保下次萬無一失
             checkAndResetLimitSymbols();
         }, 400);
     }
+    
+    // 🛡️ 安全鎖防禦：檢查 limitModalFocusHandler 是否存在，存在才移除，防止 ReferenceError 報錯
+    if (typeof limitModalFocusHandler !== 'undefined') {
+        document.removeEventListener('keydown', limitModalFocusHandler);
+    }
+    window.isLanternActive = false;
+}
     
     const unlockInput = document.getElementById('unlock-input');
     if (unlockInput) unlockInput.value = ''; 
