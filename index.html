@@ -4234,7 +4234,7 @@ function drawQRCodeToCanvas(ctx, x, y, dark, light) {
     return new Promise((resolve, reject) => { 
         const qrDiv = document.createElement('div');
         new QRCode(qrDiv, {
-            text: "https://grafittiii-hub.github.io/MascotTarot/",
+            text: "https://mascot-tarot.vercel.app/",
             width: 80,
             height: 80,
             colorDark: dark,
@@ -4794,7 +4794,6 @@ const HistoryManager = {
 
 
 // 開啟歷史記錄彈窗
-// 修正後的開啟歷史紀錄彈窗
 function openHistoryModal() {
 window.isLanternActive = false;
     const modal = document.getElementById('history-modal');
