@@ -3313,7 +3313,7 @@ function startDivination() {
 
 
 // ==========================================
-// 主控函式：極速重用版 (解決 INP 卡頓)
+// 主控函式：展開階段初始化 (安全且兼顧效能修正版)
 // ==========================================
 async function initSpreadView() {
     window.isLanternActive = false;
@@ -3336,39 +3336,25 @@ async function initSpreadView() {
     const isMobile = window.innerWidth < 768;
     const total = shuffledDeck.length;
 
-    if (isMobile) {
-        document.body.classList.add('is-initializing');
-        requestAnimationFrame(() => {
-            document.body.classList.remove('is-initializing');
-        });
-    }
+    const container = document.getElementById('cards-container');
+    if (!container) return;
 
-    // 🌟 核心優化：不再使用 innerHTML = '' 清空重建！
-    // 直接抓取在 startPreloading() 階段早就建好的 78 個 .card-wrap
-    let cards = Array.from(document.querySelectorAll('#cards-container .card-wrap'));
+    // 🌟 效能優化 1：重建前先將容器隱藏，避免瀏覽器在迴圈中做 78 次畫面重繪 (Reflow)
+    container.style.display = 'none';
+    container.innerHTML = ''; 
 
-    // 重新賦予洗牌後的資料與圖片
+    // 🌟 安全重建：確保 78 張牌一定會出現在 DOM 中
     shuffledDeck.forEach((cardData, index) => {
-        const wrapper = cards[index];
-        wrapper.dataset.index = index;
+        const wrapper = document.createElement('div');
         
-        // 只更新正面的圖片 src，不重新生成整個 HTML 結構
-        const frontImg = wrapper.querySelector('.card-front img');
-        if (frontImg) {
-            frontImg.src = `tarot-cards/${cardData.img}`;
-        }
-        
-        wrapper.onclick = (e) => handleCardClick(e, wrapper);
-
         if (isMobile) {
-            wrapper.classList.remove('shuffling');
-            wrapper.style.transition = 'none'; 
+            wrapper.className = 'card-wrap';
             wrapper.style.left = "50%";
             wrapper.style.top = "50%";
             wrapper.style.transformOrigin = "center center"; 
             wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`; 
-            wrapper.style.opacity = '1'; 
-            wrapper.style.pointerEvents = 'none';
+            wrapper.style.opacity = '1';
+            wrapper.style.pointerEvents = 'none'; 
         } else {
             const isShuffleTarget = index < 7;
             wrapper.className = isShuffleTarget ? 'card-wrap shuffling' : 'card-wrap';
@@ -3380,17 +3366,51 @@ async function initSpreadView() {
             wrapper.style.transformOrigin = "center center"; 
             wrapper.style.transform = `translate(-50%, -50%) translateZ(0)`;
         }
+
+        wrapper.dataset.index = index;
+
+        const inner = document.createElement('div');
+        inner.className = 'card-inner';
+
+        const back = document.createElement('div');
+        back.className = 'card-back';
+        const backImg = document.createElement('img');
+        backImg.src = 'tarot-cards/photo-output.png'; // 如果你改成 webp 記得在這邊一併修改
+        back.appendChild(backImg);
+
+        const front = document.createElement('div');
+        front.className = 'card-front';
+        const frontImg = document.createElement('img');
+        // 🌟 效能優化 2：卡牌正面先不急著載入，等到使用者點擊展開再說，降低手機負擔
+        frontImg.src = `tarot-cards/${cardData.img}`;
+        frontImg.alt = cardData.name;
+        frontImg.loading = 'lazy'; // 懶載入
+        front.appendChild(frontImg);
+
+        inner.appendChild(back);
+        inner.appendChild(front);
+        wrapper.appendChild(inner);
+
+        wrapper.onclick = (e) => handleCardClick(e, wrapper);
+
+        container.appendChild(wrapper);
     });
+
+    // 🌟 效能優化 3：全部 DOM 節點在記憶體中建立完畢後，一次性展現容器
+    container.style.display = 'block';
+
+    // 重新抓取剛剛建立好的所有卡牌，傳給動畫函式
+    const cards = Array.from(container.querySelectorAll('.card-wrap'));
 
     if (isMobile) {
         // 手機版等待儀式文字
-        await new Promise(resolve => setTimeout(resolve, 3800));
+        await new Promise(resolve => setTimeout(resolve, 2000));
     } else {
-        // 電腦版洗牌動畫
+        // 電腦版洗牌動畫時間
         await new Promise(resolve => setTimeout(resolve, 2200));
     }
 
-    // 展開成扇形牌陣
+    // 呼叫展開動畫
     await playSpreadAnimation(cards, isMobile, total);
 }
 
