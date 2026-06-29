@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-	
+	<meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; 
+                   script-src 'self' 'unsafe-inline'; 
+                   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+                   img-src 'self' data: https://*.vercel.app; 
+                   font-src 'self' https://fonts.gstatic.com;">
 	<!-- Vercel Speed Insights -->
 	<script>
 		window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
@@ -2769,7 +2774,40 @@ const liquidCocoonSVG = `
                 reversed: { keywords: ["過度放縱", "流言蜚語", "人際疏離"], general_meaning: "過度的派對生活影響健康，或是在群體中感到被孤立。", spread_meanings: { past: "曾因社交過度感到疲憊。", present: "感到被小團體排擠。", future: "需警惕人際關係中的爭端。", my_view: "你感到與社交圈不合。", their_view: "對方覺得你有些浮誇。", current_status: "存在不和諧音或第三方干擾。" }, advice: "減少無效社交，回歸內心。" }
 
             },
-
+			{
+    id: "w2",
+    name: "權杖九",
+    img: "9 of Wands.png",
+    element: "Fire",
+    type: "solo",
+    gaze: "center",
+    upright: {
+        keywords: ["防禦戒備", "堅持到底", "最後考驗"],
+        general_meaning: "代表雖然身心俱疲、帶著先前的傷痛，但依然緊握最後一根權杖堅守陣地。這是一張展現強大意志力、防衛心與百折不撓精神的牌。",
+        spread_meanings: {
+            past: "過去曾經歷過激烈的競爭或傷害，留下了深刻的教訓與陰影。",
+            present: "目前處於高度戒備狀態，雖然感到疲憊，但仍咬牙死守最後的底線。",
+            future: "未來還有一場最後的考驗或硬仗要打，需要你調動所有意志力堅持到最後。",
+            my_view: "你對這段關係抱持著極高的防衛心，小心翼翼地保護自己不受傷害。",
+            their_view: "對方覺得你築起了一座高牆，防心太重、難以真正親近或溝通。",
+            current_status: "雙方或某一方處於防禦受挫的僵持期，彼此帶著過去的傷痕前行，氣氛緊繃而缺乏信任感。"
+        },
+        advice: "局勢即將迎來曙光，此時絕對不能放棄。請保持警惕，守住你的底線，堅持就是勝利。"
+    },
+    reversed: {
+        keywords: ["防線崩潰", "心力交瘁", "拒絕面對"],
+        general_meaning: "象徵防禦的牆壁倒塌，或是體力與意志力終於消耗殆盡。代表無法再堅持、不願再面對創傷，或者因過度偏執而作繭自縛。",
+        spread_meanings: {
+            past: "過去因為長期硬撐或過度防衛，導致身心早已嚴重透支。",
+            present: "當前感到無力再戰、防線失守，或是因為害怕受傷而選擇徹底逃避、擺爛。",
+            future: "若持續封閉自我，未來將面臨心力交瘁、防禦機制徹底瓦解的潰敗局面。",
+            my_view: "你感到極度疲憊與無力，已經不想再為這段關係做任何防衛或努力了。",
+            their_view: "對方覺得你完全拒絕溝通，或者是疑神疑鬼、被害妄想太過嚴重，讓人無法相處。",
+            current_status: "一方防線崩潰、心碎離場，或是因為過去的陰影完全壓垮了當下的情感信任，陷入絕望僵局。"
+        },
+        advice: "不要再盲目硬撐，也不要一味躲在防禦面具背後。適時放下不必要的戒心與執著，接受援助或讓自己好好休息。"
+    }
+},
             { id: "w4", name: "權杖四", img: "4 of Wands.png", element: "Fire", type: "group", gaze: "center",
 
                 upright: { keywords: ["穩定", "家園", "慶典"], general_meaning: "象徵一個穩定的階段，具有安全感與歸屬感。", spread_meanings: { past: "穩固的基業為你遮風擋雨。", present: "享受階段性的平靜與快樂。", future: "將步入穩定發展或同居/結婚。", my_view: "你渴望安定的生活。", their_view: "對方覺得你很踏實可靠。", current_status: "和諧且具備長期潛力的關係。" }, advice: "享受當下的安寧與幸福。" },
@@ -2794,6 +2832,22 @@ const liquidCocoonSVG = `
                 upright: { keywords: ["平衡", "適應力", "多工處理"], general_meaning: "代表在兩個選擇、財務或生活事務之間努力維持平衡，展現出極佳的彈性與適應力。", spread_meanings: { past: "過去在跌跌撞撞中勉強維持了局面的平衡。", present: "目前正忙於應付工作與生活（或兩條感情線）之間的拉扯。", future: "未來局勢依舊充滿變動，需要你保持敏捷的適應能力。", my_view: "你在關係中顯得有些猶豫不決，正努力權衡得失。", their_view: "對方覺得你總是很忙，或者在感情中表現得不夠專一、在兩頭搖擺。", current_status: "處於一種動態平衡、分身乏術，雖然有趣但伴隨著不穩定感的關係。" }, advice: "保持幽默感與彈性，分清事情的優先順序，別讓自己精疲力竭。" },
                 reversed: { keywords: ["失衡", "財務混亂", "難以應付"], general_meaning: "生活或財務的雜耍球終於落地，象徵局面的失控、分身乏術以及因壓力過大而崩潰。", spread_meanings: { past: "過去因為過度擴張或管理不當，導致了局面的失衡。", present: "當前感到壓力爆棚，已經無法同時兼顧多項事務或情感。", future: "若不停止硬撐，未來生活或計畫將會面臨徹底失控的混亂。", my_view: "你感到心力交瘁，已經快要無法維持這段關係的平衡。", their_view: "對方覺得你反覆無常、承諾無法兌現，表現得極其不靠譜。", current_status: "失衡崩潰、頻頻出錯，隨時可能因為外界小事而爭吵斷裂的危機期。" }, advice: "別再試圖隱瞞或勉強硬撐，大膽放下不必要的負擔，回歸專一。" }
             },
+	{    id: "p4", name: "星幣四", img: "4 of Pentacles.png", element: "Earth", type: "solo", gaze: "center",
+    upright: { keywords: ["固守執著", "財務安全", "掌控欲"], general_meaning: "代表緊緊抱著現有的資源、財富或情感不放，拒絕任何改變與分享。這是一張象徵追求絕對安全感、保守守成但也伴隨著小氣與限制的牌。", spread_meanings: { past: "過去奠定了穩固的經濟基礎或情感模式，但也養成了不願冒險的習慣。", present: "目前極度渴望穩定，死死抓住現狀，不願意做出任何讓步、妥協或改變。", future: "未來局勢會走向封閉與僵化，雖然能保住基本的安全感，但也會失去發展的新機會。", my_view: "你對這段感情有著強烈的佔有欲，渴望完全掌控局勢，將對方視為私有財產。", their_view: "對方覺得你太過吝嗇付出（金錢/情感）或控制欲太強，相處起來沉悶且窒息。", current_status: "一段結構非常穩固但缺乏流動性的關係，雙方各懷心思、互不退讓，陷入缺乏激情的安全牌局中。" },
+        advice: "固守現狀固然安全，但過度的掌控只會勒死關係。試著鬆開緊握的雙手，學會分享與流動。" },
+    reversed: {
+        keywords: ["失去控制", "過度揮霍", "被迫放手"],
+        general_meaning: "象徵原本緊握的星幣散落一地。這可以是好現象（代表終於願意打破僵局、放開執著），也可以是壞預兆（代表財務失控、被迫失去掌控權或安全感崩解）。",
+        spread_meanings: {
+            past: "過去曾試圖緊抓某些東西不放，但最終仍遭遇了失控或被迫放手的打擊。",
+            present: "當前正經歷掌控權的流失，或是心態上終於決定豁出去，打破原有的封閉防線。",
+            future: "未來原有的穩定模式將被徹底打破，將面臨財務動盪、關係失控或必須大膽變革的交界點。",
+            my_view: "你感到無法再掌控這段關係，內心充滿了失去安全感的焦慮與恐慌（或你終於想通決定放手）。",
+            their_view: "對方覺得你變得情緒反覆、無法預測，或是認為你已經開始對這段關係放手、不再在乎。",
+            current_status: "原本僵持的局面開始鬆動瓦解，可能伴隨著控制權的激烈爭奪、信任崩潰，或是雙方關係發生劇烈動盪的轉折期。"
+        },
+        advice: "既然失控已成事實，就不要再試圖勉強挽回。大膽接受防線被打破的現實，順應變化才能重獲新生。" }
+},
             { id: "p9", name: "星幣九", img: "9 of Pentacles.png", element: "Earth", type: "solo", gaze: "forward",
                 upright: { keywords: ["獨立", "富足", "怡然自得"], general_meaning: "象徵透過自身的努力獲得了物質上的獨立與成功，享受著高品質的單身或私人生活。", spread_meanings: { past: "過去長期自律且勤奮的努力，締造了現在優渥的根基。", present: "正處於經濟獨立、享受個人空間且不依賴他人的美好時光。", future: "未來將會收穫豐厚的物質財富，並擁有極高的生活自主權。", my_view: "你非常享受個人的獨立空間，認為即使單身也能過得極好。", their_view: "對方視你為高貴、優雅、經濟獨立且有品味的理想對象。", current_status: "彼此尊重私人空間，不黏人、高質感且物質基礎極其穩固的成熟關係。" }, advice: "好好犒賞自己，享受你應得的富足與安寧。" },
                 reversed: { keywords: ["過度依賴", "外強中乾", "失去自由"], general_meaning: "可能為了物質財富而犧牲了自由，或者是表面上裝得很富有，私下卻面臨財務或精神危機。", spread_meanings: { past: "過去為了追求金錢或名利，犧牲了自由與人際關係。", present: "雖然物質不缺，但感到自己像被關在黃金鳥籠裡一樣失去了自由。", future: "若不及時調整，未來可能會為了維持虛榮而付出極大代價。", my_view: "你感到在這段關係中失去了自我，或過度依賴對方的經濟與資源。", their_view: "對方覺得你好高騖遠、虛張聲勢，或者是個依附於人的拜金者。", current_status: "充滿了物質算計、依賴性重，或者為了維持表面風光而互相忍耐的緊繃關係。" }, advice: "重新檢視金錢與自由的價值，找回真正屬於自己的獨立與尊嚴。" }
@@ -5135,6 +5189,11 @@ function closeLimitModal() {
         window.removeEventListener('keydown', limitModalFocusHandler);
         limitModalFocusHandler = null;
     }
+}
+		
+{
+  "key": "Cache-Control",
+  "value": "public, max-age=31536000, immutable"
 }
 </script>
 </body>
